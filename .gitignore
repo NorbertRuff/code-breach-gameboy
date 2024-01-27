@@ -98,4 +98,7 @@ emulicious/*.*
 gbdk/
 gbdk/*.*
 *.pptx
-
+-p/
+-p/*.*
+obj/
+obj/*.*
