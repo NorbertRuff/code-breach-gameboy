@@ -1,104 +1,97 @@
 #include <gb/gb.h>
-#include <stdio.h>
-#include "../res/simplebackground.h"
-#include "../res/simplebackgroundmap.h"
+#include <gb/cgb.h>
+#include <stdint.h>
+#include "../res/Background.h"
 
-INT16 playerlocation[2]; // stores two INT16 x and y position of player
-BYTE jumping;
-INT8 gravity = -2;
-INT16 currentspeedY;
-INT16 floorYposition = 139;
+uint16_t scrollValue=0;
 
-unsigned char bloke[] =
-        {
-                0x00,0x00,0x38,0x38,0x7C,0x44,0x7F,0x7F,
-                0x44,0x74,0x46,0x7C,0x40,0x78,0x24,0x3C,
-                0x18,0x3C,0x00,0x24,0x00,0x24,0x00,0x24,
-                0x00,0x24,0x00,0x36,0x00,0x00,0x00,0x00,
-                0x00,0x00,0x38,0x38,0x7C,0x44,0x7F,0x7F,
-                0x44,0x74,0x46,0x7C,0x40,0x78,0x24,0x3C,
-                0x18,0x3C,0x00,0x22,0x00,0x22,0x00,0x22,
-                0x00,0x23,0x00,0x30,0x00,0x00,0x00,0x00,
-                0x00,0x00,0x38,0x38,0x7C,0x44,0x7F,0x7F,
-                0x44,0x74,0x46,0x7C,0x40,0x78,0x24,0x3C,
-                0x18,0x3C,0x00,0x42,0x00,0x42,0x00,0x42,
-                0x00,0x42,0x00,0x63,0x00,0x00,0x00,0x00,
-                0x00,0x00,0x38,0x38,0x7C,0x44,0x7F,0x7F,
-                0x44,0x74,0x46,0x7C,0x40,0x78,0x24,0x3C,
-                0x18,0x3C,0x00,0x44,0x00,0x44,0x00,0x44,
-                0x00,0x64,0x00,0x06,0x00,0x00,0x00,0x00
-        };
-
-void performantdelay(UINT8 numloops){
-    UINT8 i;
-    for(i = 0; i < numloops; i++){
-        wait_vbl_done();
+void HandleBackgroundScrolling(){
+    // What scanline are we currently at?
+    switch(LYC_REG){
+        case 0:
+            // The interrupt should next trigger here
+            LYC_REG=65;
+            // No need to move the background here
+            // This will all be one color
+            // Any motion wont be noticable
+            SCX_REG = 0;
+            break;
+        case 65:
+            // The interrupt should next trigger here
+            LYC_REG=79;
+            // Move everything below on the background (until our next interrupt)
+            SCX_REG = scrollValue>>3;
+            break;
+        case 79:
+            // The interrupt should next trigger here
+            LYC_REG=95;
+            // Move everything below on the background (until our next interrupt)
+            SCX_REG = scrollValue>>5;
+            break;
+        case 95:
+            // The interrupt should next trigger here
+            LYC_REG=116;
+            // Move everything below on the background (until our next interrupt)
+            SCX_REG = scrollValue>>7;
+            break;
+        case 116:
+            // The interrupt should next trigger here
+            LYC_REG=0;
+            // Move everything below on the background (until our next interrupt)
+            SCX_REG = scrollValue;
+            break;
     }
+
 }
 
-INT8 wouldhitsurface(INT16 projectedYPosition){
-    if(projectedYPosition >= floorYposition){
 
-        return floorYposition;
-    }
-    return -1;
-}
+void main(void)
+{
+    // Set the tiles for our background in vram
+    set_bkg_data(0,Background_TILE_COUNT,Background_tiles);
 
-void jump(UINT8 spriteid, UINT16 spritelocation[2]){
-    INT8 possiblesurfaceY;
+    // Set the colors used by our background also into vram
+    set_bkg_palette(0,Background_PALETTE_COUNT,Background_palettes);
 
-    if(jumping==0){
-        jumping=1;
-        currentspeedY = 10;
-    }
-
-    // work out current speed - effect of gravities accelleration down
-    currentspeedY = currentspeedY + gravity;
-
-    spritelocation[1] = spritelocation[1] - currentspeedY;
-
-    possiblesurfaceY = wouldhitsurface(spritelocation[1]);
-
-    if(possiblesurfaceY != -1){
-        jumping = 0;
-        move_sprite(spriteid,spritelocation[0],possiblesurfaceY);
-    }
-    else{
-        move_sprite(spriteid,spritelocation[0],spritelocation[1]);
-    }
-}
-
-void main(){
-    set_bkg_data(0, 7, backgroundtiles);
-    set_bkg_tiles(0, 0, 40, 18, backgroundmap);
-    set_sprite_data(0, 8, bloke);   /* defines the sprite data */
-
-    set_sprite_tile(0,0);            /* defines the tiles numbers */
-
-    playerlocation[0] = 10;
-    playerlocation[1] = floorYposition;
-    jumping = 0;
-
-    move_sprite(0,playerlocation[0],playerlocation[1]);
-
-    DISPLAY_ON;						// Turn on the display
-    SHOW_SPRITES;
     SHOW_BKG;
+    DISPLAY_ON;
 
-    while(1){
-        scroll_bkg(1,0);
+    // Set the attributes for each background tile
+    VBK_REG =1;
+    set_bkg_tiles(0,0,Background_WIDTH>>3,Background_HEIGHT>>3,Background_map_attributes);
+
+    // Set the actual background tile
+    VBK_REG =0;
+    set_bkg_tiles(0,0,Background_WIDTH>>3,Background_HEIGHT>>3,Background_map);
+
+
+    // We're gonna use interrupts to achieve parallax scrolling
+    // Set the LYC register at 0, where we will start the scrolling logic
+    // From there we will move diferent chunks of the background different amounts
+    STAT_REG|=STATF_LYC; // prepare LYC=LY interrupt when LCD/STAT interrupts are enabled
+    LYC_REG=0u; // set the scanline where interrupt first fires
+    CRITICAL{
+        add_LCD(HandleBackgroundScrolling);
+    }
+    set_interrupts(LCD_IFLAG|VBL_IFLAG); // additionally enable LCD interrupt
+
+
+    // Loop forever
+    while(1) {
+
+
         delay(100);
-        if((joypad() & J_A) || jumping == 1){
-            jump(0,playerlocation);
+        if ((joypad() & J_A)) {
+            scrollValue += 10;
         }
-        if(joypad() & J_LEFT){
-            playerlocation[0] = playerlocation[0] - 2;
-            move_sprite(0,playerlocation[0],playerlocation[1]);
+        if (joypad() & J_LEFT) {
+            scrollValue -= 10;
         }
-        if(joypad() & J_RIGHT){
-            playerlocation[0] = playerlocation[0] + 2;
-            move_sprite(0,playerlocation[0],playerlocation[1]);
+        if (joypad() & J_RIGHT) {
+            scrollValue += 10;
         }
-        performantdelay(5);
+
+        // Done processing, yield CPU and wait for start of next frame
+        wait_vbl_done();
     }
 }
