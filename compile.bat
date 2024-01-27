@@ -1,1 +1,1 @@
-"REM Automatically generated from Makefile" 
+"-----> REM Automatically generated from Makefile <-----" 
