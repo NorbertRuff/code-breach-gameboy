@@ -15,7 +15,7 @@ BANKREF(background)
 
         };
 
-        const uint8_t background_tiles[1008] = {
+        const uint8_t background_tiles[1008] = {  
                 0x00,0xff,0x00,0xff,
                 0x00,0xff,0x00,0xff,
                 0x00,0xff,0x00,0xff,
