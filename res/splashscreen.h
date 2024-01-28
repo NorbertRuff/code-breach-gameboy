@@ -6,6 +6,12 @@
 
 #define splashscreen_tileset_size 129
 
+#define splashscreen_tileset_width 20
+#define splashscreen_tileset_height 18
+
+#define splashscreen_tileset_X 0
+#define splashscreen_tileset_Y 0
+
 extern const unsigned char splashscreen_tileset[]; 
 
 extern const unsigned char splashscreen_tilemap[];
