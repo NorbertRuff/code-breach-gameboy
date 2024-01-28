@@ -37,6 +37,8 @@ runEmulator:
 compile: Makefile
 	@echo "-----> REM Automatically generated from Makefile <-----" > compile.bat
 	@make -sn | sed y/\\//\\\\/ | sed s/mkdir\ -p\/mkdir\/ | grep -v make >> compile.bat
+	@echo "-----> REM End of automatically generated section <-----" >> compile.bat
+	@echo "-----> REM You can now run compile.bat to compile your project <-----" >> compile.bat
 
 # Compile .c files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(SRCDIR)/%.c
