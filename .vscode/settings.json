@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "background.h": "c",
+    "intro.h": "c",
+    "splashscreen.h": "c",
+    "mario.h": "c"
+  }
+}
