@@ -8,23 +8,21 @@
 
 #define apexLogo_TILE_ORIGIN 0
 #define apexLogo_TILE_W 8
-#define apexLogo_TILE_H 16
+#define apexLogo_TILE_H 8
 #define apexLogo_WIDTH 160
 #define apexLogo_HEIGHT 144
-#define apexLogo_TILE_COUNT 250
+#define apexLogo_TILE_COUNT 196
 #define apexLogo_PALETTE_COUNT 1
 #define apexLogo_COLORS_PER_PALETTE 4
 #define apexLogo_TOTAL_COLORS 4
-#define apexLogo_PIVOT_X 80
-#define apexLogo_PIVOT_Y 72
-#define apexLogo_PIVOT_W 160
-#define apexLogo_PIVOT_H 144
+#define apexLogo_MAP_ATTRIBUTES 0
 
 BANKREF_EXTERN(apexLogo)
 
 extern const palette_color_t apexLogo_palettes[4];
-extern const uint8_t apexLogo_tiles[4000];
+extern const uint8_t apexLogo_tiles[3136];
 
-extern const metasprite_t* const apexLogo_metasprites[1];
+extern const unsigned char apexLogo_map[360];
+#define apexLogo_map_attributes apexLogo_map
 
 #endif

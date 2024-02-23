@@ -1,23 +1,19 @@
 {
-    "configurations": [
+    "configurations":[
         {
-            "name": "Win32",
-            "includePath": [
+            "name":"Win32",
+            "includePath":[
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/gbdk/include"
+                "${workspaceFolder}/gbdk/include",
+                "C:/gbdk/include/**",
             ],
-            "defines": [
+            "defines":[
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
-            "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "C:/gbdk/bin/lcc.exe",
-            "cStandard": "c17",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "${default}",
-            "configurationProvider": "ms-vscode.makefile-tools"
+            "intelliSenseMode":"msvc-x64"
         }
     ],
-    "version": 4
+    "version":4
 }

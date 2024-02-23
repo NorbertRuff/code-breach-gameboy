@@ -3,7 +3,8 @@
 #include "intro.h"
 #include "utils.h"
 #include "splashscreen.h"
-#include "blank_tiles.h"
+
+extern unsigned char title[];
 
 void intro_credits(uint16_t time)
 {
@@ -28,19 +29,39 @@ void intro_credits(uint16_t time)
 
 	performant_delay(time);
 	fade_out(10);
+	return;
 }
-
 
 // // Set the tiles for our background in vram
 // set_bkg_data(0, splashscreen_tileset_size, splashscreen_tileset);
 // set_bkg_tiles(0, 0, 20, 18, splashscreen_tilemap);
 
-void init_splash_screen(uint8_t *game_state, uint16_t *text_animation_timer)
+void init_splash_screen()
 {
-
-	*text_animation_timer = ANIMATION_CYCLE_TIME;
-	*game_state = TITLE_SCREEN_STATE;
 	set_bkg_data(0, splashscreen_tileset_size, splashscreen_tileset);
 	set_bkg_tiles(splashscreen_tileset_X, splashscreen_tileset_Y, splashscreen_tileset_width, splashscreen_tileset_height, splashscreen_tilemap);
 	fade_in(10);
+	return;
+}
+
+void update_splash_screen(uint16_t *text_animation_counter)
+{
+	if (*text_animation_counter == 3000)
+	{
+		set_bkg_tiles(press_start_tileset_X, press_start_tileset_Y, press_start_tileset_width, press_start_tileset_height, press_start_blank_tilemap);
+		(*text_animation_counter) = 0;
+		return;
+	}
+	else if (*text_animation_counter == 500)
+	{
+		set_bkg_tiles(press_start_tileset_X, press_start_tileset_Y, press_start_tileset_width, press_start_tileset_height, press_start_tilemap);
+		(*text_animation_counter) ++;
+		return;
+	}
+	else 
+	{
+		(*text_animation_counter) ++;
+		return;
+	}
+
 }

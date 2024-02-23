@@ -3,6 +3,8 @@
     "background.h": "c",
     "intro.h": "c",
     "splashscreen.h": "c",
-    "mario.h": "c"
+    "mario.h": "c",
+    "stdint.h": "c",
+    "splash_screen.h": "c"
   }
 }

@@ -1,7 +1,6 @@
 #include <gb/gb.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "../res/splashscreen.h"
 #include "../res/background.h"
 #include "../res/mario.h"
 #include "../res/intro.h"
@@ -35,11 +34,13 @@ uint8_t joypadPrevious=0;
 
 
 uint16_t scroll_value = 0;
-uint8_t game_state;
-uint16_t text_animation_timer;
+uint16_t text_animation_state = ANIMATION_COUNTER_TIME;
 uint8_t button_pressed = 0;
 
-enum game_states
+enum GAME_STATE game_state;
+
+
+enum GAME_STATE
 {
     TITLE,
     SPLASH_SCREEN,
@@ -51,67 +52,32 @@ enum game_states
 
 void handle_background_scrolling()
 {
-    // What scanline are we currently at?
-    switch (LYC_REG)
-    {
-    case 0:
-        // The interrupt should next trigger here
-        LYC_REG = 65;
-        // No need to move the background here
-        // This will all be one color
-        // Any motion wont be noticable
-        SCX_REG = 0;
-        break;
-    case 65:
-        // The interrupt should next trigger here
-        LYC_REG = 79;
-        // Move everything below on the background (until our next interrupt)
-        SCX_REG = scroll_value >> 3;
-        break;
-    case 79:
-        // The interrupt should next trigger here
-        LYC_REG = 95;
-        // Move everything below on the background (until our next interrupt)
-        SCX_REG = scroll_value >> 5;
-        break;
-    case 95:
-        // The interrupt should next trigger here
-        LYC_REG = 116;
-        // Move everything below on the background (until our next interrupt)
-        SCX_REG = scroll_value >> 7;
-        break;
-    case 116:
-        // The interrupt should next trigger here
-        LYC_REG = 0;
-        // Move everything below on the background (until our next interrupt)
-        SCX_REG = scroll_value;
-        break;
-    }
+    //scroll background to the left
+    scroll_bkg(scroll_value, 0);
+    // Reset the scroll value to 0
+    scroll_value = 0;
 }
 
 
-int8_t HandleInput()
+int8_t handle_input()
 {
     int8_t movement = 0;
     if(joypadCurrent & J_LEFT){
         movement = -1;
         marioDirection=0;
-        scroll_value -= 10;
+        scroll_value -= 5;
 
     }
     else if(joypadCurrent & J_RIGHT){
         movement=1;
         marioDirection=1;
-        scroll_value += 10;
+        scroll_value += 5;
     }
 
     // When a is pressed
     if((joypadCurrent & J_A) && !(joypadPrevious & J_A)){
-
         // Unshift the value if we WERE  in SPR
         marioX=marioX>>4;
-
-
         // SHIFT the value if we are now in SPR
         marioX=marioX<<4;
     }
@@ -130,14 +96,15 @@ void main(void)
 {
     setup();
     // Set the intro screen
-    intro_credits(100);
+    intro_credits(10);
 
     // Initialize the splash screen
-    init_splash_screen(&game_state, &text_animation_timer);
+    init_splash_screen();
 
-    // Wait for start button to be pressed
-    waitpad(J_START);
-
+    while (joypad() != J_START)
+    {
+        update_splash_screen(&text_animation_state);
+    }
     // Fade out screen
     fade_out(10);
 
@@ -190,7 +157,7 @@ void main(void)
         joypadPrevious=joypadCurrent;
         joypadCurrent=joypad();
 
-        int16_t movement = HandleInput();
+        int16_t movement = handle_input();
 
         marioDrawX=marioX;
         marioDrawFrame=marioFrame;
@@ -234,9 +201,9 @@ void main(void)
         // Done processing, yield CPU and wait for start of next frame
         wait_vbl_done();
     
-        switch (state)
+        switch (game_state)
         {
-        case PLAYING:
+        case TITLE:
             performant_delay(5);
 
             if (joypadCurrent & J_A)
