@@ -23,5 +23,23 @@ void show_intro_credits()
 	printf("                    ");
 	printf("                    ");
 	printf("        2024        ");
+	printf("                    ");
 	return;
+}
+
+void handle_intro_credits()
+{
+	fade_in_screen(10);
+	show_intro_credits();
+	performant_delay(10);
+
+	for (uint8_t i = 0; i < 32; i++)
+	{
+		scroll_bkg(0, 4);
+		performant_delay(5);
+	}
+
+	performant_delay(10);
+	fade_out_screen(10);
+	scroll_bkg(0, -128);
 }

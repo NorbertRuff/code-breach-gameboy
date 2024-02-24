@@ -4,21 +4,17 @@
 
 #include "../res/background.h"
 #include "../res/mario.h"
-#include "./game_state/intro_credits.h"
-#include "./game_state/start_screen.h"
 #include "./utils.h"
 
+#include "./game_state/core_game_loop.h"
+#include "./game_state/intro_credits.h"
+#include "./game_state/prepare_core_game_loop.h"
+#include "./game_state/start_screen.h"
+
 #define FLOOR_Y 130
-
-#define DEFAULT 0
-#define FRAME_RATE 1
-#define COUNTER 2
-#define SUB_PIXEL_RESOLUTION 3
-
 #define MARIO_RUN_FRAMECOUNT 4
 #define MARIO_WALKING_SPEED 20
 
-uint8_t counter = 0;
 uint16_t mario_x;
 
 uint16_t mario_draw_x;
@@ -32,7 +28,6 @@ uint8_t joypad_previous = 0;
 
 uint16_t scroll_value = 0;
 uint16_t text_animation_state = ANIMATION_COUNTER_TIME;
-uint8_t button_pressed = 0;
 
 uint8_t current_game_state = INTRO_CREDITS_STATE;
 
@@ -68,26 +63,6 @@ int8_t handle_joystick_input()
         mario_x = mario_x << 4;
     }
     return movement;
-}
-
-void set_background_tiles()
-{
-    // Set the tiles for our background in vram
-    set_bkg_data(0, background_TILE_COUNT, background_tiles);
-    // Set the colors used by our background also into vram
-    set_bkg_palette(0, background_PALETTE_COUNT, background_palettes);
-    set_bkg_tiles(0, 0, background_WIDTH >> 3, background_HEIGHT >> 3, background_map_attributes);
-    set_bkg_tiles(0, 0, background_WIDTH >> 3, background_HEIGHT >> 3, background_map);
-}
-
-void set_mario_metasprite()
-{
-    // Set the mario metasprite
-    set_sprite_data(0, mario_TILE_COUNT, mario_tiles);
-    set_sprite_palette(0, mario_PALETTE_COUNT, mario_palettes);
-
-    // Put mario in the middle
-    mario_x = 10;
 }
 
 void handle_mario_animation(int8_t *movement)
@@ -141,46 +116,6 @@ void handle_mario_animation(int8_t *movement)
     }
 }
 
-void handle_intro_credits()
-{
-    fade_in_screen(10);
-    show_intro_credits();
-    performant_delay(10);
-
-    for (uint8_t i = 0; i < 25; i++)
-    {
-        scroll_bkg(0, 5);
-        performant_delay(5);
-    }
-
-    performant_delay(10);
-    fade_out_screen(10);
-    current_game_state = TITLE_SCREEN_STATE;
-    scroll_bkg(0, -125);
-}
-
-// Initialize the splash screen
-void handle_slpash_screen_state()
-{
-    init_splash_screen();
-    // Wait for the player to press start
-    while (joypad() != J_START)
-    {
-        update_splash_screen(&text_animation_state);
-    }
-    fade_out_screen(10);
-    current_game_state = GAMEPLAY_START;
-}
-
-// Prepare the tile data and background
-void handle_gameplay_start()
-{
-    set_background_tiles();
-    set_mario_metasprite();
-    fade_in_screen(10);
-    current_game_state = COREGAMELOOP;
-}
-
 // Main game loop
 void main_game_loop()
 {
@@ -188,12 +123,6 @@ void main_game_loop()
     int16_t movement = handle_joystick_input();
 
     handle_mario_animation(&movement);
-}
-
-// Handle the end of the game
-void handle_gameplay_end()
-{
-    // TODO: Add game over screen
 }
 
 void main(void)
@@ -209,24 +138,39 @@ void main(void)
         {
         case INTRO_CREDITS_STATE:
             handle_intro_credits();
+            current_game_state = TITLE_SCREEN_STATE;
             break;
         case TITLE_SCREEN_STATE:
-            handle_slpash_screen_state();
+            init_splash_screen();
+            // Wait for the player to press start
+            while (joypad_current != J_START)
+            {
+                update_splash_screen(&text_animation_state);
+            }
+            fade_out_screen(10);
+            current_game_state = GAMEPLAY_START;
             break;
         case GAMEPLAY_START:
-            handle_gameplay_start();
+            prepare_core_game_loop();
+            // Put mario in the middle
+            mario_x = 10;
+            current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:
             main_game_loop();
+            current_game_state = GAMEPLAY_END;
+            fade_out_screen(10);
             break;
         case GAMEPLAY_END:
-            // TODO: Add game over screen
+            game_over();
+            fade_out_screen(10);
+            current_game_state = GAMEPLAY_START;
             break;
         default:
             break;
         }
 
         // Done processing, yield CPU and wait for start of next frame
-        wait_vbl_done();
+        vsync();
     }
 }

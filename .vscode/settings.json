@@ -8,6 +8,8 @@
     "introcredits.h": "c",
     "startscreen.h": "c",
     "stdio.h": "c",
-    "intro_credits.h": "c"
+    "intro_credits.h": "c",
+    "stdbool.h": "c",
+    "gb.h": "c"
   }
 }
