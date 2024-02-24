@@ -11,7 +11,7 @@
 #include "./game_state/prepare_core_game_loop.h"
 #include "./game_state/start_screen.h"
 
-#define FLOOR_Y 130
+#define FLOOR_Y 120
 #define MARIO_RUN_FRAMECOUNT 4
 #define MARIO_WALKING_SPEED 20
 
@@ -30,6 +30,7 @@ uint16_t scroll_value = 0;
 uint16_t text_animation_state = ANIMATION_COUNTER_TIME;
 
 uint8_t current_game_state = INTRO_CREDITS_STATE;
+// uint8_t current_game_state = GAMEPLAY_START;
 
 void handle_background_scrolling()
 {
@@ -44,6 +45,7 @@ int8_t handle_joystick_input()
     if (joypad_current & J_LEFT)
     {
         movement = -1;
+
         mario_direction = 0;
         scroll_value -= 2;
     }
@@ -129,7 +131,6 @@ void main(void)
 {
     prepare_gameboy();
 
-    // Loop forever
     while (1)
     {
         joypad_previous = joypad_current;
@@ -143,7 +144,7 @@ void main(void)
         case TITLE_SCREEN_STATE:
             init_splash_screen();
             // Wait for the player to press start
-            while (joypad_current != J_START)
+            while (joypad() != J_START)
             {
                 update_splash_screen(&text_animation_state);
             }
@@ -158,8 +159,8 @@ void main(void)
             break;
         case COREGAMELOOP:
             main_game_loop();
-            current_game_state = GAMEPLAY_END;
-            fade_out_screen(10);
+            // current_game_state = GAMEPLAY_END;
+            // fade_out_screen(10);
             break;
         case GAMEPLAY_END:
             game_over();

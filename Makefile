@@ -131,6 +131,7 @@ assets:
 	$(PNG2ASSET) $(IMGDIR)/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -out $(SRCDIR)/apexLogo.c
 	$(PNG2ASSET) $(IMGDIR)/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -out $(SRCDIR)/press_start.c
 	$(PNG2ASSET) $(IMGDIR)/apexLogo3.png -bank 1 -org 0x8000 -noflip -map -name apexLogo3 -out $(SRCDIR)/apexLogo3.c
+	$(PNG2ASSET) $(IMGDIR)/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -out $(SRCDIR)/hud.c
 
 # Remove all compiled files
 clean:
