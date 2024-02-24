@@ -4,9 +4,8 @@
 #include "../utils.h"
 #include "intro_credits.h"
 
-void show_intro_credits(uint16_t sleep)
+void show_intro_credits()
 {
-	fade_in_screen(10);
 	printf("                    ");
 	printf("                    ");
 	printf("                    ");
@@ -24,8 +23,5 @@ void show_intro_credits(uint16_t sleep)
 	printf("                    ");
 	printf("                    ");
 	printf("        2024        ");
-
-	performant_delay(sleep);
-	fade_out_screen(10);
 	return;
 }

@@ -4,8 +4,8 @@
 #define INTRO_CREDITS_STATE 0
 #define TITLE_SCREEN_STATE 1
 #define GAMEPLAY_START 2
-#define GAMEPLAY_END 3
-#define COREGAMELOOP 4
+#define COREGAMELOOP 3
+#define GAMEPLAY_END 4
 
 void performant_delay(uint16_t time);
 

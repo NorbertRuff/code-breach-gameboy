@@ -16,7 +16,7 @@
 #define SUB_PIXEL_RESOLUTION 3
 
 #define MARIO_RUN_FRAMECOUNT 4
-#define MARIO_WALKING_SPEED 25
+#define MARIO_WALKING_SPEED 20
 
 uint8_t counter = 0;
 uint16_t mario_x;
@@ -33,6 +33,8 @@ uint8_t joypad_previous = 0;
 uint16_t scroll_value = 0;
 uint16_t text_animation_state = ANIMATION_COUNTER_TIME;
 uint8_t button_pressed = 0;
+
+uint8_t current_game_state = INTRO_CREDITS_STATE;
 
 void handle_background_scrolling()
 {
@@ -139,44 +141,90 @@ void handle_mario_animation(int8_t *movement)
     }
 }
 
-void main(void)
+void handle_intro_credits()
 {
-    prepare_gameboy();
-    // Set the intro screen
-    uint8_t current_game_state = INTRO_CREDITS_STATE;
-    show_intro_credits(10);
+    fade_in_screen(10);
+    show_intro_credits();
+    performant_delay(10);
 
-    // Initialize the splash screen
+    for (uint8_t i = 0; i < 25; i++)
+    {
+        scroll_bkg(0, 5);
+        performant_delay(5);
+    }
+
+    performant_delay(10);
+    fade_out_screen(10);
     current_game_state = TITLE_SCREEN_STATE;
-    init_splash_screen();
+    scroll_bkg(0, -125);
+}
 
+// Initialize the splash screen
+void handle_slpash_screen_state()
+{
+    init_splash_screen();
     // Wait for the player to press start
     while (joypad() != J_START)
     {
         update_splash_screen(&text_animation_state);
     }
-
-    // Fade out screen
     fade_out_screen(10);
+    current_game_state = GAMEPLAY_START;
+}
 
-    // Set the background tiles
+// Prepare the tile data and background
+void handle_gameplay_start()
+{
     set_background_tiles();
-
     set_mario_metasprite();
-
-    // Fade in screen
     fade_in_screen(10);
+    current_game_state = COREGAMELOOP;
+}
+
+// Main game loop
+void main_game_loop()
+{
+    handle_background_scrolling();
+    int16_t movement = handle_joystick_input();
+
+    handle_mario_animation(&movement);
+}
+
+// Handle the end of the game
+void handle_gameplay_end()
+{
+    // TODO: Add game over screen
+}
+
+void main(void)
+{
+    prepare_gameboy();
 
     // Loop forever
     while (1)
     {
         joypad_previous = joypad_current;
         joypad_current = joypad();
-        handle_background_scrolling();
-
-        int16_t movement = handle_joystick_input();
-
-        handle_mario_animation(&movement);
+        switch (current_game_state)
+        {
+        case INTRO_CREDITS_STATE:
+            handle_intro_credits();
+            break;
+        case TITLE_SCREEN_STATE:
+            handle_slpash_screen_state();
+            break;
+        case GAMEPLAY_START:
+            handle_gameplay_start();
+            break;
+        case COREGAMELOOP:
+            main_game_loop();
+            break;
+        case GAMEPLAY_END:
+            // TODO: Add game over screen
+            break;
+        default:
+            break;
+        }
 
         // Done processing, yield CPU and wait for start of next frame
         wait_vbl_done();
