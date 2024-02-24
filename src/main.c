@@ -153,6 +153,7 @@ void main(void)
             break;
         case GAMEPLAY_START:
             prepare_core_game_loop();
+            fade_in_screen(10);
             // Put mario in the middle
             mario_x = 10;
             current_game_state = COREGAMELOOP;
@@ -172,6 +173,6 @@ void main(void)
         }
 
         // Done processing, yield CPU and wait for start of next frame
-        vsync();
+        wait_vbl_done();
     }
 }

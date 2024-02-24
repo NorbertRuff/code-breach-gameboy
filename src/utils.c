@@ -7,7 +7,7 @@ void performant_delay(uint16_t time)
     uint8_t i;
     for (i = 0; i < time; i++)
     {
-        vsync();
+        wait_vbl_done();
     }
 }
 

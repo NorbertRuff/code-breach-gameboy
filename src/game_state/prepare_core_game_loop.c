@@ -48,5 +48,4 @@ void prepare_core_game_loop()
     set_background_tiles();
     set_hud_window_tiles();
     set_mario_metasprite();
-    fade_in_screen(10);
 }
