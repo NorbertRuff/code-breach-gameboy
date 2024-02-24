@@ -20,13 +20,14 @@ LCCFLAGS += -debug # Uncomment to enable debug output
 PROJECTNAME    = ApexLab
 
 SRCDIR      = src
+GAMESTATES  = src/game_state
 EMUDIR      = emulicious
 IMGDIR      = img
 OBJDIR      = obj
 RESDIR      = res
 BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c)))
-ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s)))
+CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c)))
+ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
 all:	clean prepare $(BINS) runEmulator
@@ -45,6 +46,11 @@ $(OBJDIR)/%.o:	$(SRCDIR)/%.c
 	echo "-----> Compiling src/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
+# Compile .c files in "GAMESTATES/" to .o object files
+$(OBJDIR)/%.o:	$(GAMESTATES)/%.c
+	echo "-----> Compiling res/c files <-----"
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
 # Compile .c files in "res/" to .o object files
 $(OBJDIR)/%.o:	$(RESDIR)/%.c
 	echo "-----> Compiling res/c files <-----"
@@ -55,10 +61,21 @@ $(OBJDIR)/%.o:	$(SRCDIR)/%.s
 	echo "-----> Compiling src/s files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
+# Compile .s assembly files in "src/" to .o object files
+$(OBJDIR)/%.o:	$(GAMESTATES)/%.s
+	echo "-----> Compiling src/s files <-----"
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
 
 # If needed, compile .c files in "src/" to .s assembly files
 # (not required if .c is compiled directly to .o)
 $(OBJDIR)/%.s:	$(SRCDIR)/%.c
+	echo "-----> Compiling src/c files to src/s files <-----"
+	$(LCC) $(LCCFLAGS) -S -o $@ $<
+
+# If needed, compile .c files in "src/" to .s assembly files
+# (not required if .c is compiled directly to .o)
+$(OBJDIR)/%.s:	$(GAMESTATES)/%.c
 	echo "-----> Compiling src/c files to src/s files <-----"
 	$(LCC) $(LCCFLAGS) -S -o $@ $<
 

@@ -29,4 +29,4 @@ extern const uint8_t background_tiles[1008];
 extern const unsigned char background_map[576];
 extern const unsigned char background_map_attributes[576];
 
-#endif
+#endif // METASPRITE_background_H

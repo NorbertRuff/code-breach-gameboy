@@ -1,10 +1,13 @@
 {
   "files.associations": {
     "background.h": "c",
-    "intro.h": "c",
     "splashscreen.h": "c",
     "mario.h": "c",
     "stdint.h": "c",
-    "splash_screen.h": "c"
+    "utils.h": "c",
+    "introcredits.h": "c",
+    "startscreen.h": "c",
+    "stdio.h": "c",
+    "intro_credits.h": "c"
   }
 }
