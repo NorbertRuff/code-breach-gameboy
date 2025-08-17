@@ -1,0 +1,6 @@
+@echo off
+echo Compiling ApexLab GameBoy game...
+make
+echo.
+echo Starting Emulicious emulator...
+java -jar emulicious\Emulicious.jar obj\ApexLab.gb 

@@ -87,7 +87,7 @@ $(BINS):	$(OBJS)
 # Create the obj directory if it doesn't exist
 prepare:
 	echo "-----> Creating obj directory <-----"
-	mkdir -p $(OBJDIR)
+	if not exist $(OBJDIR) mkdir $(OBJDIR)
 
 # Create assets from png files
 #usage: png2asset    <file>.png [options]
@@ -136,10 +136,10 @@ assets:
 # Remove all compiled files
 clean:
 	echo "-----> Cleaning up <-----"
-	rd /s /q $(OBJDIR)
-	rd /s /q .\-p\
+	if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
+	if exist .\-p\ rmdir /s /q .\-p\
 
 # create necessary directories after Makefile is parsed but before build
 # info prevents the command from being pasted into the makefile
-$(info $(shell mkdir -p $(MKDIRS)))
+# $(info $(shell mkdir -p $(MKDIRS)))
 

@@ -13,8 +13,7 @@
 #define hud_point_counter_third_digit_x 18
 
 #define hud_point_counter_first_offset 77 // 0
-#define hud_point_counter_first_offset 77 // 0
-#define hud_point_counter_first_offset 78 // 1
+#define hud_point_counter_second_offset 78 // 1
 
 #define hud_tileset_size 25
 
