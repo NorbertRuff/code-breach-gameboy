@@ -7,7 +7,7 @@
 BANKREF(apexLogo3)
 
 const palette_color_t apexLogo3_palettes[4] = {
-	RGB8(172,204, 15), RGB8(140,172, 15), RGB8( 48, 98, 48), RGB8( 85,  2,  0)
+	RGB8(172,204, 15), RGB8(140,172, 15), RGB8( 48, 98, 48), RGB8(223,  1,  0)
 	
 };
 

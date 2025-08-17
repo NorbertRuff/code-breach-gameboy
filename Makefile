@@ -19,14 +19,17 @@ LCCFLAGS += -debug # Uncomment to enable debug output
 # You can set the name of the .gb ROM file here
 PROJECTNAME    = ApexLab
 
+# Directories
 SRCDIR      = src
 GAMESTATES  = src/game_state
 EMUDIR      = emulicious
-GRAPHICS    = res/graphics
+GRAPHICS    = graphics
 OBJDIR      = obj
 RESDIR      = res
+GRAPHICSDIR = src/graphics
+
 BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c)))
+CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
@@ -54,6 +57,11 @@ $(OBJDIR)/%.o:	$(GAMESTATES)/%.c
 # Compile .c files in "res/" to .o object files
 $(OBJDIR)/%.o:	$(RESDIR)/%.c
 	echo "-----> Compiling res/c files <-----"
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/graphics/" to .o object files
+$(OBJDIR)/%.o:	$(GRAPHICSDIR)/%.c
+	echo "-----> Compiling graphics/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files
@@ -128,12 +136,11 @@ prepare:
 
 assets:
 	echo "-----> Creating assets from png files <-----"
-	$(PNG2ASSET) $(GRAPHICS)/programmer.png -bank 1 -org 0x8000 -noflip -map -name programmer -out $(SRCDIR)/programmer.c
-
-	#$(PNG2ASSET) $(GRAPHICS)/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -out $(SRCDIR)/apexLogo.c
-	#$(PNG2ASSET) $(GRAPHICS)/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -out $(SRCDIR)/press_start.c
-	#$(PNG2ASSET) $(GRAPHICS)/apexLogo3.png -bank 1 -org 0x8000 -noflip -map -name apexLogo3 -out $(SRCDIR)/apexLogo3.c
-	#$(PNG2ASSET) $(GRAPHICS)/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -out $(SRCDIR)/hud.c
+	$(PNG2ASSET) $(GRAPHICS)/player/programmer.png -bank 1 -org 0x8000 -noflip -map -name programmer -o $(SRCDIR)/graphics/programmer.c
+	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -o $(SRCDIR)/graphics/apexLogo.c
+	$(PNG2ASSET) $(GRAPHICS)/start_screen/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -o $(SRCDIR)/graphics/press_start.c
+	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo3.png -bank 1 -org 0x8000 -noflip -map -name apexLogo3 -o $(SRCDIR)/graphics/apexLogo3.c
+	$(PNG2ASSET) $(GRAPHICS)/hud/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -o $(SRCDIR)/graphics/hud.c
 
 # Remove all compiled files
 clean:

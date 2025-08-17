@@ -7,7 +7,7 @@
 BANKREF(press_start)
 
 const palette_color_t press_start_palettes[4] = {
-	RGB8(188,213,140), RGB8(  0,  0,  0), RGB8( 80,  1,141), RGB8(166,  1,  0)
+	RGB8(188,213,140), RGB8(  0,  0,  0), RGB8( 80,  1,100), RGB8( 37,  2,  0)
 	
 };
 

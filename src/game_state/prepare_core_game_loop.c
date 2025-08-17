@@ -1,8 +1,8 @@
 #include <gb/gb.h>
 
-#include "../../res/background.h"
-#include "../../res/hud.h"
-#include "../../res/programmer.h"
+#include "../graphics/background.h"
+#include "../graphics/hud.h"
+#include "../graphics/programmer.h"
 
 #include "../utils.h"
 

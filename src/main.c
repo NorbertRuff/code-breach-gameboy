@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "../res/background.h"
-#include "../res/programmer.h"
+#include "./graphics/background.h"
+#include "./graphics/programmer.h"
 #include "./utils.h"
 
 #include "./game_state/core_game_loop.h"
