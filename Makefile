@@ -2,21 +2,14 @@
 # A Makefile that compiles all .c and .s files in "src" and "res" 
 # subdirectories and places the output in a "obj" subdirectory
 #
-
-# If you move this project you can change the directory 
-# to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
 GBDK_HOME = ./gbdk/
 
 LCC = $(GBDK_HOME)bin/lcc 
 PNG2ASSET = $(GBDK_HOME)bin/png2asset
 
-# You can set flags for LCC here
-# For example, you can uncomment the line below to turn on debug output
 LCCFLAGS += -debug # Uncomment to enable debug output
 #LCCFLAGS += -v     # Uncomment for lcc verbose output
 
-
-# You can set the name of the .gb ROM file here
 PROJECTNAME    = ApexLab
 
 # Directories
@@ -37,7 +30,7 @@ OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
 all:	clean prepare $(BINS)
 
-runEmulator:
+run:
 	java -jar .\$(EMUDIR)\Emulicious.jar $(BINS)
 
 compile: Makefile
@@ -48,60 +41,49 @@ compile: Makefile
 
 # Compile .c files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(SRCDIR)/%.c
-	echo "-----> Compiling src/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .c files in "GAMESTATES/" to .o object files
 $(OBJDIR)/%.o:	$(GAMESTATES)/%.c
-	echo "-----> Compiling res/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .c files in "res/" to .o object files
 $(OBJDIR)/%.o:	$(RESDIR)/%.c
-	echo "-----> Compiling res/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .c files in "src/graphics/" to .o object files
 $(OBJDIR)/%.o:	$(GRAPHICSDIR)/%.c
-	echo "-----> Compiling graphics/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .c files in "src/player/" to .o object files
 $(OBJDIR)/%.o:	$(PLAYERDIR)/%.c
-	echo "-----> Compiling player/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .c files in "src/input/" to .o object files
 $(OBJDIR)/%.o:	$(INPUTDIR)/%.c
-	echo "-----> Compiling input/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(SRCDIR)/%.s
-	echo "-----> Compiling src/s files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(GAMESTATES)/%.s
-	echo "-----> Compiling src/s files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 
 # If needed, compile .c files in "src/" to .s assembly files
 # (not required if .c is compiled directly to .o)
 $(OBJDIR)/%.s:	$(SRCDIR)/%.c
-	echo "-----> Compiling src/c files to src/s files <-----"
 	$(LCC) $(LCCFLAGS) -S -o $@ $<
 
 # If needed, compile .c files in "src/" to .s assembly files
 # (not required if .c is compiled directly to .o)
 $(OBJDIR)/%.s:	$(GAMESTATES)/%.c
-	echo "-----> Compiling src/c files to src/s files <-----"
 	$(LCC) $(LCCFLAGS) -S -o $@ $<
 
 # Link the compiled object files into a .gb ROM file
 $(BINS):	$(OBJS)
-	echo "-----> Linking object files into a .gb ROM file <-----"
 	$(LCC) $(LCCFLAGS) -o $(BINS) $(OBJS)
 
 # Create the obj directory if it doesn't exist
