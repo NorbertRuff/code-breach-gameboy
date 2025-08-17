@@ -1,4 +1,6 @@
 @echo off
+echo Cleaning...
+make clean
 echo Compiling ApexLab GameBoy game...
 make
 echo.

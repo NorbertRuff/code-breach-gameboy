@@ -94,7 +94,7 @@
 ## 📋 Implementation Plan
 
 ### Phase 1: Foundation (Week 1-2)
-- [ ] Replace Mario character with programmer sprite
+- [x] Replace Mario character with programmer sprite
 - [ ] Implement jumping mechanics
 - [ ] Add basic collision detection
 - [ ] Create new background assets
@@ -141,6 +141,36 @@
 - [ ] Collectible management system
 - [ ] Level progression manager
 - [ ] Save/load system
+
+## 🧪 Development Features & Tools
+
+### Feature Flags
+- [x] **SKIP_INTRO_AND_START**: Skip intro credits and press start screen for faster development/testing
+  - Set to `1` in `src/utils.h` to enable
+  - Set to `0` to restore normal intro sequence
+  - Useful for rapid iteration during development
+
+- [x] **EMPTY_BACKGROUND**: Draw empty background instead of city background for debugging
+  - Set to `1` in `src/utils.h` to enable
+  - Set to `0` to restore normal city background
+  - Useful for debugging character movement and collision detection
+
+- [x] **DISABLE_BACKGROUND_SCROLLING**: Disable background scrolling for debugging
+  - Set to `1` in `src/utils.h` to enable
+  - Set to `0` to restore normal background scrolling
+  - Useful for debugging character movement without background interference
+
+### Debug Tools
+- [ ] Frame rate display
+- [ ] Collision box visualization
+- [ ] Enemy spawn indicators
+- [ ] Performance monitoring
+
+### Testing Utilities
+- [ ] Level skip commands
+- [ ] Invincibility toggle
+- [ ] Enemy spawn controls
+- [ ] Save state management
 
 ## 🎯 Success Metrics
 - **Gameplay**: Smooth 60fps performance

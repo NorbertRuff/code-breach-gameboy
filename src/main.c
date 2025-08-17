@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "../res/background.h"
-#include "../res/mario.h"
+#include "../res/programmer.h"
 #include "./utils.h"
 
 #include "./game_state/core_game_loop.h"
@@ -13,17 +13,22 @@
 #include "./game_state/prepare_gameboy.h"
 #include "./game_state/start_screen.h"
 
+// Feature flag: Set SKIP_INTRO_AND_START to 1 in utils.h to skip intro and start screen
+// This is useful for development and testing to get directly to gameplay
+// Feature flag: Set EMPTY_BACKGROUND to 1 in utils.h to draw empty background for debugging
+// Feature flag: Set DISABLE_BACKGROUND_SCROLLING to 1 in utils.h to disable background scrolling
+
 #define FLOOR_Y 120
-#define MARIO_RUN_FRAMECOUNT 4
-#define MARIO_WALKING_SPEED 20
+#define PROGRAMMER_RUN_FRAMECOUNT 4
+#define PROGRAMMER_WALKING_SPEED 20
 
-uint16_t mario_x;
+uint16_t programmer_x;
 
-uint16_t mario_draw_x;
-uint16_t mario_draw_frame;
-uint8_t mario_direction = 0;
+uint16_t programmer_draw_x;
+uint16_t programmer_draw_frame;
+uint8_t programmer_direction = 0;
 
-uint8_t mario_frame = 0;
+uint8_t programmer_frame = 0;
 
 uint8_t joypad_current = 0;
 uint8_t joypad_previous = 0;
@@ -36,8 +41,14 @@ uint8_t current_game_state = INTRO_CREDITS_STATE;
 
 void handle_background_scrolling()
 {
-    scroll_bkg(scroll_value, 0);
-    scroll_value = 0;
+    #if DISABLE_BACKGROUND_SCROLLING
+        // Background scrolling is disabled - do nothing
+        scroll_value = 0;
+    #else
+        // Normal background scrolling behavior
+        scroll_bkg(scroll_value, 0);
+        scroll_value = 0;
+    #endif
 }
 
 int8_t handle_joystick_input()
@@ -48,75 +59,79 @@ int8_t handle_joystick_input()
     {
         movement = -1;
 
-        mario_direction = 0;
-        scroll_value -= 2;
+        programmer_direction = 0;
+        #if !DISABLE_BACKGROUND_SCROLLING
+            scroll_value -= 2;
+        #endif
     }
     else if (joypad_current & J_RIGHT)
     {
         movement = 1;
-        mario_direction = 1;
-        scroll_value += 2;
+        programmer_direction = 1;
+        #if !DISABLE_BACKGROUND_SCROLLING
+            scroll_value += 2;
+        #endif
     }
 
     // When a is pressed
     if ((joypad_current & J_A) && !(joypad_previous & J_A))
     {
         // Unshift the value if we WERE  in SPR
-        mario_x = mario_x >> 4;
+        programmer_x = programmer_x >> 4;
         // SHIFT the value if we are now in SPR
-        mario_x = mario_x << 4;
+        programmer_x = programmer_x << 4;
     }
     return movement;
 }
 
-void handle_mario_animation(int8_t *movement)
+void handle_programmer_animation(int8_t *movement)
 {
 
-    mario_draw_x = mario_x;
-    mario_draw_frame = mario_frame;
+    programmer_draw_x = programmer_x;
+    programmer_draw_frame = programmer_frame;
 
     // Increase/Decrease the "face" value
-    mario_x += *movement * MARIO_WALKING_SPEED;
+    programmer_x += *movement * PROGRAMMER_WALKING_SPEED;
 
-    // Draw mario at the true value
-    mario_draw_x = mario_x >> 4;
+    // Draw programmer at the true value
+    programmer_draw_x = programmer_x >> 4;
 
     // If the player is moving
     if (*movement != 0)
     {
 
-        // Increase mario's frame by 2
+        // Increase programmer's frame by 2
         // This is a sub-pixel resolution value
-        mario_frame += 2;
+        programmer_frame += 2;
 
-        // Increase mario's frame
+        // Increase programmer's frame
         // Loop background after 3
         // Shift right 4 bits to get it's true value
-        if ((mario_frame >> 4) >= MARIO_RUN_FRAMECOUNT)
-            mario_frame = 0;
+        if ((programmer_frame >> 4) >= PROGRAMMER_RUN_FRAMECOUNT)
+            programmer_frame = 0;
 
         // Frame 0 is or standing
         // Increase by one for running frames
         // Shift right 4 bits to get it's true value
-        mario_draw_frame = 1 + mario_frame >> 4;
+        programmer_draw_frame = 1 + programmer_frame >> 4;
     }
     else
     {
 
         // Draw with our standing frame 0
-        mario_frame = 0;
-        mario_draw_frame = 0;
+        programmer_frame = 0;
+        programmer_draw_frame = 0;
     }
 
-    // Draw the mario metasprite
-    // Flip the metasprite horizontally (using vflip) if mario isn' facing right
-    if (mario_direction == 1)
+    // Draw the programmer metasprite
+    // Flip the metasprite horizontally (using vflip) if programmer isn' facing right
+    if (programmer_direction == 1)
     {
-        move_metasprite(mario_metasprites[mario_draw_frame], 0, 0, mario_draw_x, FLOOR_Y);
+        move_metasprite(programmer_metasprites[programmer_draw_frame], 0, 0, programmer_draw_x, FLOOR_Y);
     }
     else
     {
-        move_metasprite_vflip(mario_metasprites[mario_draw_frame], 0, 0, mario_draw_x + 4, FLOOR_Y);
+        move_metasprite_vflip(programmer_metasprites[programmer_draw_frame], 0, 0, programmer_draw_x + 4, FLOOR_Y);
     }
 }
 
@@ -126,12 +141,18 @@ void main_game_loop()
     handle_background_scrolling();
     int16_t movement = handle_joystick_input();
 
-    handle_mario_animation(&movement);
+    handle_programmer_animation(&movement);
 }
 
 void main(void)
 {
     prepare_gameboy();
+
+    // Feature flag: Skip intro and start screen for development/testing
+    #if SKIP_INTRO_AND_START
+        // Skip directly to gameplay
+        current_game_state = GAMEPLAY_START;
+    #endif
 
     while (1)
     {
@@ -156,8 +177,8 @@ void main(void)
         case GAMEPLAY_START:
             prepare_core_game_loop();
             fade_in_screen(10);
-            // Put mario in the middle
-            mario_x = 10;
+            // Put programmer in the middle
+            programmer_x = 10;
             current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:
