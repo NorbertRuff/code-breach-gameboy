@@ -136,11 +136,12 @@ prepare:
 
 assets:
 	echo "-----> Creating assets from png files <-----"
-	$(PNG2ASSET) $(GRAPHICS)/player/programmer.png -bank 1 -org 0x8000 -noflip -map -name programmer -o $(SRCDIR)/graphics/programmer.c
+	$(PNG2ASSET) $(GRAPHICS)/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -name programmer -o $(SRCDIR)/graphics/programmer.c
 	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -o $(SRCDIR)/graphics/apexLogo.c
 	$(PNG2ASSET) $(GRAPHICS)/start_screen/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -o $(SRCDIR)/graphics/press_start.c
 	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo3.png -bank 1 -org 0x8000 -noflip -map -name apexLogo3 -o $(SRCDIR)/graphics/apexLogo3.c
 	$(PNG2ASSET) $(GRAPHICS)/hud/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -o $(SRCDIR)/graphics/hud.c
+	$(PNG2ASSET) $(GRAPHICS)/background/background.png -bank 1 -org 0x8000 -noflip -map -name background -o $(SRCDIR)/graphics/background.c
 
 # Remove all compiled files
 clean:
