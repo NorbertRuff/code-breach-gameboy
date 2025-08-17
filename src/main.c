@@ -22,9 +22,17 @@
 #define PROGRAMMER_RUN_FRAMECOUNT 4
 #define PROGRAMMER_WALKING_SPEED 20
 
+// Jumping mechanics constants
+#define MAX_JUMP_FRAMES 15      // Maximum frames to hold jump
+#define JUMP_UPWARD_FORCE -2    // Upward movement per frame while jumping
+
 uint16_t programmer_x;
+uint16_t programmer_y;          // Vertical position
+uint8_t programmer_is_jumping;  // Jump state flag
+uint8_t programmer_jump_frames; // How long we've been jumping
 
 uint16_t programmer_draw_x;
+uint16_t programmer_draw_y;     // Drawing Y position
 uint16_t programmer_draw_frame;
 uint8_t programmer_direction = 0;
 
@@ -73,15 +81,45 @@ int8_t handle_joystick_input()
         #endif
     }
 
-    // When a is pressed
-    if ((joypad_current & J_A) && !(joypad_previous & J_A))
+    // Jump when A button is pressed and we're on the ground
+    if ((joypad_current & J_A) && !(joypad_previous & J_A) && !programmer_is_jumping)
     {
-        // Unshift the value if we WERE  in SPR
-        programmer_x = programmer_x >> 4;
-        // SHIFT the value if we are now in SPR
-        programmer_x = programmer_x << 4;
+        programmer_is_jumping = 1;
+        programmer_jump_frames = 0;  // Start jump frame counter
     }
+    
     return movement;
+}
+
+void handle_jumping_physics()
+{
+    // If we're jumping and still have frames left
+    if (programmer_is_jumping && programmer_jump_frames < MAX_JUMP_FRAMES)
+    {
+        // Move upward
+        programmer_y += JUMP_UPWARD_FORCE;
+        programmer_jump_frames++;
+    }
+    // If we're not jumping or ran out of frames, fall down
+    else
+    {
+        // Simple gravity - fall down
+        if (programmer_y < 120)  // Ground level
+        {
+            programmer_y += 2;  // Fall down
+        }
+        
+        // Check if we've landed
+        if (programmer_y >= 120)
+        {
+            programmer_y = 120;  // Snap to ground
+            programmer_is_jumping = 0;  // No longer jumping
+            programmer_jump_frames = 0; // Reset jump frames
+        }
+    }
+    
+    // Update drawing Y position
+    programmer_draw_y = programmer_y;
 }
 
 void handle_programmer_animation(int8_t *movement)
@@ -127,11 +165,11 @@ void handle_programmer_animation(int8_t *movement)
     // Flip the metasprite horizontally (using vflip) if programmer isn' facing right
     if (programmer_direction == 1)
     {
-        move_metasprite(programmer_metasprites[programmer_draw_frame], 0, 0, programmer_draw_x, FLOOR_Y);
+        move_metasprite(programmer_metasprites[programmer_draw_frame], 0, 0, programmer_draw_x, programmer_draw_y);
     }
     else
     {
-        move_metasprite_vflip(programmer_metasprites[programmer_draw_frame], 0, 0, programmer_draw_x + 4, FLOOR_Y);
+        move_metasprite_vflip(programmer_metasprites[programmer_draw_frame], 0, 0, programmer_draw_x + 4, programmer_draw_y);
     }
 }
 
@@ -141,6 +179,7 @@ void main_game_loop()
     handle_background_scrolling();
     int16_t movement = handle_joystick_input();
 
+    handle_jumping_physics();
     handle_programmer_animation(&movement);
 }
 
@@ -179,6 +218,11 @@ void main(void)
             fade_in_screen(10);
             // Put programmer in the middle
             programmer_x = 10;
+            // Initialize jumping variables
+            programmer_y = 120;           // Start on ground
+            programmer_is_jumping = 0;    // Not jumping initially
+            programmer_jump_frames = 0;   // No jump frames
+            programmer_draw_y = 120;      // Drawing Y position
             current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:

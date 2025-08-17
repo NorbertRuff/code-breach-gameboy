@@ -9,21 +9,26 @@
 void set_hud_window_tiles()
 {
     SHOW_WIN;
+
+    
     scroll_win(0, 128);
+
+    
     // Set the tiles for our hud window in vram
-    set_win_data(background_TILE_COUNT, hud_tileset_size, hud_tileset);
-    set_win_based_tiles(0, 0, hud_tilemap_width, hud_tilemap_height, hud_tilemap, background_TILE_COUNT);
+    set_win_data(background_TILE_COUNT, hud_TILE_COUNT, hud_tiles);
+    set_win_based_tiles(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, hud_map, background_TILE_COUNT);
 
     // Hearts counter
-    set_win_based_tiles(hud_heart_counter_first_x, 0, 2, 2, heart_tilemap, 63);
-    set_win_based_tiles(hud_heart_counter_second_x, 0, 2, 2, heart_tilemap, 63);
-    set_win_based_tiles(hud_heart_counter_third_x, 0, 2, 2, heart_tilemap, 63);
+ //  set_win_based_tiles(1, 0, 2, 2, hud_tiles, 63);
+  //  set_win_based_tiles(3, 0, 2, 2, hud_tiles, 63);
+  //  set_win_based_tiles(5, 0, 2, 2, hud_tiles, 63);
 
     // Points counter 77 78 79 === 001
-    set_win_based_tiles(hud_point_counter_first_digit_x, 1, 1, 1, hud_tilemap, 77);
-    set_win_based_tiles(hud_point_counter_second_digit_x, 1, 1, 1, hud_tilemap, 77);
-    set_win_based_tiles(hud_point_counter_third_digit_x, 1, 1, 1, hud_tilemap, 78);
+ //   set_win_based_tiles(16, 1, 1, 1, hud_tiles, 77);
+ //   set_win_based_tiles(17, 1, 1, 1, hud_tiles, 77);
+ //   set_win_based_tiles(18, 1, 1, 1, hud_tiles, 78);
 }
+
 
 void set_background_tiles()
 {

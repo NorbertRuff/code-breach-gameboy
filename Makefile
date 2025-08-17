@@ -33,7 +33,7 @@ CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreac
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
-all:	clean prepare $(BINS) runEmulator
+all:	clean prepare $(BINS)
 
 runEmulator:
 	java -jar .\$(EMUDIR)\Emulicious.jar $(BINS)

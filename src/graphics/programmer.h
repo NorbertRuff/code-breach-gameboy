@@ -11,7 +11,7 @@
 #define programmer_TILE_H 16
 #define programmer_WIDTH 16
 #define programmer_HEIGHT 32
-#define programmer_TILE_COUNT 24
+#define programmer_TILE_COUNT 40
 #define programmer_PALETTE_COUNT 1
 #define programmer_COLORS_PER_PALETTE 4
 #define programmer_TOTAL_COLORS 4
@@ -23,7 +23,7 @@
 BANKREF_EXTERN(programmer)
 
 extern const palette_color_t programmer_palettes[4];
-extern const uint8_t programmer_tiles[384];
+extern const uint8_t programmer_tiles[640];
 
 extern const metasprite_t* const programmer_metasprites[5];
 
