@@ -27,9 +27,11 @@ GRAPHICS    = graphics
 OBJDIR      = obj
 RESDIR      = res
 GRAPHICSDIR = src/graphics
+PLAYERDIR   = src/player
+INPUTDIR    = src/input
 
 BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c)))
+CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(PLAYERDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(INPUTDIR),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
@@ -62,6 +64,16 @@ $(OBJDIR)/%.o:	$(RESDIR)/%.c
 # Compile .c files in "src/graphics/" to .o object files
 $(OBJDIR)/%.o:	$(GRAPHICSDIR)/%.c
 	echo "-----> Compiling graphics/c files <-----"
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/player/" to .o object files
+$(OBJDIR)/%.o:	$(PLAYERDIR)/%.c
+	echo "-----> Compiling player/c files <-----"
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/input/" to .o object files
+$(OBJDIR)/%.o:	$(INPUTDIR)/%.c
+	echo "-----> Compiling input/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files
@@ -139,7 +151,6 @@ assets:
 	$(PNG2ASSET) $(GRAPHICS)/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -name programmer -o $(SRCDIR)/graphics/programmer.c
 	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -o $(SRCDIR)/graphics/apexLogo.c
 	$(PNG2ASSET) $(GRAPHICS)/start_screen/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -o $(SRCDIR)/graphics/press_start.c
-	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo3.png -bank 1 -org 0x8000 -noflip -map -name apexLogo3 -o $(SRCDIR)/graphics/apexLogo3.c
 	$(PNG2ASSET) $(GRAPHICS)/hud/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -o $(SRCDIR)/graphics/hud.c
 	$(PNG2ASSET) $(GRAPHICS)/background/background.png -bank 1 -org 0x8000 -noflip -map -name background -o $(SRCDIR)/graphics/background.c
 
