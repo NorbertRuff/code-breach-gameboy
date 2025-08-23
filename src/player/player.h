@@ -12,6 +12,7 @@
 // Animation system constants
 #define ANIMATION_FRAME_LENGTH 2         // How often to change animation frames (from example)
 #define MOVEMENT_FRAME_LENGTH 4          // Reduced for more responsive movement
+#define DECELERATION_FRAMES 3            // Frames to continue moving after releasing button
 
 // Underfoot detection constants
 #define FOOT_ON_LAND    0x01U

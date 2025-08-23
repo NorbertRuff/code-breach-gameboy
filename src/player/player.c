@@ -53,15 +53,14 @@ void player_detect_collisions(Player* player, uint16_t* predicted_x, uint16_t* p
 
 void player_handle_movement_physics(Player* player)
 {
-    // Reset frame counters when movement changes (from example)
-    if ((player->last_movement_x != 0 && player->movement_force_x == 0) ||
-        (player->last_movement_x == 0 && player->movement_force_x != 0))
+    // Reset frame counters when starting movement (but NOT when stopping)
+    if (player->last_movement_x == 0 && player->movement_force_x != 0)
     {
         player->movement_frame_count = 0;
         player->animation_frame_count = 0;
     }
 
-    // Handle deceleration when stopping (from example)
+    // Flag true when we release from movement (from example)
     if (player->last_movement_x != 0 && player->movement_force_x == 0)
     {
         player->slowing_x = player->last_movement_x > 0 ? 1 : -1;
@@ -110,12 +109,12 @@ void player_handle_movement_physics(Player* player)
     // When no longer moving
     else
     {
-        if (player->slowing_x && player->movement_frame_count < 3)
+        if (player->slowing_x && player->movement_frame_count < DECELERATION_FRAMES)
         {
             player->movement_frame_count++;
 
-            // Allow character to move one frame before stopping
-            if (player->movement_frame_count == 2)
+            // Allow character to move one frame before stopping (like example)
+            if (player->movement_frame_count == DECELERATION_FRAMES - 1)
             {
                 player->velocity_x = 0;
                 player->slowing_x = 0;
@@ -127,11 +126,13 @@ void player_handle_movement_physics(Player* player)
         else
         {
             player->velocity_x = 0;
-            player->slowing_x = 0;
         }
         
-        // Reset to standing frame when stopped
-        player->draw_frame = 0;
+        // Reset to standing frame when fully stopped
+        if (player->velocity_x == 0)
+        {
+            player->draw_frame = 0;
+        }
     }
     
     // Update position based on velocity
