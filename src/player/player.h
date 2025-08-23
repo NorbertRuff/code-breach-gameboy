@@ -7,19 +7,21 @@
 // Player character constants
 #define FLOOR_Y 120
 #define PROGRAMMER_RUN_FRAMECOUNT 5      // Updated to match actual available frames (0-4)
-#define PROGRAMMER_WALKING_SPEED 20
+#define PROGRAMMER_WALKING_SPEED 2       // Increased for faster horizontal movement
 
 // Animation system constants
-#define ANIMATION_FRAME_LENGTH 4         // How often to change animation frames
-#define MOVEMENT_FRAME_LENGTH 8          // Movement timing for smooth acceleration
+#define ANIMATION_FRAME_LENGTH 2         // How often to change animation frames (from example)
+#define MOVEMENT_FRAME_LENGTH 4          // Reduced for more responsive movement
 
 // Underfoot detection constants
 #define FOOT_ON_LAND    0x01U
 #define FOOT_IN_AIR     0x02U
 
-// Jumping mechanics constants
+// Jumping mechanics constants (improved from example)
 #define MAX_JUMP_FRAMES 15      // Maximum frames to hold jump
-#define JUMP_UPWARD_FORCE -2    // Upward movement per frame while jumping
+#define JUMP_UPWARD_FORCE -1    // Upward movement per frame while jumping
+#define MAX_VELOCITY_Y 3        // Maximum vertical velocity
+#define MIN_VELOCITY_Y -3       // Minimum vertical velocity
 
 // Player character structure
 typedef struct {
@@ -38,12 +40,15 @@ typedef struct {
     
     // Movement
     int8_t movement_force_x;
+    int8_t movement_force_y;    // Vertical movement force for jumping
     int8_t velocity_x;
     uint8_t slowing_x;
     
-    // Jumping
+    // Jumping (improved physics)
     uint8_t is_jumping;
     uint8_t jump_frames;
+    int8_t velocity_y;          // Vertical velocity for smooth falling
+    uint8_t jump_frame_count;   // Counter for jump physics
     
     // State
     uint8_t underfoot_state;
@@ -55,5 +60,6 @@ void player_handle_movement_physics(Player* player);
 void player_handle_jumping_physics(Player* player);
 void player_draw(Player* player);
 void player_update_underfoot_state(Player* player);
+void player_detect_collisions(Player* player, uint16_t* predicted_x, uint16_t* predicted_y);
 
 #endif // PLAYER_H

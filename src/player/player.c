@@ -19,12 +19,15 @@ void player_init(Player* player, uint16_t start_x, uint16_t start_y)
     
     // Initialize movement
     player->movement_force_x = 0;
+    player->movement_force_y = 0;  // Initialize vertical movement force
     player->velocity_x = 0;
     player->slowing_x = 0;
     
-    // Initialize jumping
+    // Initialize jumping (improved physics)
     player->is_jumping = 0;
     player->jump_frames = 0;
+    player->velocity_y = 0;
+    player->jump_frame_count = 0;
     
     // Initialize state
     player->underfoot_state = FOOT_ON_LAND;
@@ -32,12 +35,25 @@ void player_init(Player* player, uint16_t start_x, uint16_t start_y)
 
 void player_update_underfoot_state(Player* player)
 {
-    player->underfoot_state = (player->y >= 120) ? FOOT_ON_LAND : FOOT_IN_AIR;
+    player->underfoot_state = (player->y >= FLOOR_Y) ? FOOT_ON_LAND : FOOT_IN_AIR;
+}
+
+void player_detect_collisions(Player* player, uint16_t* predicted_x, uint16_t* predicted_y)
+{
+    // If we hit ground...
+    if (*predicted_y >= FLOOR_Y)
+    {
+        // Snap to ground
+        *predicted_y = FLOOR_Y; 
+
+        // Remove velocity
+        player->velocity_y = 0;
+    }
 }
 
 void player_handle_movement_physics(Player* player)
 {
-    // Reset frame counters when movement changes
+    // Reset frame counters when movement changes (from example)
     if ((player->last_movement_x != 0 && player->movement_force_x == 0) ||
         (player->last_movement_x == 0 && player->movement_force_x != 0))
     {
@@ -45,44 +61,67 @@ void player_handle_movement_physics(Player* player)
         player->animation_frame_count = 0;
     }
 
-    // Handle deceleration when stopping
+    // Handle deceleration when stopping (from example)
     if (player->last_movement_x != 0 && player->movement_force_x == 0)
     {
         player->slowing_x = player->last_movement_x > 0 ? 1 : -1;
     }
 
-    // Apply movement force to velocity
+    // Handle sprite flipping for direction
+    if (player->last_movement_x <= 0 && player->movement_force_x > 0)
+    {
+        player->direction = 1;  // Facing right
+    }
+    else if (player->last_movement_x >= 0 && player->movement_force_x < 0)
+    {
+        player->direction = 0;  // Facing left
+    }
+
+    // While moving...
     if (player->movement_force_x != 0)
     {
-        // Direct movement when force is applied
+        // Move character by movement force (from example)
         player->velocity_x = player->movement_force_x;
+
+        // Progress movement counter
         player->movement_frame_count++;
+        
+        // Roll around after max frame
+        if (player->movement_frame_count == MOVEMENT_FRAME_LENGTH)
+        {
+            player->movement_frame_count = 0;
+        }
         
         // Progress animation counter
         player->animation_frame_count++;
         
-        // Change animation frame every ANIMATION_FRAME_LENGTH frames
-        if (player->animation_frame_count % ANIMATION_FRAME_LENGTH == 0)
+        // Roll around after max frame
+        if (player->animation_frame_count == ANIMATION_FRAME_LENGTH)
         {
-            // Progress to next animation frame
-            // Use all available frames: 0=standing, 1-4=running frames
+            player->animation_frame_count = 0;
+
+            // Move to next animation frame
             if (player->draw_frame < 4)  // Use frames 0-4 (5 total frames)
                 player->draw_frame++;
             else
                 player->draw_frame = 1; // Start from frame 1 (skip standing frame)
         }
     }
+    // When no longer moving
     else
     {
-        // Handle deceleration
         if (player->slowing_x && player->movement_frame_count < 3)
         {
             player->movement_frame_count++;
-            
-            // Allow one more frame of movement before stopping
+
+            // Allow character to move one frame before stopping
             if (player->movement_frame_count == 2)
+            {
                 player->velocity_x = 0;
+                player->slowing_x = 0;
+            }
             else
+                // Continue to move in the direction we were
                 player->velocity_x = player->slowing_x;
         }
         else
@@ -98,8 +137,8 @@ void player_handle_movement_physics(Player* player)
     // Update position based on velocity
     player->x += player->velocity_x * PROGRAMMER_WALKING_SPEED;
     
-    // Update drawing position
-    player->draw_x = player->x >> 4;
+    // Update drawing position (removed bit shifting that was dividing by 16)
+    player->draw_x = player->x;
     
     // Remember last movement for next frame
     player->last_movement_x = player->movement_force_x;
@@ -110,30 +149,46 @@ void player_handle_jumping_physics(Player* player)
     // Update underfoot state based on Y position
     player_update_underfoot_state(player);
     
-    // If we're jumping and still have frames left
-    if (player->is_jumping && player->jump_frames < MAX_JUMP_FRAMES)
+    // While jumping...
+    if (player->movement_force_y != 0)
     {
-        // Move upward
-        player->y += JUMP_UPWARD_FORCE;
-        player->jump_frames++;
+        player->velocity_y += player->movement_force_y;
+        player->jump_frame_count = 0;
     }
-    // If we're not jumping or ran out of frames, fall down
-    else
+    // Otherwise, if in the air...
+    else if (player->underfoot_state & FOOT_IN_AIR)
     {
-        // Simple gravity - fall down
-        if (player->y < 120)  // Ground level
-        {
-            player->y += 2;  // Fall down
-        }
-        
-        // Check if we've landed
-        if (player->y >= 120)
-        {
-            player->y = 120;  // Snap to ground
-            player->is_jumping = 0;  // No longer jumping
-            player->jump_frames = 0; // Reset jump frames
-        }
+        // Jump frame count from 0 to 60
+        player->jump_frame_count = (player->jump_frame_count + 1) % 60;
+
+        // Apply gravity (from example - variable gravity for smooth feel)
+        if (player->jump_frame_count < 5)
+            player->velocity_y = -2;
+        else if (player->jump_frame_count < 10)
+            player->velocity_y = -1;
+        else if (player->jump_frame_count < 14)
+            player->velocity_y = 0;
+        else if (player->jump_frame_count < 20)
+            player->velocity_y = 1;
+        else
+            player->velocity_y = 2;
     }
+
+    // Velocity limits (from example)
+    if (player->velocity_y != 0 && player->velocity_y < MIN_VELOCITY_Y)
+        player->velocity_y = MIN_VELOCITY_Y;
+    if (player->velocity_y != 0 && player->velocity_y > MAX_VELOCITY_Y)
+        player->velocity_y = MAX_VELOCITY_Y;
+    
+    // Calculate future position
+    uint16_t predicted_x = player->x;
+    uint16_t predicted_y = player->y + player->velocity_y;
+
+    // Update predictions based on collision
+    player_detect_collisions(player, &predicted_x, &predicted_y);
+
+    // Move character to new position
+    player->y = predicted_y;
     
     // Update drawing Y position
     player->draw_y = player->y;
@@ -146,7 +201,7 @@ void player_draw(Player* player)
     if (safe_frame > 4) safe_frame = 0;  // Clamp to valid range 0-4
     
     // Draw the programmer metasprite
-    // Flip the metasprite horizontally (using vflip) if programmer isn' facing right
+    // Flip the metasprite horizontally (using vflip) if programmer isn't facing right
     if (player->direction == 1)
     {
         move_metasprite(programmer_metasprites[safe_frame], 0, 0, player->draw_x, player->draw_y);
