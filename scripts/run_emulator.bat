@@ -1,3 +1,0 @@
-@echo off
-echo Starting Emulicious emulator with ApexLab.gb...
-java -jar emulicious\Emulicious.jar obj\ApexLab.gb
