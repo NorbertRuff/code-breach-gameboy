@@ -1,7 +1,8 @@
 #include <gb/gb.h>
 #include <stdio.h>
 
-#include "../../res/splashscreen.h"
+#include "../graphics/splashscreen.h"
+#include "../graphics/press_start.h"
 #include "../utils.h"
 #include "start_screen.h"
 

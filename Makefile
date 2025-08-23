@@ -2,37 +2,35 @@
 # A Makefile that compiles all .c and .s files in "src" and "res" 
 # subdirectories and places the output in a "obj" subdirectory
 #
-
-# If you move this project you can change the directory 
-# to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
 GBDK_HOME = ./gbdk/
 
 LCC = $(GBDK_HOME)bin/lcc 
 PNG2ASSET = $(GBDK_HOME)bin/png2asset
 
-# You can set flags for LCC here
-# For example, you can uncomment the line below to turn on debug output
 LCCFLAGS += -debug # Uncomment to enable debug output
 #LCCFLAGS += -v     # Uncomment for lcc verbose output
 
-
-# You can set the name of the .gb ROM file here
 PROJECTNAME    = ApexLab
 
+# Directories
 SRCDIR      = src
 GAMESTATES  = src/game_state
 EMUDIR      = emulicious
-IMGDIR      = img
+GRAPHICS    = graphics
 OBJDIR      = obj
 RESDIR      = res
+GRAPHICSDIR = src/graphics
+PLAYERDIR   = src/player
+INPUTDIR    = src/input
+
 BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c)))
+CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(PLAYERDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(INPUTDIR),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
-all:	clean prepare $(BINS) runEmulator
+all:	clean prepare $(BINS)
 
-runEmulator:
+run:
 	java -jar .\$(EMUDIR)\Emulicious.jar $(BINS)
 
 compile: Makefile
@@ -43,51 +41,55 @@ compile: Makefile
 
 # Compile .c files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(SRCDIR)/%.c
-	echo "-----> Compiling src/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .c files in "GAMESTATES/" to .o object files
 $(OBJDIR)/%.o:	$(GAMESTATES)/%.c
-	echo "-----> Compiling res/c files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .c files in "res/" to .o object files
 $(OBJDIR)/%.o:	$(RESDIR)/%.c
-	echo "-----> Compiling res/c files <-----"
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/graphics/" to .o object files
+$(OBJDIR)/%.o:	$(GRAPHICSDIR)/%.c
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/player/" to .o object files
+$(OBJDIR)/%.o:	$(PLAYERDIR)/%.c
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/input/" to .o object files
+$(OBJDIR)/%.o:	$(INPUTDIR)/%.c
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(SRCDIR)/%.s
-	echo "-----> Compiling src/s files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(GAMESTATES)/%.s
-	echo "-----> Compiling src/s files <-----"
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 
 # If needed, compile .c files in "src/" to .s assembly files
 # (not required if .c is compiled directly to .o)
 $(OBJDIR)/%.s:	$(SRCDIR)/%.c
-	echo "-----> Compiling src/c files to src/s files <-----"
 	$(LCC) $(LCCFLAGS) -S -o $@ $<
 
 # If needed, compile .c files in "src/" to .s assembly files
 # (not required if .c is compiled directly to .o)
 $(OBJDIR)/%.s:	$(GAMESTATES)/%.c
-	echo "-----> Compiling src/c files to src/s files <-----"
 	$(LCC) $(LCCFLAGS) -S -o $@ $<
 
 # Link the compiled object files into a .gb ROM file
 $(BINS):	$(OBJS)
-	echo "-----> Linking object files into a .gb ROM file <-----"
 	$(LCC) $(LCCFLAGS) -o $(BINS) $(OBJS)
 
 # Create the obj directory if it doesn't exist
 prepare:
 	echo "-----> Creating obj directory <-----"
-	mkdir -p $(OBJDIR)
+	if not exist $(OBJDIR) mkdir $(OBJDIR)
 
 # Create assets from png files
 #usage: png2asset    <file>.png [options]
@@ -128,18 +130,19 @@ prepare:
 
 assets:
 	echo "-----> Creating assets from png files <-----"
-	$(PNG2ASSET) $(IMGDIR)/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -out $(SRCDIR)/apexLogo.c
-	$(PNG2ASSET) $(IMGDIR)/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -out $(SRCDIR)/press_start.c
-	$(PNG2ASSET) $(IMGDIR)/apexLogo3.png -bank 1 -org 0x8000 -noflip -map -name apexLogo3 -out $(SRCDIR)/apexLogo3.c
-	$(PNG2ASSET) $(IMGDIR)/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -out $(SRCDIR)/hud.c
+	$(PNG2ASSET) $(GRAPHICS)/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -name programmer -o $(SRCDIR)/graphics/programmer.c
+	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -o $(SRCDIR)/graphics/apexLogo.c
+	$(PNG2ASSET) $(GRAPHICS)/start_screen/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -o $(SRCDIR)/graphics/press_start.c
+	$(PNG2ASSET) $(GRAPHICS)/hud/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -o $(SRCDIR)/graphics/hud.c
+	$(PNG2ASSET) $(GRAPHICS)/background/background.png -bank 1 -org 0x8000 -noflip -map -name background -o $(SRCDIR)/graphics/background.c
 
 # Remove all compiled files
 clean:
 	echo "-----> Cleaning up <-----"
-	rd /s /q $(OBJDIR)
-	rd /s /q .\-p\
+	if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
+	if exist .\-p\ rmdir /s /q .\-p\
 
 # create necessary directories after Makefile is parsed but before build
 # info prevents the command from being pasted into the makefile
-$(info $(shell mkdir -p $(MKDIRS)))
+# $(info $(shell mkdir -p $(MKDIRS)))
 
