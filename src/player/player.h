@@ -10,7 +10,7 @@
 #define PROGRAMMER_WALKING_SPEED 2       // Increased for faster horizontal movement
 
 // Animation system constants
-#define ANIMATION_FRAME_LENGTH 2         // How often to change animation frames (from example)
+#define ANIMATION_FRAME_LENGTH 4         // How often to change animation frames (slowed down)
 #define MOVEMENT_FRAME_LENGTH 4          // Reduced for more responsive movement
 #define DECELERATION_FRAMES 3            // Frames to continue moving after releasing button
 

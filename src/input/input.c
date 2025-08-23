@@ -37,6 +37,8 @@ int8_t input_handle_joystick_input(Player* player, uint8_t joypad_current, uint8
         // Mark character as jumped
         player->is_jumping = 1;
         player->jump_frames = 0;
+        // Set to frame 4 (running pose) for jumping
+        player->draw_frame = 3;
     }
     // If we are on land again after jumping...
     else if (player->underfoot_state & FOOT_ON_LAND)

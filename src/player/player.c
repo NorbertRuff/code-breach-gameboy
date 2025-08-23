@@ -128,8 +128,8 @@ void player_handle_movement_physics(Player* player)
             player->velocity_x = 0;
         }
         
-        // Reset to standing frame when fully stopped
-        if (player->velocity_x == 0)
+        // Reset to standing frame when fully stopped (but not when jumping)
+        if (player->velocity_x == 0 && !player->is_jumping)
         {
             player->draw_frame = 0;
         }
