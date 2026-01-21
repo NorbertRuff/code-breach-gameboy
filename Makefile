@@ -2,6 +2,33 @@
 # A Makefile that compiles all .c and .s files in "src" and "res" 
 # subdirectories and places the output in a "obj" subdirectory
 #
+
+# OS Detection
+ifeq ($(OS),Windows_NT)
+    detected_OS := Windows
+else
+    detected_OS := $(shell uname -s)
+endif
+
+# Platform-specific settings
+ifeq ($(detected_OS),Windows)
+    # Windows commands and paths
+    MKDIR = if not exist $(1) mkdir $(1)
+    RMDIR = if exist $(1) rmdir /s /q $(1)
+    PATH_SEP = \\
+    JAVA_PATH_SEP = .\\
+    SED_PATH_CONVERT = sed y/\\//\\\\/
+    SED_MKDIR_CONVERT = sed s/mkdir\ -p\/mkdir\/
+else
+    # Linux/Unix commands and paths
+    MKDIR = mkdir -p $(1)
+    RMDIR = rm -rf $(1)
+    PATH_SEP = /
+    JAVA_PATH_SEP = ./
+    SED_PATH_CONVERT = cat
+    SED_MKDIR_CONVERT = cat
+endif
+
 GBDK_HOME = ./gbdk/
 
 LCC = $(GBDK_HOME)bin/lcc 
@@ -31,11 +58,11 @@ OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 all:	clean prepare $(BINS)
 
 run:
-	java -jar .\$(EMUDIR)\Emulicious.jar $(BINS)
+	java -jar $(JAVA_PATH_SEP)$(EMUDIR)$(PATH_SEP)Emulicious.jar $(BINS)
 
 compile: Makefile
 	@echo "-----> REM Automatically generated from Makefile <-----" > compile.bat
-	@make -sn | sed y/\\//\\\\/ | sed s/mkdir\ -p\/mkdir\/ | grep -v make >> compile.bat
+	@make -sn | $(SED_PATH_CONVERT) | $(SED_MKDIR_CONVERT) | grep -v make >> compile.bat
 	@echo "-----> REM End of automatically generated section <-----" >> compile.bat
 	@echo "-----> REM You can now run compile.bat to compile your project <-----" >> compile.bat
 
@@ -89,7 +116,7 @@ $(BINS):	$(OBJS)
 # Create the obj directory if it doesn't exist
 prepare:
 	echo "-----> Creating obj directory <-----"
-	if not exist $(OBJDIR) mkdir $(OBJDIR)
+	$(call MKDIR,$(OBJDIR))
 
 # Create assets from png files
 #usage: png2asset    <file>.png [options]
@@ -139,8 +166,8 @@ assets:
 # Remove all compiled files
 clean:
 	echo "-----> Cleaning up <-----"
-	if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
-	if exist .\-p\ rmdir /s /q .\-p\
+	$(call RMDIR,$(OBJDIR))
+	$(call RMDIR,./-p/)
 
 # create necessary directories after Makefile is parsed but before build
 # info prevents the command from being pasted into the makefile
