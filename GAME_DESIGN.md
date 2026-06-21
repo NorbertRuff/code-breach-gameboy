@@ -1,192 +1,266 @@
 # ApexLab: Code Breach - Game Design Document
 
-## 🎮 Game Concept
-**ApexLab: Code Breach** is a platformer game where you play as a programmer at ApexLab (a programming company) who must escape when the AI systems go haywire! The lab's security protocols have been corrupted, and you need to escape while fixing code bugs and avoiding digital threats.
-
-## 🏢 Story & Setting
-- **Setting**: ApexLab programming facility
-- **Protagonist**: ApexLab programmer/employee
-- **Conflict**: AI security breach, corrupted systems
-- **Goal**: Escape the lab while collecting code fragments and avoiding digital threats
-- **Theme**: Programming/tech, cybersecurity, AI gone wrong
-
-## 🎯 Core Gameplay
-- **Genre**: 2D Platformer with collectibles
-- **Movement**: Left/right movement, jumping
-- **Objective**: Navigate through lab sections, collect items, reach exit
-- **Challenge**: Avoid enemies, navigate obstacles, solve simple puzzles
-
-## 🎨 Visual Style
-- **Aesthetic**: Cyberpunk/tech with programming elements
-- **Colors**: Blues, greens, glowing effects
-- **Elements**: Circuits, code symbols, digital effects
-- **Environment**: Modern lab with computers, servers, testing equipment
-
-## 🗺️ Level Design
-
-### Level 1: Server Room
-- **Theme**: Server racks, cables, glowing lights
-- **Enemies**: Corrupted security bots
-- **Collectibles**: Code fragments, security keys
-- **Obstacles**: Broken servers, exposed wiring
-
-### Level 2: Code Testing Lab
-- **Theme**: Computer workstations, code displays
-- **Enemies**: Digital viruses, corrupted code blocks
-- **Collectibles**: Bug reports, debug tools
-- **Obstacles**: Floating code fragments, broken terminals
-
-### Level 3: AI Research Wing
-- **Theme**: Advanced AI systems, neural network displays
-- **Enemies**: Malfunctioning AI entities
-- **Collectibles**: AI cores, security protocols
-- **Obstacles**: Digital barriers, corrupted data streams
-
-### Level 4: Network Hub
-- **Theme**: Network infrastructure, data flow
-- **Enemies**: Network security bots, data corruption
-- **Collectibles**: Network keys, data packets
-- **Obstacles**: Broken connections, firewall barriers
-
-### Level 5: Mainframe (Final Level)
-- **Theme**: Core system, central processing
-- **Enemies**: Final AI boss, security systems
-- **Collectibles**: Master key, system reset code
-- **Obstacles**: Ultimate challenge, final escape
-
-## 🎭 Character Design
-- **Main Character**: ApexLab programmer
-  - **Appearance**: Lab coat, glasses, tech accessories
-  - **Animations**: Walk, run, jump, collect items
-  - **Size**: 16x16 or 16x32 sprite
-- **Enemies**:
-  - Security bots (patrolling)
-  - Digital viruses (chasing)
-  - Corrupted code blocks (moving obstacles)
-  - AI entities (intelligent threats)
-
-## 🎮 Gameplay Mechanics
-
-### Core Movement
-- [x] Left/right movement
-- [x] Jumping mechanics
-- [x] Smooth acceleration/deceleration
-- [ ] Wall collision detection
-
-### Collectibles
-- [ ] Code fragments (basic collectibles)
-- [ ] Bug reports (special items)
-- [ ] Security keys (unlock areas)
-- [ ] Debug tools (power-ups)
-
-### Enemies & AI
-- [ ] Basic enemy movement patterns
-- [ ] Collision detection with enemies
-- [ ] Enemy spawning system
-- [ ] Different enemy types
-
-### Level Progression
-- [ ] Level completion triggers
-- [ ] Score tracking
-- [ ] Lives system
-- [ ] Level transitions
-
-## 📋 Implementation Plan
-
-### Phase 1: Foundation (Week 1-2)
-- [x] Replace Mario character with programmer sprite
-- [ ] Implement jumping mechanics
-- [ ] Add basic collision detection
-- [ ] Create new background assets
-- [ ] Implement basic enemy system
-
-### Phase 2: Core Gameplay (Week 3-4)
-- [ ] Design and implement first level (Server Room)
-- [ ] Add collectible system
-- [ ] Implement enemy AI patterns
-- [ ] Add sound effects
-- [ ] Create HUD for score/lives
-
-### Phase 3: Level Expansion (Week 5-6)
-- [ ] Design remaining levels
-- [ ] Implement level transitions
-- [ ] Add power-up system
-- [ ] Create boss encounters
-- [ ] Implement save/load system
-
-### Phase 4: Polish & Testing (Week 7-8)
-- [ ] Add background music
-- [ ] Implement screen transitions
-- [ ] Add particle effects
-- [ ] Playtesting and bug fixes
-- [ ] Performance optimization
-
-## 🛠️ Technical Requirements
-
-### Graphics
-- [ ] Programmer character sprites (walk, run, jump)
-- [ ] Enemy sprites (bots, viruses, AI entities)
-- [ ] Background tilesets for each level
-- [ ] UI elements (HUD, menus, transitions)
-- [ ] Collectible item sprites
-
-### Audio
-- [ ] Background music for each level
-- [ ] Sound effects (jump, collect, enemy, death)
-- [ ] Menu navigation sounds
-
-### Code Architecture
-- [ ] Modular level system
-- [ ] Enemy AI state machine
-- [ ] Collectible management system
-- [ ] Level progression manager
-- [ ] Save/load system
-
-## 🧪 Development Features & Tools
-
-### Feature Flags
-- [x] **SKIP_INTRO_AND_START**: Skip intro credits and press start screen for faster development/testing
-  - Set to `1` in `src/utils.h` to enable
-  - Set to `0` to restore normal intro sequence
-  - Useful for rapid iteration during development
-
-- [x] **EMPTY_BACKGROUND**: Draw empty background instead of city background for debugging
-  - Set to `1` in `src/utils.h` to enable
-  - Set to `0` to restore normal city background
-  - Useful for debugging character movement and collision detection
-
-- [x] **DISABLE_BACKGROUND_SCROLLING**: Disable background scrolling for debugging
-  - Set to `1` in `src/utils.h` to enable
-  - Set to `0` to restore normal background scrolling
-  - Useful for debugging character movement without background interference
-
-### Debug Tools
-- [ ] Frame rate display
-- [ ] Collision box visualization
-- [ ] Enemy spawn indicators
-- [ ] Performance monitoring
-
-### Testing Utilities
-- [ ] Level skip commands
-- [ ] Invincibility toggle
-- [ ] Enemy spawn controls
-- [ ] Save state management
-
-## 🎯 Success Metrics
-- **Gameplay**: Smooth 60fps performance
-- **Content**: 5 unique levels with increasing difficulty
-- **Replayability**: Collectible completion, speed runs
-- **Polish**: Professional feel, smooth transitions
-- **Fun Factor**: Engaging gameplay loop
-
-## 🚀 Future Enhancements
-- **Multiplayer**: Co-op escape mode
-- **Level Editor**: Create custom levels
-- **Achievements**: Unlockable content
-- **Soundtrack**: Extended music collection
-- **Mobile Port**: Adapt for mobile devices
+## Game Concept
+**ApexLab: Code Breach** is a Game Boy platformer where you play as a programmer at ApexLab who must escape when the AI security systems go haywire. The lab's protocols are corrupted, and you need to collect code fragments and get out while avoiding malfunctioning security bots.
 
 ---
 
-*This document will be updated as development progresses.*
-*Last updated: [Current Date]*
+## Story & Setting
+- **Setting**: ApexLab programming facility
+- **Protagonist**: ApexLab programmer/employee (16×32 sprite, lab coat + glasses)
+- **Conflict**: AI security breach — corrupted security bots are patrolling the facility
+- **Goal**: Collect all code fragments in each section and reach the exit
+- **Theme**: Cyberpunk tech lab, programming, AI gone wrong
+
+---
+
+## Current Build Status
+
+### What Is Done
+- [x] Player movement — left/right with smooth acceleration and deceleration
+- [x] Jump mechanics — variable height, jump_frames counter, coyote-style landing
+- [x] Physics engine — integer-only (no floats), velocity_x/y, deceleration over DECELERATION_FRAMES
+- [x] Tile-based collision detection — SOLID, ONE_WAY (defined), COLLECTIBLE, HAZARD, NONE
+- [x] Horizontal camera follow — player centered at 80px, clamped to level bounds
+- [x] Horizontal background scroll — 32-tile wide level (256px), move_bkg camera
+- [x] World-coordinate player position — draw_x computed as player.x - total_scroll_x
+- [x] Collectibles system — 12 collectibles in level 1, tile cleared on pickup
+- [x] Win condition — all collectibles collected triggers LEVEL_COMPLETE
+- [x] HUD — bottom window layer, lives (heart + digit), collectible counter (N/T), custom digit tiles
+- [x] Lives system — 3 lives, death → GAMEPLAY_END, respawn or game over
+- [x] Invincibility frames — 90 frames after respawn, sprite flashes (hide every 2 frames)
+- [x] Enemy system (MVP) — patrol AI, bounces between min/max world X, placeholder mushroom sprite
+- [x] Enemy direction flip — horizontal sprite flip + column swap for correct mirroring
+- [x] Enemy–player AABB collision — world coordinates, skipped while invincible
+- [x] Game over effect — palette flash (BGP_REG toggle, no LCDC changes) → fade out → full restart
+- [x] Level complete effect — faster palette flash → fade out → GAMEPLAY_START
+- [x] Sound effects — jump (CH1 sweep), collect (CH2 blip), hit (CH1 low + CH4 noise)
+- [x] State machine — INTRO_CREDITS → TITLE_SCREEN → GAMEPLAY_START → COREGAMELOOP → GAMEPLAY_END / LEVEL_COMPLETE
+- [x] Intro credits + title screen with animated "PRESS START"
+- [x] Asset pipeline — PNG → png2asset → C source, ROM bank 1 for large assets
+- [x] Feature flags — SKIP_INTRO_AND_START, EMPTY_BACKGROUND, DISABLE_BACKGROUND_SCROLLING
+
+### Known Issues / In Progress
+- [ ] Game-over reload visual bug — background or HUD sometimes loads incorrectly on first full restart (under investigation)
+- [ ] Enemy sprites are mushroom placeholders — need proper security-bot sprites per theme
+- [ ] ONE_WAY platform collision defined but not implemented
+- [ ] Sub-pixel smooth movement (branch: feat-smooth-movement — in progress)
+
+---
+
+## Level Design
+
+### Level 1: Server Room *(implemented)*
+- **Width**: 32 tiles (256px), single horizontal scroll
+- **Ground**: Full bottom row
+- **Platforms**: 5 platforms at varying heights (staircase path upward right)
+- **Enemies**: 3 patrol bots (OAM 4–9), fixed patrol ranges
+- **Collectibles**: 12 code fragments, placed above each surface cluster
+- **Objective**: Collect all 12 fragments to trigger level complete
+
+### Level 2: Code Testing Lab *(not started)*
+- **Theme**: Computer workstations, code displays, broken terminals
+- **Enemies**: Faster patrol bots, consider vertical movers
+- **Collectibles**: Bug reports, debug tools
+- **New mechanic**: ONE_WAY platforms (jump up through, land on top)
+- **Width**: Consider exceeding 256px → requires dynamic tile streaming (set_bkg_submap)
+
+### Level 3: AI Research Wing *(planned)*
+- **Theme**: Advanced AI systems, neural network displays
+- **Enemies**: Malfunctioning AI entities with more complex patterns
+- **Collectibles**: AI cores, security protocols
+
+### Level 4: Network Hub *(planned)*
+- **Theme**: Network infrastructure, data flow visualization
+- **Enemies**: Network bots, data corruption hazards
+- **New mechanic**: Hazard tiles (COLLISION_HAZARD, instant death)
+
+### Level 5: Mainframe *(planned)*
+- **Theme**: Core system, central processing
+- **Boss**: Final AI entity (not yet designed)
+
+---
+
+## Gameplay Mechanics
+
+### Core Movement
+- [x] Left/right movement with acceleration
+- [x] Jump mechanics (variable height)
+- [x] Smooth deceleration
+- [x] Wall/ground collision
+- [ ] ONE_WAY platform pass-through
+- [ ] Sub-pixel resolution for smoother movement (in progress)
+
+### Collectibles
+- [x] Code fragments (basic collectibles, clear tile on pick-up)
+- [x] Collectible counter HUD
+- [ ] Different collectible types per level
+- [ ] Key items (unlock exit gate)
+
+### Enemies
+- [x] Patrol AI (bounce between world X bounds)
+- [x] Player collision + lives loss
+- [x] Direction-aware sprite flip
+- [ ] Security bot sprites (replace mushroom placeholder)
+- [ ] Vertical patrol enemies
+- [ ] Chase/aggro AI
+
+### HUD & Progression
+- [x] Lives display (heart + digit)
+- [x] Collectible counter (N/T format)
+- [x] Game over (full restart)
+- [x] Level complete
+- [ ] Score counter (points per collectible)
+- [ ] Level select / transition between levels
+- [ ] Proper game over text ("GAME OVER" on screen)
+- [ ] Timer / speed-run mode
+
+### Audio
+- [x] Jump sound (CH1 sweep)
+- [x] Collect sound (CH2 blip)
+- [x] Hit/death sound (CH1 + CH4 noise)
+- [ ] Background music (hUGEDriver — see Research Notes)
+- [ ] Menu music
+- [ ] Level complete jingle
+
+---
+
+## Technical Architecture
+
+### Physics (src/player/)
+Integer-only, no floats. Horizontal: `velocity_x`, `movement_force_x`, `slowing_x` over DECELERATION_FRAMES. Vertical: `velocity_y` clamped to [MIN_VELOCITY_Y, MAX_VELOCITY_Y], `jump_frames` up to MAX_JUMP_FRAMES. Ground state via `underfoot_state`.
+
+**Next**: Sub-pixel resolution — scale positions by 16 (or power-of-2), store face value, draw `face >> 4`. This is the current feat-smooth-movement branch goal.
+
+### Camera (src/main.c)
+`total_scroll_x = clamp(player.x - 80, 0, MAX_SCROLL_X)`. Applied via `move_bkg(total_scroll_x, 0)`. Player draws at `draw_x = player.x - total_scroll_x`.
+
+**For Level 2+ wider than 256px**: Implement `set_bkg_submap` streaming — copy visible columns into the 32×32 BG map as the camera scrolls (see Larold's "Drawing Large Maps" tutorial).
+
+### Collision (src/level/)
+`collision_map[18][32]` byte array. `level_check_collision()` converts world pixel → tile index. Collision types: NONE, SOLID, ONE_WAY, HAZARD, COLLECTIBLE.
+
+**ONE_WAY todo**: When landing from above (`velocity_y > 0`), treat as solid. When moving upward or already overlapping, ignore.
+
+### Enemy System (src/enemy/)
+`Enemy { x, y, dir, patrol_min, patrol_max, active }`. OAM slots 4–9 (2 per enemy, 8×16 sprites). AABB collision in world coords. Mushroom tiles currently used as placeholder — to be replaced with security bot PNG via png2asset.
+
+### State Machine (src/main.c)
+```
+INTRO_CREDITS → TITLE_SCREEN → GAMEPLAY_START → COREGAMELOOP
+                                     ↑                  ↓
+                                GAMEPLAY_END ← enemy/pit/hazard hit
+                                LEVEL_COMPLETE ← all collectibles collected
+```
+
+### VRAM Layout
+- Tiles 0–63: Background tiles (bank 1)
+- Tiles 64–77: HUD window tiles (bank 1)
+- Tiles 128–131: Enemy mushroom placeholder (to be replaced)
+- Tile 132: Collectible (diamond shape, hand-drawn)
+- Tiles 133–142: Digit tiles 0–9 (hand-drawn 8×8)
+- Tile 143: Slash `/`
+- Tile 144: Heart `♥`
+- Sprite VRAM 0–3: Player programmer (bank 0, 4 tiles for 16×32)
+- Sprite VRAM 4+: Enemy tiles
+
+### ROM Banking
+Assets compiled with `-bank 1 -org 0x8000` (background, hud, mushroom, apexLogo, press_start). Accessed via GBDK's banked data mechanism. Code runs from bank 0.
+
+---
+
+## Upcoming Work (Priority Order)
+
+1. **Fix game-over reload visual bug** — HUD/background incorrect on first reload; root cause still under investigation
+2. **ONE_WAY platforms** — implement pass-through collision in `player_handle_jumping_physics`
+3. **Security bot sprite** — draw 16×16 or 16×32 indexed PNG (4-color, multiples of 8px), run `make assets`, update enemy.c tile references
+4. **Sub-pixel smooth movement** — scale player coords by 16, store/update as face values, convert to screen px via `>> 4` (current branch)
+5. **Score system** — add points per collectible, display in HUD
+6. **Background music** — integrate hUGEDriver (see Research Notes)
+7. **Level 2** — new layout, wider map (>256px), set_bkg_submap streaming, ONE_WAY platforms
+8. **Proper game-over / level-complete text** — use GBDK text drawing or custom tile font
+9. **Hazard tiles** — instant death tiles (spikes, exposed wiring), COLLISION_HAZARD in player collision
+
+---
+
+## Visual Style
+- **Aesthetic**: Cyberpunk tech lab — circuits, code symbols, digital effects
+- **Colors**: Four-color GB palette (white/light/dark/black) used creatively per environment
+- **Character**: 16×32 programmer sprite (current: placeholder; complete animations planned)
+- **Enemies**: Corrupted security bots — NOT mushrooms; need 16×16 or 16×32 bot sprites
+- **Environment**: Server racks, computer banks, lab equipment, neural displays
+
+---
+
+## Research Notes — Larold's Retro Gameyard (laroldsretrogameyard.com)
+
+This site has a complete GBDK-2020 tutorial series. All directly applicable to this project:
+
+### Already covered by our implementation
+- Getting Started, Background/Window Layers, Sprites, Joypad, Sounds, PNG2Asset
+
+### High-value tutorials to follow next
+
+**Tilemap Collision Detection**
+URL: `/tutorials/gb/tilemap-collision-detection-in-game-boy-games/`
+Their approach: `column = worldX >> 3; row = worldY >> 3` (bit shift instead of divide). Multi-point edge checks (check all 4 corners of player bounding box per axis). Out-of-bounds treated as solid. Separate X and Y collision steps for wall-sliding. Our current implementation is close; could add multi-point checks for large sprites.
+
+**Smooth Movement / Sub-Pixel Resolution**
+URL: `/tutorials/gb/smooth-movement-using-sub-pixel-resolution/`
+Store position as `face` integer = true_position × 16. Update physics in face units. Draw at `face >> 4` pixels. Always use powers-of-2 as scale (bit-shift = free division on SM83). This is exactly what feat-smooth-movement branch should implement.
+
+**Drawing Large Maps**
+URL: `/tutorials/gb/drawing-large-maps-in-gbdk/`
+Key insight: BG layer is 32×32 tiles (256×256px); for wider worlds use `set_bkg_submap()` to stream tiles into the wrap-around buffer as camera moves. Track `camera_x`, `map_pos_x = camera_x >> 3`, update a 21-column strip when `map_pos_x` changes. Only update tiles on camera movement (use redraw flag). **Required for Level 2+ if map exceeds 256px.**
+
+**PNG2Asset for Sprites**
+URL: `/tutorials/gb/png2asset-graphics-creation-for-gbdk-2020/`
+For enemy/character sprites: PNG width/height must be multiples of 8 (height multiples of 16 for 8x16 mode). No padding between frames on sprite sheet. Use `-keep_palette_order` for consistent 4-color palette. Use `-px`/`-py` pivot flags for proper flip behavior. Run: `png2asset enemy.png -sw 16 -sh 16 -spr8x16 -keep_palette_order -name security_bot -o src/graphics/security_bot.c`
+
+**Playing Music with hUGEDriver**
+URL: `/tutorials/gb/playing-music-in-game-boy-games-with-huge-driver/`
+Steps:
+1. Create music in hUGETracker (free, export as `.uge`)
+2. Download hUGEDriver from GitHub, place `gbdk/` and `include/` under `hugedriver/`
+3. Add to Makefile: `-Ihugedriver/include` and `-Wl-lhugedriver/gbdk/hUGEDriver.lib`
+4. In code: `#include "hUGEDriver.h"`, declare `extern const hUGESong_t my_song;`
+5. Init in `__critical` block: `hUGE_init(&my_song);`
+6. Register VBL: `add_VBL(hUGE_dosound);`
+Songs in bank 1+ need a NONBANKED wrapper that switches ROM bank before calling dosound.
+
+**Saving Games**
+URL: `/tutorials/gb/how-to-save-data-in-game-boy-games/`
+Requires MBC with SRAM + battery (e.g., MBC-5, type 0x1B in Makefile). API: `ENABLE_RAM` / `DISABLE_RAM` around SRAM reads/writes. Define saveable vars in a separate `.c` compiled with `-Wf-ba0`. Include a magic checksum to detect first-boot (no save). Only save what can't be reconstructed: high score, unlocked levels, settings. Keep SRAM disabled normally to prevent corruption.
+
+**Parallax Backgrounds**
+URL: `/tutorials/gb/parallax-backgrounds-with-gbdk-2020/`
+Relevant for visual polish in later levels. Uses HBlank interrupt (STAT interrupt) to change `SCX_REG` mid-scanline, creating the illusion of depth. Adds atmosphere to Server Room / Network Hub environments.
+
+**Drawing Text**
+URL: `/tutorials/gb/drawing-text-in-game-boy-games/`
+Needed for: "GAME OVER" screen, "LEVEL COMPLETE" text, score display. GBDK provides `set_bkg_based_tiles` with a font tileset or use custom digit tiles (already partially done in our HUD).
+
+---
+
+## Feature Flags (src/utils.h)
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `SKIP_INTRO_AND_START` | `1` | Skip intro/title for faster dev iteration |
+| `EMPTY_BACKGROUND` | `1` | Blank background for collision debugging |
+| `DISABLE_BACKGROUND_SCROLLING` | `0` | Freeze camera for movement debugging |
+
+---
+
+## GB Hardware Constraints
+
+- **No floats**: all math uses int8_t / int16_t / uint8_t
+- **Sprite limit**: 40 OAM slots total, 10 per scanline. Player = 4 slots (OAM 0–3), each enemy = 2 slots (OAM 4–9)
+- **VRAM timing**: tile writes must happen during VBlank — GBDK buffers this; `wait_vbl_done()` at end of main loop
+- **Stack**: tiny — avoid deep recursion, declare large arrays as `static`
+- **ROM banking**: bank 0 fixed (code), bank 1 switchable (large assets) — always `SWITCH_ROM_BANK` before accessing banked data if explicitly needed
+- **SM83 CPU**: no hardware multiply/divide; use bit-shifting for ×2/÷2 operations
+
+---
+
+*Last updated: 2026-06-21*
