@@ -11,6 +11,7 @@
 #define GAMEPLAY_START 2
 #define COREGAMELOOP 3
 #define GAMEPLAY_END 4
+#define LEVEL_COMPLETE 5
 
 void performant_delay(uint16_t time);
 

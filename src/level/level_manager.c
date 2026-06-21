@@ -3,13 +3,14 @@
 #include "../graphics/mushroom.h"
 #include "../graphics/hud.h"
 #include "../graphics/programmer.h"
+#include "../sound/sound.h"
 
 #define COLLECTIBLE_TILE_INDEX (128 + mushroom_TILE_COUNT)
 
 // 8x8 2bpp digit tiles for HUD counter.
 // Each row: two identical bytes (same bit pattern for both bit-planes → color 0 or 3 only).
 // Tiles 0-9 map to digits '0'-'9', tile 10 maps to '/'.
-static const uint8_t hud_digit_tiles[11 * 16] = {
+static const uint8_t hud_digit_tiles[12 * 16] = {
     // '0'
     0x3C,0x3C, 0x66,0x66, 0x6E,0x6E, 0x76,0x76, 0x66,0x66, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
     // '1'
@@ -32,6 +33,8 @@ static const uint8_t hud_digit_tiles[11 * 16] = {
     0x3C,0x3C, 0x66,0x66, 0x66,0x66, 0x3E,0x3E, 0x06,0x06, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
     // '/'
     0x00,0x00, 0x06,0x06, 0x0C,0x0C, 0x18,0x18, 0x30,0x30, 0x60,0x60, 0x00,0x00, 0x00,0x00,
+    // heart ♥
+    0x00,0x00, 0x66,0x66, 0xFF,0xFF, 0xFF,0xFF, 0x7E,0x7E, 0x3C,0x3C, 0x18,0x18, 0x00,0x00,
 };
 
 // 8x8 diamond / gem shape for collectible tiles
@@ -67,6 +70,14 @@ void set_programmer_metasprite()
     // Set the programmer metasprite
     set_sprite_data(0, programmer_TILE_COUNT, programmer_tiles);
     set_sprite_palette(0, programmer_PALETTE_COUNT, programmer_palettes);
+}
+
+void hud_update_lives(uint8_t lives)
+{
+    uint8_t t_heart = HUD_HEART_TILE;
+    uint8_t t_digit = HUD_DIGIT_TILE_BASE + (lives <= 9 ? lives : 9);
+    set_win_tiles(0, 0, 1, 1, &t_heart);
+    set_win_tiles(1, 0, 1, 1, &t_digit);
 }
 
 void hud_update_count(uint8_t collected, uint8_t total)
@@ -127,8 +138,8 @@ void level_load_level(LevelManager* manager, uint8_t level_id)
     // Load collectible tile
     set_bkg_data(COLLECTIBLE_TILE_INDEX, 1, collectible_tile_data);
 
-    // Load HUD digit tiles (digits 0-9 and '/') at VRAM 133-143
-    set_bkg_data(HUD_DIGIT_TILE_BASE, 11, hud_digit_tiles);
+    // Load HUD digit/symbol tiles (0-9, '/', heart) at VRAM 133-144
+    set_bkg_data(HUD_DIGIT_TILE_BASE, 12, hud_digit_tiles);
 
     // Create and load collision visualization map (static: 32×18=576 bytes avoids stack overflow)
     static uint8_t collision_vis_map[LEVEL_HEIGHT][LEVEL_WIDTH];
@@ -323,6 +334,7 @@ void level_handle_collision(Level* level, uint8_t collision_type, uint8_t tile_x
         case COLLISION_COLLECTIBLE:
             level->collision_map[tile_y][tile_x] = COLLISION_NONE;
             level->collected_count++;
+            sound_play_collect();
             {
                 uint8_t bg_tile = level->background_map[tile_y * LEVEL_WIDTH + tile_x];
                 set_bkg_tiles(tile_x, tile_y, 1, 1, &bg_tile);

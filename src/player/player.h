@@ -60,6 +60,7 @@ typedef struct {
     
     // State
     uint8_t underfoot_state;
+    uint8_t invincibility_frames;  // counts down after taking a hit; sprite flashes while > 0
 } Player;
 
 // Function declarations

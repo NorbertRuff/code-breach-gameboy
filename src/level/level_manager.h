@@ -78,11 +78,13 @@ void level_render(LevelManager* manager);
 // HUD digit tiles — loaded at VRAM indices 133-143 (after collectible at 132)
 #define HUD_DIGIT_TILE_BASE 133   // tile 133 = '0', 134 = '1', ..., 142 = '9'
 #define HUD_SLASH_TILE      143   // tile 143 = '/'
+#define HUD_HEART_TILE      144   // tile 144 = '♥'
 
 // HUD and sprite setup functions
 void set_hud_window_tiles();
 void set_programmer_metasprite();
 void hud_update_count(uint8_t collected, uint8_t total);
+void hud_update_lives(uint8_t lives);
 
 // Level-specific functions
 void level_1_server_room_init(Level* level);

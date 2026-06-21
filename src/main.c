@@ -8,6 +8,8 @@
 #include "./level/level_manager.h"
 #include "./player/player.h"
 #include "./input/input.h"
+#include "./enemy/enemy.h"
+#include "./sound/sound.h"
 
 #include "./game_state/core_game_loop.h"
 #include "./game_state/game_over.h"
@@ -28,6 +30,12 @@ Player player;
 
 // Level manager instance
 LevelManager level_manager;
+
+// Enemy instances
+Enemy enemies[MAX_ENEMIES];
+
+// Lives (persists across respawns; resets to 3 on full game over)
+uint8_t lives = 3;
 
 // Main game loop
 void main_game_loop()
@@ -55,6 +63,12 @@ void main_game_loop()
     // Check collectibles (world coords, no scroll offset needed)
     player_check_collectibles(&player, &level_manager.current_level, 0);
 
+    // Win condition: all collectibles gathered
+    if (level_manager.current_level.collectible_count > 0 &&
+        level_manager.current_level.collected_count >= level_manager.current_level.collectible_count) {
+        current_game_state = LEVEL_COMPLETE;
+    }
+
     // Update HUD counter when count changes
     {
         static uint8_t prev_collected = 0xFF;
@@ -62,6 +76,23 @@ void main_game_loop()
         if (cur != prev_collected) {
             hud_update_count(cur, level_manager.current_level.collectible_count);
             prev_collected = cur;
+        }
+    }
+
+    // Invincibility countdown
+    if (player.invincibility_frames > 0) player.invincibility_frames--;
+
+    // Update enemies, draw them, and check player collision (skip if invincible)
+    {
+        uint8_t i;
+        for (i = 0; i < MAX_ENEMIES; i++) {
+            enemy_update(&enemies[i]);
+            enemy_draw(&enemies[i], ENEMY_OAM_BASE + i * 2, total_scroll_x);
+            if (!player.invincibility_frames &&
+                enemy_check_player_collision(&enemies[i], player.x, player.y)) {
+                sound_play_hit();
+                current_game_state = GAMEPLAY_END;
+            }
         }
     }
 
@@ -108,6 +139,13 @@ void main(void)
             level_load_level(&level_manager, 1);  // Load Level 1: Server Room
             // Initialize player at level start position
             player_init(&player, level_manager.current_level.player_start_x, level_manager.current_level.player_start_y);
+            // Initialize enemies and load their sprite tiles into sprite VRAM
+            enemy_init_sprite_data();
+            enemy_init(&enemies[0], 88,  135,  64,  112);
+            enemy_init(&enemies[1], 80,   87,  72,   88);
+            enemy_init(&enemies[2], 184,  95, 176,  192);
+            enemies[3].active = 0;
+            hud_update_lives(lives);
             current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:
@@ -115,10 +153,31 @@ void main(void)
             // current_game_state = GAMEPLAY_END;
             // fade_out_screen(10);
             break;
-        case GAMEPLAY_END:
-            game_over();
+        case LEVEL_COMPLETE:
+            level_complete();
             fade_out_screen(10);
             current_game_state = GAMEPLAY_START;
+            break;
+        case GAMEPLAY_END:
+            lives--;
+            if (lives == 0) {
+                // All lives spent — show game over and do a full restart
+                lives = 3;
+                game_over();
+                fade_out_screen(10);
+                current_game_state = GAMEPLAY_START;
+            } else {
+                // Respawn: reset player and enemies, grant invincibility frames
+                player_init(&player,
+                    level_manager.current_level.player_start_x,
+                    level_manager.current_level.player_start_y);
+                player.invincibility_frames = 90;  // ~3 s at 30 fps
+                enemy_init(&enemies[0], 88,  135,  64,  112);
+                enemy_init(&enemies[1], 80,   87,  72,   88);
+                enemy_init(&enemies[2], 184,  95, 176,  192);
+                hud_update_lives(lives);
+                current_game_state = COREGAMELOOP;
+            }
             break;
         default:
             break;

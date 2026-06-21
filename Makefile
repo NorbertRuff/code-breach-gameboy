@@ -33,9 +33,11 @@ GRAPHICSDIR = src/graphics
 PLAYERDIR   = src/player
 INPUTDIR    = src/input
 LEVELDIR    = src/level
+ENEMYDIR    = src/enemy
+SOUNDDIR    = src/sound
 
 BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(filter-out prepare_core_game_loop.c,$(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c)))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(PLAYERDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(INPUTDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(LEVELDIR),$(notdir $(wildcard $(dir)/*.c)))
+CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(filter-out prepare_core_game_loop.c,$(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c)))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(PLAYERDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(INPUTDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(LEVELDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(ENEMYDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SOUNDDIR),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
@@ -82,6 +84,14 @@ $(OBJDIR)/%.o:	$(INPUTDIR)/%.c
 
 # Compile .c files in "src/level/" to .o object files
 $(OBJDIR)/%.o:	$(LEVELDIR)/%.c
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/enemy/" to .o object files
+$(OBJDIR)/%.o:	$(ENEMYDIR)/%.c
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/sound/" to .o object files
+$(OBJDIR)/%.o:	$(SOUNDDIR)/%.c
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files

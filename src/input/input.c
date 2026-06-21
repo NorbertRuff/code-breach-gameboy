@@ -1,5 +1,6 @@
 #include "input.h"
 #include "../utils.h"
+#include "../sound/sound.h"
 
 void input_update_joypad_state(uint8_t* joypad_current, uint8_t* joypad_previous)
 {
@@ -33,6 +34,7 @@ int8_t input_handle_joystick_input(Player* player, uint8_t joypad_current, uint8
         player->jump_frames = 0;
         // Set to frame 4 (running pose) for jumping
         player->draw_frame = 3;
+        sound_play_jump();
     }
     // If we are on land again after jumping...
     else if (player->underfoot_state & FOOT_ON_LAND)

@@ -31,6 +31,7 @@ void player_init(Player* player, uint16_t start_x, uint16_t start_y)
     
     // Initialize state
     player->underfoot_state = FOOT_ON_LAND;
+    player->invincibility_frames = 0;
 }
 
 void player_update_underfoot_state(Player* player, Level* current_level, uint16_t scroll_x)
@@ -263,6 +264,13 @@ void player_check_collectibles(Player* player, Level* current_level, uint16_t sc
 
 void player_draw(Player* player)
 {
+    // Flash sprite while invincible: hide every other 2-frame window
+    if (player->invincibility_frames > 0 && (player->invincibility_frames & 2)) {
+        move_sprite(0, 0, 0); move_sprite(1, 0, 0);
+        move_sprite(2, 0, 0); move_sprite(3, 0, 0);
+        return;
+    }
+
     // Safety check: ensure frame is within valid range
     uint8_t safe_frame = player->draw_frame;
     if (safe_frame > 4) safe_frame = 0;  // Clamp to valid range 0-4
