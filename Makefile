@@ -1,7 +1,17 @@
 #
-# A Makefile that compiles all .c and .s files in "src" and "res" 
+# A Makefile that compiles all .c and .s files in "src" and "res"
 # subdirectories and places the output in a "obj" subdirectory
 #
+
+# OS-specific shell commands
+ifeq ($(OS),Windows_NT)
+    MKDIR_OBJ = if not exist $(OBJDIR) mkdir $(OBJDIR)
+    CLEAN_OBJ = if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
+else
+    MKDIR_OBJ = mkdir -p $(OBJDIR)
+    CLEAN_OBJ = rm -rf $(OBJDIR)
+endif
+
 GBDK_HOME = ./gbdk/
 
 LCC = $(GBDK_HOME)bin/lcc 
@@ -22,22 +32,31 @@ RESDIR      = res
 GRAPHICSDIR = src/graphics
 PLAYERDIR   = src/player
 INPUTDIR    = src/input
+LEVELDIR    = src/level
+ENEMYDIR    = src/enemy
+SOUNDDIR    = src/sound
 
 BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(PLAYERDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(INPUTDIR),$(notdir $(wildcard $(dir)/*.c)))
+CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(filter-out prepare_core_game_loop.c,$(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c)))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(PLAYERDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(INPUTDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(LEVELDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(ENEMYDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SOUNDDIR),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
 OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
 all:	clean prepare $(BINS)
 
+test:	all run
+
 run:
-	java -jar .\$(EMUDIR)\Emulicious.jar $(BINS)
+	java -jar ./$(EMUDIR)/Emulicious.jar $(BINS)
 
 compile: Makefile
+ifeq ($(OS),Windows_NT)
+	@echo "compile target requires Unix tools (sed, grep) - not supported on Windows"
+else
 	@echo "-----> REM Automatically generated from Makefile <-----" > compile.bat
-	@make -sn | sed y/\\//\\\\/ | sed s/mkdir\ -p\/mkdir\/ | grep -v make >> compile.bat
+	@$(MAKE) -sn | sed 's/\//\\/g' | grep -v make >> compile.bat
 	@echo "-----> REM End of automatically generated section <-----" >> compile.bat
 	@echo "-----> REM You can now run compile.bat to compile your project <-----" >> compile.bat
+endif
 
 # Compile .c files in "src/" to .o object files
 $(OBJDIR)/%.o:	$(SRCDIR)/%.c
@@ -61,6 +80,18 @@ $(OBJDIR)/%.o:	$(PLAYERDIR)/%.c
 
 # Compile .c files in "src/input/" to .o object files
 $(OBJDIR)/%.o:	$(INPUTDIR)/%.c
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/level/" to .o object files
+$(OBJDIR)/%.o:	$(LEVELDIR)/%.c
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/enemy/" to .o object files
+$(OBJDIR)/%.o:	$(ENEMYDIR)/%.c
+	$(LCC) $(LCCFLAGS) -c -o $@ $<
+
+# Compile .c files in "src/sound/" to .o object files
+$(OBJDIR)/%.o:	$(SOUNDDIR)/%.c
 	$(LCC) $(LCCFLAGS) -c -o $@ $<
 
 # Compile .s assembly files in "src/" to .o object files
@@ -88,8 +119,8 @@ $(BINS):	$(OBJS)
 
 # Create the obj directory if it doesn't exist
 prepare:
-	echo "-----> Creating obj directory <-----"
-	if not exist $(OBJDIR) mkdir $(OBJDIR)
+	@echo "-----> Creating obj directory <-----"
+	@$(MKDIR_OBJ)
 
 # Create assets from png files
 #usage: png2asset    <file>.png [options]
@@ -135,12 +166,11 @@ assets:
 	$(PNG2ASSET) $(GRAPHICS)/start_screen/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -o $(SRCDIR)/graphics/press_start.c
 	$(PNG2ASSET) $(GRAPHICS)/hud/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -o $(SRCDIR)/graphics/hud.c
 	$(PNG2ASSET) $(GRAPHICS)/background/background.png -bank 1 -org 0x8000 -noflip -map -name background -o $(SRCDIR)/graphics/background.c
-
+	$(PNG2ASSET) $(GRAPHICS)/enemies/mushroom.png -bank 1 -org 0x8000 -noflip -map -name mushroom -o $(SRCDIR)/graphics/mushroom.c
 # Remove all compiled files
 clean:
-	echo "-----> Cleaning up <-----"
-	if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
-	if exist .\-p\ rmdir /s /q .\-p\
+	@echo "-----> Cleaning up <-----"
+	@$(CLEAN_OBJ)
 
 # create necessary directories after Makefile is parsed but before build
 # info prevents the command from being pasted into the makefile
