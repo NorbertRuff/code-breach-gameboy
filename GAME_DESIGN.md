@@ -69,8 +69,8 @@
 
 ### Core Movement
 - [x] Left/right movement
-- [ ] Jumping mechanics
-- [ ] Smooth acceleration/deceleration
+- [x] Jumping mechanics
+- [x] Smooth acceleration/deceleration
 - [ ] Wall collision detection
 
 ### Collectibles

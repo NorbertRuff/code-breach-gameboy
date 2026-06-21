@@ -3,11 +3,18 @@
 
 #include <gb/gb.h>
 #include <stdint.h>
+#include "../level/level_manager.h"
 
 // Player character constants
-#define FLOOR_Y 120
+#define FLOOR_Y 128
 #define PROGRAMMER_RUN_FRAMECOUNT 5      // Updated to match actual available frames (0-4)
 #define PROGRAMMER_WALKING_SPEED 2       // Increased for faster horizontal movement
+
+// Sprite bounds derived from programmer_PIVOT_X=8, programmer_PIVOT_Y=16, size 16x32
+// player->x is the horizontal pivot (center), player->y is the vertical pivot (feet reference)
+#define SPRITE_LEFT_W   8   // pixels from pivot to left edge
+#define SPRITE_RIGHT_W  7   // pixels from pivot to right edge (16px wide, 0-indexed)
+#define SPRITE_HEAD_OFFSET 32  // pixels above pivot to head top (= programmer_HEIGHT)
 
 // Animation system constants
 #define ANIMATION_FRAME_LENGTH 4         // How often to change animation frames (slowed down)
@@ -57,10 +64,11 @@ typedef struct {
 
 // Function declarations
 void player_init(Player* player, uint16_t start_x, uint16_t start_y);
-void player_handle_movement_physics(Player* player);
-void player_handle_jumping_physics(Player* player);
+void player_handle_movement_physics(Player* player, Level* current_level, uint16_t scroll_x);
+void player_handle_jumping_physics(Player* player, Level* current_level, uint16_t scroll_x);
 void player_draw(Player* player);
-void player_update_underfoot_state(Player* player);
-void player_detect_collisions(Player* player, uint16_t* predicted_x, uint16_t* predicted_y);
+void player_check_collectibles(Player* player, Level* current_level, uint16_t scroll_x);
+void player_update_underfoot_state(Player* player, Level* current_level, uint16_t scroll_x);
+void player_detect_collisions(Player* player, uint16_t* predicted_x, uint16_t* predicted_y, Level* current_level, uint16_t scroll_x);
 
 #endif // PLAYER_H

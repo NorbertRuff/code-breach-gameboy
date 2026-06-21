@@ -17,17 +17,11 @@ int8_t input_handle_joystick_input(Player* player, uint8_t joypad_current, uint8
     {
         player->movement_force_x = -1;
         player->direction = 0;
-        #if !DISABLE_BACKGROUND_SCROLLING
-            *scroll_value -= 2;
-        #endif
     }
     else if (joypad_current & J_RIGHT)
     {
         player->movement_force_x = 1;
         player->direction = 1;
-        #if !DISABLE_BACKGROUND_SCROLLING
-            *scroll_value += 2;
-        #endif
     }
 
     // Jump mechanics (from example code)

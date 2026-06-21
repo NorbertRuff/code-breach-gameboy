@@ -5,13 +5,13 @@
 #include "./graphics/background.h"
 #include "./graphics/programmer.h"
 #include "./utils.h"
+#include "./level/level_manager.h"
 #include "./player/player.h"
 #include "./input/input.h"
 
 #include "./game_state/core_game_loop.h"
 #include "./game_state/game_over.h"
 #include "./game_state/intro_credits.h"
-#include "./game_state/prepare_core_game_loop.h"
 #include "./game_state/prepare_gameboy.h"
 #include "./game_state/start_screen.h"
 
@@ -19,37 +19,54 @@
 uint8_t joypad_current = 0;
 uint8_t joypad_previous = 0;
 uint16_t scroll_value = 0;
+int16_t total_scroll_x = 0;  // Accumulated scroll offset for collision detection
 uint16_t text_animation_state = ANIMATION_COUNTER_TIME;
 uint8_t current_game_state = INTRO_CREDITS_STATE;
 
 // Player instance
 Player player;
 
-void handle_background_scrolling()
-{
-    #if DISABLE_BACKGROUND_SCROLLING
-        // Background scrolling is disabled - do nothing
-        scroll_value = 0;
-    #else
-        // Normal background scrolling behavior
-        scroll_bkg(scroll_value, 0);
-        scroll_value = 0;
-    #endif
-}
+// Level manager instance
+LevelManager level_manager;
 
 // Main game loop
 void main_game_loop()
 {
-    handle_background_scrolling();
-    
-    // Handle input and update player
-    int16_t movement = input_handle_joystick_input(&player, joypad_current, joypad_previous, &scroll_value);
-    
-    // Update player physics
-    player_handle_movement_physics(&player);
-    player_handle_jumping_physics(&player);
-    
-    // Draw player
+    // Handle input (movement_force only; camera handles scrolling)
+    input_handle_joystick_input(&player, joypad_current, joypad_previous, &scroll_value);
+
+    // Update player physics in world coordinates (scroll_x=0: player->x is world X)
+    player_handle_movement_physics(&player, &level_manager.current_level, 0);
+    player_handle_jumping_physics(&player, &level_manager.current_level, 0);
+
+    // Camera follow: center player on screen, clamped to level bounds
+    {
+        int16_t cam = (int16_t)player.x - 80;
+        if (cam < 0) cam = 0;
+        if (cam > (int16_t)MAX_SCROLL_X) cam = (int16_t)MAX_SCROLL_X;
+        total_scroll_x = cam;
+    }
+    move_bkg((uint8_t)total_scroll_x, 0);
+
+    // Update and render level
+    level_update(&level_manager);
+    level_render(&level_manager);
+
+    // Check collectibles (world coords, no scroll offset needed)
+    player_check_collectibles(&player, &level_manager.current_level, 0);
+
+    // Update HUD counter when count changes
+    {
+        static uint8_t prev_collected = 0xFF;
+        uint8_t cur = level_manager.current_level.collected_count;
+        if (cur != prev_collected) {
+            hud_update_count(cur, level_manager.current_level.collectible_count);
+            prev_collected = cur;
+        }
+    }
+
+    // Compute screen-space draw position from world position then draw
+    player.draw_x = (uint16_t)((int16_t)player.x - total_scroll_x);
     player_draw(&player);
 }
 
@@ -85,10 +102,12 @@ void main(void)
             current_game_state = GAMEPLAY_START;
             break;
         case GAMEPLAY_START:
-            prepare_core_game_loop();
             fade_in_screen(10);
-            // Initialize player
-            player_init(&player, 10, 120);
+            // Initialize level system (includes HUD and sprite setup)
+            level_manager_init(&level_manager);
+            level_load_level(&level_manager, 1);  // Load Level 1: Server Room
+            // Initialize player at level start position
+            player_init(&player, level_manager.current_level.player_start_x, level_manager.current_level.player_start_y);
             current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:
