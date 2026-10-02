@@ -9,8 +9,14 @@
 - **Setting**: ApexLab programming facility
 - **Protagonist**: ApexLab programmer/employee (16×32 sprite, lab coat + glasses)
 - **Conflict**: AI security breach — corrupted security bots are patrolling the facility
-- **Goal**: Collect all code fragments in each section and reach the exit
+- **Goal**: Each level has 3 sections. Collect enough code fragments in a section to open its security gate, then reach the elevator at the end. Extra fragments are bonus. The camera locks behind an opened gate. Details in [docs/LEVEL_DESIGN.md](docs/LEVEL_DESIGN.md).
 - **Theme**: Cyberpunk tech lab, programming, AI gone wrong
+- **Story through the fragments ("PATCH n/5")**: each level's fragments compile into one part of a patch. In the final fight the player uploads the patch into the Mainframe AI.
+- **Text, kept minimal**:
+  - Boot screen: three terminal lines, "ANOMALY / STAFF #042 / LOCKDOWN".
+  - Each elevator ride: one line from the AI's log, more corrupted on every floor.
+  - Ending: the elevator goes up, the palette fades to light, "LOCKDOWN LIFTED".
+- **Hard mode**: unlocked after clearing the game. Every gate needs all of its section's fragments.
 
 ---
 
@@ -41,10 +47,11 @@
 - [x] Feature flags — SKIP_INTRO_AND_START, EMPTY_BACKGROUND, DISABLE_BACKGROUND_SCROLLING
 
 ### Known Issues / In Progress
-- [ ] Game-over reload visual bug — background or HUD sometimes loads incorrectly on first full restart (under investigation)
+Full bug list with causes: [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
+- [ ] Game-over reload visual bug — **cause found**: `scroll_win(0, 128)` is relative, so every second level load moves the HUD window to the top and it covers the screen. Fix: `move_win(7, 128)` (roadmap M1).
 - [ ] Enemy sprites are mushroom placeholders — need proper security-bot sprites per theme
 - [ ] ONE_WAY platform collision defined but not implemented
-- [ ] Sub-pixel smooth movement (branch: feat-smooth-movement — in progress)
+- [ ] Sub-pixel smooth movement — PR #2 was merged, but positions are still whole pixels (roadmap M2)
 
 ---
 
@@ -77,7 +84,13 @@
 
 ### Level 5: Mainframe *(planned)*
 - **Theme**: Core system, central processing
-- **Boss**: Final AI entity (not yet designed)
+- **Boss: "KERNEL"** (concept accepted 2026-10-02; details in M8)
+  - **Arena:** one screen. KERNEL is a monitor face of about 7×6 tiles, drawn with background tiles, so it uses no sprites. A screen-line split moves the face while the floor stays still.
+  - **How to hurt it:** the player has no attack. Three kill-switch terminals light up in turn; standing on the lit one and holding Up for about half a second uploads part of the patch.
+  - **Hit feedback:** a short freeze, screen shake, and a wobble on the face.
+  - **Phases:** 2 adds lifts (level 3's mechanic), 3 corrupts floor tiles (level 4's).
+  - **Attacks:** packet rain with a column warning, spawned level 1 bots, and a purge sweep escaped on one-way platforms.
+  - Research notes: [docs/RESEARCH.md](docs/RESEARCH.md) section 3.
 
 ---
 
@@ -95,7 +108,7 @@
 - [x] Code fragments (basic collectibles, clear tile on pick-up)
 - [x] Collectible counter HUD
 - [ ] Different collectible types per level
-- [ ] Key items (unlock exit gate)
+- [ ] Security gates that open at a fragment quota; opened gates are checkpoints
 
 ### Enemies
 - [x] Patrol AI (bounce between world X bounds)
@@ -119,9 +132,11 @@
 - [x] Jump sound (CH1 sweep)
 - [x] Collect sound (CH2 blip)
 - [x] Hit/death sound (CH1 + CH4 noise)
-- [ ] Background music (hUGEDriver — see Research Notes)
+- [ ] Background music: Tronimal's Game Boy Music Packs #1 and #2 (CC BY 4.0) with hUGEDriver
 - [ ] Menu music
 - [ ] Level complete jingle
+- [ ] Sound effects from Tronimal's GBFX/GBFX2 (CC-BY) through untoxa's VGM2GBSFX player, with priority over the music
+- [ ] Credits for every CC-BY item in `CREDITS.md` and on the in-game credits screen
 
 ---
 
@@ -169,23 +184,15 @@ Assets compiled with `-bank 1 -org 0x8000` (background, hud, mushroom, apexLogo,
 
 ---
 
-## Upcoming Work (Priority Order)
+## Upcoming Work
 
-1. **Fix game-over reload visual bug** — HUD/background incorrect on first reload; root cause still under investigation
-2. **ONE_WAY platforms** — implement pass-through collision in `player_handle_jumping_physics`
-3. **Security bot sprite** — draw 16×16 or 16×32 indexed PNG (4-color, multiples of 8px), run `make assets`, update enemy.c tile references
-4. **Sub-pixel smooth movement** — scale player coords by 16, store/update as face values, convert to screen px via `>> 4` (current branch)
-5. **Score system** — add points per collectible, display in HUD
-6. **Background music** — integrate hUGEDriver (see Research Notes)
-7. **Level 2** — new layout, wider map (>256px), set_bkg_submap streaming, ONE_WAY platforms
-8. **Proper game-over / level-complete text** — use GBDK text drawing or custom tile font
-9. **Hazard tiles** — instant death tiles (spikes, exposed wiring), COLLISION_HAZARD in player collision
+Moved to [docs/ROADMAP.md](docs/ROADMAP.md) (milestones M0–M9). Project decisions are in [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ---
 
 ## Visual Style
 - **Aesthetic**: Cyberpunk tech lab — circuits, code symbols, digital effects
-- **Colors**: Four-color GB palette (white/light/dark/black) used creatively per environment
+- **Colors**: Game Boy Color palettes per environment (up to 8 background + 8 sprite palettes), with a 4-shade fallback on the original Game Boy. Every palette is ordered light → dark so the DMG version reads correctly. See [docs/CGB_PLAN.md](docs/CGB_PLAN.md) and [docs/ART_PIPELINE.md](docs/ART_PIPELINE.md).
 - **Character**: 16×32 programmer sprite (current: placeholder; complete animations planned)
 - **Enemies**: Corrupted security bots — NOT mushrooms; need 16×16 or 16×32 bot sprites
 - **Environment**: Server racks, computer banks, lab equipment, neural displays
@@ -247,8 +254,8 @@ Needed for: "GAME OVER" screen, "LEVEL COMPLETE" text, score display. GBDK provi
 | Flag | Default | Purpose |
 |---|---|---|
 | `SKIP_INTRO_AND_START` | `1` | Skip intro/title for faster dev iteration |
-| `EMPTY_BACKGROUND` | `1` | Blank background for collision debugging |
-| `DISABLE_BACKGROUND_SCROLLING` | `0` | Freeze camera for movement debugging |
+| `EMPTY_BACKGROUND` | `1` | No effect: only read by the excluded `prepare_core_game_loop.c` |
+| `DISABLE_BACKGROUND_SCROLLING` | `0` | No effect: nothing reads it |
 
 ---
 
@@ -263,4 +270,4 @@ Needed for: "GAME OVER" screen, "LEVEL COMPLETE" text, score display. GBDK provi
 
 ---
 
-*Last updated: 2026-06-21*
+*Last updated: 2026-10-02*
