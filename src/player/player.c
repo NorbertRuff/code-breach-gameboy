@@ -1,6 +1,11 @@
 #include "player.h"
 #include "../graphics/programmer.h"
 #include "../level/level_manager.h"
+#include "../engine/banking.h"
+
+// Read by the PyBoy tests (tests/gamelib.py) to catch Player struct changes that the
+// Python mirror of the struct doesn't know about yet.
+const uint8_t player_struct_size = sizeof(Player);
 
 void player_init(Player* player, uint16_t start_x, uint16_t start_y)
 {
@@ -277,12 +282,13 @@ void player_draw(Player* player)
     
     // Draw the programmer metasprite
     // Flip the metasprite horizontally (using vflip) if programmer isn't facing right
+    // The metasprite tables live in the programmer asset's ROM bank.
     if (player->direction == 1)
     {
-        move_metasprite(programmer_metasprites[safe_frame], 0, 0, player->draw_x, player->draw_y);
+        WITH_BANK(programmer, move_metasprite(programmer_metasprites[safe_frame], 0, 0, player->draw_x, player->draw_y));
     }
     else
     {
-        move_metasprite_vflip(programmer_metasprites[safe_frame], 0, 0, player->draw_x + 4, player->draw_y);
+        WITH_BANK(programmer, move_metasprite_vflip(programmer_metasprites[safe_frame], 0, 0, player->draw_x + 4, player->draw_y));
     }
 }

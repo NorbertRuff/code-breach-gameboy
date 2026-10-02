@@ -21,7 +21,12 @@
 
 
 
-extern const unsigned char splashscreen_tileset[]; 
+#include <gbdk/platform.h>
+
+// All arrays below live in the banked ROM area named "splashscreen".
+BANKREF_EXTERN(splashscreen)
+
+extern const unsigned char splashscreen_tileset[];
 
 extern const unsigned char splashscreen_tilemap[];
 

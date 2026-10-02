@@ -1,5 +1,13 @@
+#pragma bank 255
+
 // Generated using GB Export by AngelSix https://github.com/angelsix/retrosix-resources
 // Enhanced version based of original by https://github.com/gabrielcnr
+// Banking lines added by hand (2026-10-02). This file is replaced by the png2asset
+// title screen in roadmap M5.
+
+#include <gbdk/platform.h>
+
+BANKREF(splashscreen)
 
 const unsigned char splashscreen_tileset[] = {
 

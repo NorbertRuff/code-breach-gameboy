@@ -11,7 +11,6 @@
 #include "./enemy/enemy.h"
 #include "./sound/sound.h"
 
-#include "./game_state/core_game_loop.h"
 #include "./game_state/game_over.h"
 #include "./game_state/intro_credits.h"
 #include "./game_state/prepare_gameboy.h"

@@ -1,178 +1,129 @@
 #
-# A Makefile that compiles all .c and .s files in "src" and "res"
-# subdirectories and places the output in a "obj" subdirectory
+# ApexLab: Code Breach — build
+#
+#   make            build obj/ApexLab.gb (incremental; headers are tracked)
+#   make rebuild    clean, then build
+#   make run        build, then open the ROM in Emulicious
+#   make test       build, then run the PyBoy tests (DMG and GBC mode)
+#   make venv       create .venv with the test tools from tools/requirements.txt
+#   make savetest   build obj/savetest.gb, the cartridge RAM persistence test
+#   make usage      show ROM and RAM use per bank
+#   make assets     regenerate src/graphics/*.c from the PNGs in graphics/
+#   make clean      delete obj/
+#
+# RELEASE=1 turns on slower, size-optimizing compilation (about 4x compile time).
 #
 
-# OS-specific shell commands
+PROJECTNAME := ApexLab
+GBDK_HOME   ?= ./gbdk/
+
+OBJDIR := obj
+SRCDIR := src
+ROM    := $(OBJDIR)/$(PROJECTNAME).gb
+MAP    := $(OBJDIR)/$(PROJECTNAME).map
+
+# On Windows, always run recipes with cmd.exe. Otherwise make picks sh.exe when Git Bash
+# is on PATH and cmd.exe when it isn't, and the same recipe can't serve both.
 ifeq ($(OS),Windows_NT)
-    MKDIR_OBJ = if not exist $(OBJDIR) mkdir $(OBJDIR)
-    CLEAN_OBJ = if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
+SHELL   := cmd.exe
+fixpath  = $(subst /,\,$1)
+MKDIR    = if not exist $(call fixpath,$1) mkdir $(call fixpath,$1)
+RMDIR    = if exist $(call fixpath,$1) rmdir /s /q $(call fixpath,$1)
+VENV_PY := .venv/Scripts/python.exe
 else
-    MKDIR_OBJ = mkdir -p $(OBJDIR)
-    CLEAN_OBJ = rm -rf $(OBJDIR)
+fixpath  = $1
+MKDIR    = mkdir -p $1
+RMDIR    = rm -rf $1
+VENV_PY := .venv/bin/python
 endif
 
-GBDK_HOME = ./gbdk/
+LCC       := $(call fixpath,$(GBDK_HOME)bin/lcc)
+PNG2ASSET := $(call fixpath,$(GBDK_HOME)bin/png2asset)
+ROMUSAGE  := $(call fixpath,$(GBDK_HOME)bin/romusage)
+EMULICIOUS := emulicious/Emulicious.jar
 
-LCC = $(GBDK_HOME)bin/lcc 
-PNG2ASSET = $(GBDK_HOME)bin/png2asset
+# Tests use the project venv when it exists, otherwise python from PATH (as in CI).
+PYTHON ?= $(call fixpath,$(if $(wildcard $(VENV_PY)),$(VENV_PY),python))
 
-LCCFLAGS += -debug # Uncomment to enable debug output
-#LCCFLAGS += -v     # Uncomment for lcc verbose output
+# Cartridge (docs/CGB_PLAN.md section 1):
+#   MBC5 + RAM + battery, 1 RAM bank (8 KB), ROM size picked automatically,
+#   GBC-enhanced header that still runs on DMG, cartridge title.
+CART_FLAGS := -Wl-yt0x1B -Wm-yoA -Wm-ya1 -Wm-yc -Wm-ynAPEXLAB
 
-PROJECTNAME    = ApexLab
+# -debug: .cdb/.noi/.map for Emulicious. -Wm-yS: .sym for PyBoy.
+LCCFLAGS := -debug
+# -MMD/-MP: write obj/*.d header dependency files.
+CFLAGS   := -Wf-MMD -Wf-Wp-MP
+# -autobank: place data and code marked "#pragma bank 255" into ROM banks.
+LDFLAGS  := -autobank -Wb-ext=.rel -Wm-yS $(CART_FLAGS)
 
-# Directories
-SRCDIR      = src
-GAMESTATES  = src/game_state
-EMUDIR      = emulicious
-GRAPHICS    = graphics
-OBJDIR      = obj
-RESDIR      = res
-GRAPHICSDIR = src/graphics
-PLAYERDIR   = src/player
-INPUTDIR    = src/input
-LEVELDIR    = src/level
-ENEMYDIR    = src/enemy
-SOUNDDIR    = src/sound
-
-BINS	    = $(OBJDIR)/$(PROJECTNAME).gb
-CSOURCES    = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(RESDIR),$(notdir $(wildcard $(dir)/*.c))) $(filter-out prepare_core_game_loop.c,$(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.c)))) $(foreach dir,$(GRAPHICSDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(PLAYERDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(INPUTDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(LEVELDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(ENEMYDIR),$(notdir $(wildcard $(dir)/*.c))) $(foreach dir,$(SOUNDDIR),$(notdir $(wildcard $(dir)/*.c)))
-ASMSOURCES  = $(foreach dir,$(SRCDIR),$(notdir $(wildcard $(dir)/*.s))) $(foreach dir,$(GAMESTATES),$(notdir $(wildcard $(dir)/*.s)))
-OBJS       = $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
-
-all:	clean prepare $(BINS)
-
-test:	all run
-
-run:
-	java -jar ./$(EMUDIR)/Emulicious.jar $(BINS)
-
-compile: Makefile
-ifeq ($(OS),Windows_NT)
-	@echo "compile target requires Unix tools (sed, grep) - not supported on Windows"
-else
-	@echo "-----> REM Automatically generated from Makefile <-----" > compile.bat
-	@$(MAKE) -sn | sed 's/\//\\/g' | grep -v make >> compile.bat
-	@echo "-----> REM End of automatically generated section <-----" >> compile.bat
-	@echo "-----> REM You can now run compile.bat to compile your project <-----" >> compile.bat
+ifdef RELEASE
+CFLAGS += -Wf--max-allocs-per-node50000
 endif
 
-# Compile .c files in "src/" to .o object files
-$(OBJDIR)/%.o:	$(SRCDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+# All .c files under src/, sorted so autobank places them the same way on every build.
+rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+CSOURCES  := $(sort $(call rwildcard,$(SRCDIR),*.c))
 
-# Compile .c files in "GAMESTATES/" to .o object files
-$(OBJDIR)/%.o:	$(GAMESTATES)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+# Object files go flat into obj/, so two sources must not share a file name.
+OBJNAMES := $(notdir $(CSOURCES:.c=.o))
+ifneq ($(words $(OBJNAMES)),$(words $(sort $(OBJNAMES))))
+$(error Two .c files under $(SRCDIR)/ share a file name; their object files would collide)
+endif
+OBJS := $(addprefix $(OBJDIR)/,$(OBJNAMES))
+vpath %.c $(sort $(dir $(CSOURCES)))
 
-# Compile .c files in "res/" to .o object files
-$(OBJDIR)/%.o:	$(RESDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+SAVETEST := $(OBJDIR)/savetest.gb
 
-# Compile .c files in "src/graphics/" to .o object files
-$(OBJDIR)/%.o:	$(GRAPHICSDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+.PHONY: all rebuild run test venv savetest usage assets clean
 
-# Compile .c files in "src/player/" to .o object files
-$(OBJDIR)/%.o:	$(PLAYERDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+all: $(ROM)
 
-# Compile .c files in "src/input/" to .o object files
-$(OBJDIR)/%.o:	$(INPUTDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+$(ROM): $(OBJS)
+	$(LCC) $(LCCFLAGS) $(LDFLAGS) -o $@ $(OBJS)
+	$(ROMUSAGE) $(MAP) -g -R
 
-# Compile .c files in "src/level/" to .o object files
-$(OBJDIR)/%.o:	$(LEVELDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+$(OBJDIR)/%.o: %.c | $(OBJDIR)
+	$(LCC) $(LCCFLAGS) $(CFLAGS) -c -o $@ $<
 
-# Compile .c files in "src/enemy/" to .o object files
-$(OBJDIR)/%.o:	$(ENEMYDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+$(OBJDIR):
+	@$(call MKDIR,$@)
 
-# Compile .c files in "src/sound/" to .o object files
-$(OBJDIR)/%.o:	$(SOUNDDIR)/%.c
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+-include $(OBJS:.o=.d)
 
-# Compile .s assembly files in "src/" to .o object files
-$(OBJDIR)/%.o:	$(SRCDIR)/%.s
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+rebuild:
+	$(MAKE) clean
+	$(MAKE) all
 
-# Compile .s assembly files in "src/" to .o object files
-$(OBJDIR)/%.o:	$(GAMESTATES)/%.s
-	$(LCC) $(LCCFLAGS) -c -o $@ $<
+run: $(ROM)
+	java -jar $(EMULICIOUS) $(ROM)
 
+test: $(ROM) $(SAVETEST)
+	$(PYTHON) -m pytest tests
 
-# If needed, compile .c files in "src/" to .s assembly files
-# (not required if .c is compiled directly to .o)
-$(OBJDIR)/%.s:	$(SRCDIR)/%.c
-	$(LCC) $(LCCFLAGS) -S -o $@ $<
+venv:
+	python -m venv .venv
+	$(call fixpath,$(VENV_PY)) -m pip install -r tools/requirements.txt
 
-# If needed, compile .c files in "src/" to .s assembly files
-# (not required if .c is compiled directly to .o)
-$(OBJDIR)/%.s:	$(GAMESTATES)/%.c
-	$(LCC) $(LCCFLAGS) -S -o $@ $<
+# Standalone ROM with the same cartridge type as the game. It counts boots in
+# cartridge RAM, to check that saves survive a power cycle on the flashcart.
+savetest: $(SAVETEST)
 
-# Link the compiled object files into a .gb ROM file
-$(BINS):	$(OBJS)
-	$(LCC) $(LCCFLAGS) -o $(BINS) $(OBJS)
+$(SAVETEST): tools/savetest/savetest.c | $(OBJDIR)
+	$(LCC) $(LCCFLAGS) -Wm-yS $(CART_FLAGS) -o $@ $<
 
-# Create the obj directory if it doesn't exist
-prepare:
-	@echo "-----> Creating obj directory <-----"
-	@$(MKDIR_OBJ)
+usage: $(ROM)
+	$(ROMUSAGE) $(MAP) -a -g
 
-# Create assets from png files
-#usage: png2asset    <file>.png [options]
-#-o                  ouput file (default: <png file>.c)
-#-c                  deprecated, same as -o
-#-sw <width>         metasprites width size (default: png width)
-#-sh <height>        metasprites height size (default: png height)
-#-sp <props>         change default for sprite OAM property bytes (in hex) (default: 0x00)
-#-px <x coord>       metasprites pivot x coordinate (default: metasprites width / 2)
-#-py <y coord>       metasprites pivot y coordinate (default: metasprites height / 2)
-#-pw <width>         metasprites collision rect width (default: metasprites width)
-#-ph <height>        metasprites collision rect height (default: metasprites height)
-#-spr8x8             use SPRITES_8x8
-#-spr8x16            use SPRITES_8x16 (this is the default)
-#-spr16x16msx        use SPRITES_16x16
-#-b <bank>           bank (default: fixed bank)
-#-keep_palette_order use png palette
-#-repair_indexed_pal try to repair indexed tile palettes (implies "-keep_palette_order")
-#-noflip             disable tile flip
-#-map                Export as map (tileset + bg)
-#-use_map_attributes Use CGB BG Map attributes
-#-use_nes_attributes Use NES BG Map attributes
-#-use_nes_colors     Convert RGB color values to NES PPU colors
-#-use_structs        Group the exported info into structs (default: false) (used by ZGB Game Engine)
-#-bpp                bits per pixel: 1, 2, 4 (default: 2)
-#-max_palettes       max number of palettes allowed (default: 8)
-#                    (note: max colors = max_palettes x num colors per palette)
-#-pack_mode          gb, nes, sgb, sms, 1bpp (default: gb)
-#-tile_origin        tile index offset for maps (default: 0)
-#-tiles_only         export tile data only
-#-maps_only          export map tilemap only
-#-metasprites_only   export metasprite descriptors only
-#-source_tileset     use source tileset (image with common tiles)
-#-keep_duplicate_tiles   do not remove duplicate tiles (default: not enabled)
-#-no_palettes        do not export palette data
-#-bin                export to binary format
-#-transposed         export transposed (column-by-column instead of row-by-row)
-
+# png2asset output is committed. Run this after changing a PNG, and read the output:
+# png2asset only warns about unknown options and still succeeds.
+# -b 255 puts the data in a ROM bank picked by autobank, so code must switch to
+# BANK(name) before reading it (see src/engine/banking.h).
 assets:
-	echo "-----> Creating assets from png files <-----"
-	$(PNG2ASSET) $(GRAPHICS)/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -name programmer -o $(SRCDIR)/graphics/programmer.c
-	$(PNG2ASSET) $(GRAPHICS)/start_screen/apexLogo.png -bank 1 -org 0x8000 -noflip -map -name apexLogo -o $(SRCDIR)/graphics/apexLogo.c
-	$(PNG2ASSET) $(GRAPHICS)/start_screen/press_start.png -bank 1 -org 0x8000 -noflip -map -name press_start -o $(SRCDIR)/graphics/press_start.c
-	$(PNG2ASSET) $(GRAPHICS)/hud/hud_a.png -bank 1 -org 0x8000 -noflip -map -name hud -o $(SRCDIR)/graphics/hud.c
-	$(PNG2ASSET) $(GRAPHICS)/background/background.png -bank 1 -org 0x8000 -noflip -map -name background -o $(SRCDIR)/graphics/background.c
-	$(PNG2ASSET) $(GRAPHICS)/enemies/mushroom.png -bank 1 -org 0x8000 -noflip -map -name mushroom -o $(SRCDIR)/graphics/mushroom.c
-# Remove all compiled files
+	$(PNG2ASSET) graphics/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255 -o src/graphics/programmer.c
+	$(PNG2ASSET) graphics/hud/hud_a.png -map -noflip -b 255 -o src/graphics/hud.c
+	$(PNG2ASSET) graphics/background/background.png -map -noflip -b 255 -o src/graphics/background.c
+	$(PNG2ASSET) graphics/enemies/Mushroom.png -map -noflip -b 255 -o src/graphics/mushroom.c
+
 clean:
-	@echo "-----> Cleaning up <-----"
-	@$(CLEAN_OBJ)
-
-# create necessary directories after Makefile is parsed but before build
-# info prevents the command from being pasted into the makefile
-# $(info $(shell mkdir -p $(MKDIRS)))
-
+	@$(call RMDIR,$(OBJDIR))

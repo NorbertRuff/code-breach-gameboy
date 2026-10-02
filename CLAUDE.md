@@ -10,7 +10,7 @@ Planning docs live in `docs/` (index: `docs/README.md`). Read `docs/ROADMAP.md` 
 
 **Workflow:** Claude writes the code. The owner runs git (branches, commits, pushes, PRs), reviews, and tests on a real DMG and GBC (EverDrive-style flashcart). Don't run git commands that change state; leave changes in the working tree and suggest a commit message.
 
-**"Build it" means:** run `make`, then `make run` to open the ROM in Emulicious. Run make from PowerShell: the Makefile uses cmd syntax on Windows and fails under Git Bash's `sh`.
+**"Build it" means:** run `make`, then `make run` to open the ROM in Emulicious. Don't launch Emulicious otherwise. `make` works the same from PowerShell, cmd and Git Bash (on Windows the Makefile always runs recipes with `cmd.exe`).
 
 ## Toolchain
 
@@ -19,32 +19,31 @@ The toolchain is **not** in git. `gbdk/` and `emulicious/` are gitignored and in
 - GBDK-2020 **4.5.0** in `gbdk/` (the Makefile uses `./gbdk/bin/lcc` and `./gbdk/bin/png2asset`)
 - Emulicious in `emulicious/` (needs Java; Java 21 is installed)
 - GNU Make 4.4.1, Python 3.13/3.14
+- Test tools in `.venv/` (gitignored), created by `make venv` from `tools/requirements.txt` (PyBoy 2.7.0, pytest)
 
 If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
-**ROM bank 0 is nearly full** (85 bytes free as of 2026-10-02). Check `./gbdk/bin/romusage obj/ApexLab.gb -g` after adding code. New code may not fit until the MBC5 + autobank change in roadmap M0.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-02 it has 5,112 bytes free.
 
 ## Build Commands
 
 ```bash
-# Full build (clean + compile)
-make
-
-# Run in Emulicious emulator (requires Java)
-make run
-
-# Regenerate asset .c files from PNG sources
-make assets
-
-# Clean build artifacts
-make clean
+make            # build obj/ApexLab.gb (incremental; header changes are tracked)
+make rebuild    # clean, then build
+make run        # build, then open the ROM in Emulicious (Java)
+make test       # build, then run the PyBoy tests in DMG and GBC mode
+make venv       # create .venv with the test tools (once)
+make savetest   # build obj/savetest.gb, the cartridge RAM persistence test
+make usage      # ROM and RAM use per bank, with areas
+make assets     # regenerate src/graphics/*.c from graphics/*.png
+make clean      # delete obj/
 ```
 
-The compiled ROM is output to `obj/ApexLab.gb`. `make all` runs `clean` then `prepare` then links — always a fresh build.
+`RELEASE=1` adds size-optimizing compilation (slower). The cartridge is MBC5 + RAM + battery with a GBC-enhanced header (`-Wm-yc`); flags are in the Makefile and `docs/CGB_PLAN.md`. The build writes `obj/ApexLab.sym`, which the tests use to read globals by name.
 
-Planned in milestone M0 (not there yet): `make test` (PyBoy tests in DMG and GBC mode, see `docs/TESTING.md`), GBC header flags, MBC5 cartridge, and `.sym` output.
+**Tests** (`tests/`, details in `docs/TESTING.md`): run `make test` after every change. A known bug is written as a test marked `xfail(strict=True)` in `tests/test_known_bugs.py`; fixing the bug makes that test pass, which fails the run until the marker is removed. Failing tests save screenshots to `tests/out/`; look at them.
 
-**Asset pipeline**: PNG files in `graphics/` are converted to GBDK-compatible C source files via `png2asset`. Run `make assets` after modifying any PNG, then commit both the PNG and the regenerated `.c`/`.h` in `src/graphics/`. **Known broken (fix in M0):** the `assets` target passes `-bank`, `-org` and `-name`, which png2asset ignores with only a warning, so nothing is banked. The real banking option is `-b 255`. Always check png2asset output for `not recognized` warnings.
+**Asset pipeline**: PNG files in `graphics/` are converted to GBDK-compatible C source files via `png2asset`. Run `make assets` after modifying any PNG, then commit both the PNG and the regenerated `.c`/`.h` in `src/graphics/`. Assets use `-b 255` (autobank). png2asset only warns about unknown options and still succeeds, so read its output for `not recognized`.
 
 Research on techniques, reference code, licensed assets and tool flags is in `docs/RESEARCH.md`. Check a reference repo's license there before copying code: several have none (ideas only). The planned Claude Design → `tools/gbconvert.py` → png2asset flow is in `docs/ART_PIPELINE.md`.
 
@@ -61,14 +60,17 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state live
 
 | Directory | Purpose |
 |---|---|
-| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen`, `game_over` (also `level_complete`). `prepare_core_game_loop.c` is excluded from the build; `core_game_loop.c` is an empty stub. |
+| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen`, `game_over` (also `level_complete`) |
+| `src/engine/` | `platform.c` (`is_cgb`, GBC setup at boot), `banking.h` (`WITH_BANK` for reading banked assets) |
 | `src/player/` | `Player` struct + physics: `player_handle_movement_physics`, `player_handle_jumping_physics`, `player_draw`, collision and collectible checks |
 | `src/input/` | Joypad polling; turns button state into player movement and jump forces |
 | `src/level/` | `LevelManager` + `Level` structs, tile collision map (18 rows × 32 columns), level 1 built in code (`level_1_server_room_init`), HUD drawing |
 | `src/enemy/` | Patrol enemies: update, draw (2 OAM entries each, from OAM 4), AABB hit test |
 | `src/sound/` | Sound effects written straight to the APU registers |
-| `src/graphics/` | Generated asset files from `make assets` (plus the older hand-made `splashscreen.c`) |
+| `src/graphics/` | Generated asset files from `make assets` (plus the older hand-made `splashscreen.c`), all banked |
 | `graphics/` | Source PNG files for the asset pipeline |
+| `tests/` | PyBoy tests (`gamelib.py` helpers, `conftest.py` fixtures) |
+| `tools/` | `requirements.txt` for the test tools, `savetest/` save-persistence ROM |
 
 ### Player Physics (`src/player/player.h`, `src/player/player.c`)
 
@@ -90,9 +92,7 @@ Physics uses integer arithmetic (no floats — Game Boy has no FPU). Positions a
 
 | Flag | Value | Effect |
 |---|---|---|
-| `SKIP_INTRO_AND_START` | `1` | Skip intro/title screens, jump straight to gameplay |
-| `EMPTY_BACKGROUND` | `1` | **No effect.** Only read by the excluded `prepare_core_game_loop.c`. |
-| `DISABLE_BACKGROUND_SCROLLING` | `0` | **No effect.** Nothing reads it. |
+| `SKIP_INTRO_AND_START` | `1` | Skip intro/title screens, jump straight to gameplay. The tests assume `1`. |
 
 ## Game Boy Constraints to Keep in Mind
 
@@ -100,13 +100,14 @@ Physics uses integer arithmetic (no floats — Game Boy has no FPU). Positions a
 - **VRAM timing**: tile/map writes must happen during VBlank or HBlank. Use `wait_vbl_done()` at end of main loop (already in place).
 - **Shared tile memory**: GBDK uses `0x8800` addressing for background tiles, so background tiles 128–255 and sprite tiles 128–255 are the same memory.
 - **Sprite limit**: 10 sprites per scanline, 40 total OAM slots. The player uses 8×16 metasprites (`SPRITES_8x16` mode), 4 OAM entries.
-- **ROM banking**: assets in bank 1 use `-bank 1 -org 0x8000` flags in `make assets`. Access banked data with `SWITCH_ROM_BANK`.
+- **ROM banking**: assets are made with `png2asset -b 255`, so autobank puts them in a ROM bank (`BANKREF(name)`). Code reads them inside `WITH_BANK(name, ...)` from `src/engine/banking.h`, one asset per `WITH_BANK`. That only works from code in bank 0 (no `#pragma bank` in the file); all game code is in bank 0 for now. Metasprite tables count as banked data too: draw them inside `WITH_BANK`.
 - **Stack is tiny**: avoid deep recursion and large stack allocations.
 - **Window position**: `scroll_win()` is relative and takes `int8_t`; use `move_win()` for absolute positions. `WX = 7` is the left screen edge.
 
 ## GBC + DMG Rules (from `docs/CGB_PLAN.md`)
 
-- Check the hardware once with `_cpu == CGB_TYPE`. Every VRAM bank 1 / attribute write must be guarded: on DMG, `VBK_REG` is ignored and the write would overwrite the tile map.
+- Use `is_cgb` from `src/engine/platform.h` (set once at boot from `_cpu == CGB_TYPE`). Every VRAM bank 1 / attribute write must be guarded: on DMG, `VBK_REG` is ignored and the write would overwrite the tile map.
+- Until the palette module (M4), `platform_init()` loads gray GBC palettes that match the DMG shades, and fades/flashes only work on DMG.
 - `BGP_REG`/`OBP0_REG`/`OBP1_REG` do nothing in GBC mode, and GBC palette registers do nothing on DMG. Palette changes, fades and flashes need both paths.
 - Every palette is ordered index 0 lightest → index 3 darkest, so DMG shades come out right.
 - No background tile flips (DMG can't flip background tiles): backgrounds use `png2asset -noflip`.

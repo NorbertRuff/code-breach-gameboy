@@ -4,6 +4,7 @@
 #include "../graphics/hud.h"
 #include "../graphics/programmer.h"
 #include "../sound/sound.h"
+#include "../engine/banking.h"
 
 #define COLLECTIBLE_TILE_INDEX (128 + mushroom_TILE_COUNT)
 
@@ -49,9 +50,6 @@ static const uint8_t collectible_tile_data[16] = {
     0x00, 0x00
 };
 
-// Global level manager instance
-LevelManager g_level_manager;
-
 // HUD and scrolling setup functions
 void set_hud_window_tiles()
 {
@@ -61,15 +59,19 @@ void set_hud_window_tiles()
     scroll_win(0, 128);
     
     // Set the tiles for our HUD window in VRAM
-    set_win_data(background_TILE_COUNT, hud_TILE_COUNT, hud_tiles);
-    set_win_based_tiles(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, hud_map, background_TILE_COUNT);
+    WITH_BANK(hud, {
+        set_win_data(background_TILE_COUNT, hud_TILE_COUNT, hud_tiles);
+        set_win_based_tiles(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, hud_map, background_TILE_COUNT);
+    });
 }
 
 void set_programmer_metasprite()
 {
     // Set the programmer metasprite
-    set_sprite_data(0, programmer_TILE_COUNT, programmer_tiles);
-    set_sprite_palette(0, programmer_PALETTE_COUNT, programmer_palettes);
+    WITH_BANK(programmer, {
+        set_sprite_data(0, programmer_TILE_COUNT, programmer_tiles);
+        set_sprite_palette(0, programmer_PALETTE_COUNT, programmer_palettes);
+    });
 }
 
 void hud_update_lives(uint8_t lives)
@@ -90,6 +92,24 @@ void hud_update_count(uint8_t collected, uint8_t total)
     set_win_tiles(17, 0, 1, 1, &t_collected);
     set_win_tiles(18, 0, 1, 1, &t_slash);
     set_win_tiles(19, 0, 1, 1, &t_total);
+}
+
+// Build the debug view of the level: solid tiles drawn as mushroom blocks, collectibles
+// as diamonds, everything else from the background map. Reads background_map, so the
+// caller must have the "background" bank mapped in.
+static void build_level_view(Level* level, uint8_t view[LEVEL_HEIGHT][LEVEL_WIDTH])
+{
+    for (int y = 0; y < LEVEL_HEIGHT; y++) {
+        for (int x = 0; x < LEVEL_WIDTH; x++) {
+            if (level->collision_map[y][x] == COLLISION_SOLID) {
+                view[y][x] = 128;
+            } else if (level->collision_map[y][x] == COLLISION_COLLECTIBLE) {
+                view[y][x] = COLLECTIBLE_TILE_INDEX;
+            } else {
+                view[y][x] = level->background_map[y * LEVEL_WIDTH + x];
+            }
+        }
+    }
 }
 
 void level_manager_init(LevelManager* manager)
@@ -129,11 +149,11 @@ void level_load_level(LevelManager* manager, uint8_t level_id)
     
     // Load background tiles into VRAM (Game Boy optimization)
     if (manager->current_level.background_tiles) {
-        set_bkg_data(0, 256, manager->current_level.background_tiles);
+        WITH_BANK(background, set_bkg_data(0, 256, manager->current_level.background_tiles));
     }
     
     // Load mushroom tiles for collision visualization (starting at tile index 128)
-    set_bkg_data(128, mushroom_TILE_COUNT, mushroom_tiles);
+    WITH_BANK(mushroom, set_bkg_data(128, mushroom_TILE_COUNT, mushroom_tiles));
 
     // Load collectible tile
     set_bkg_data(COLLECTIBLE_TILE_INDEX, 1, collectible_tile_data);
@@ -143,17 +163,7 @@ void level_load_level(LevelManager* manager, uint8_t level_id)
 
     // Create and load collision visualization map (static: 32×18=576 bytes avoids stack overflow)
     static uint8_t collision_vis_map[LEVEL_HEIGHT][LEVEL_WIDTH];
-    for (int y = 0; y < LEVEL_HEIGHT; y++) {
-        for (int x = 0; x < LEVEL_WIDTH; x++) {
-            if (manager->current_level.collision_map[y][x] == COLLISION_SOLID) {
-                collision_vis_map[y][x] = 128;
-            } else if (manager->current_level.collision_map[y][x] == COLLISION_COLLECTIBLE) {
-                collision_vis_map[y][x] = COLLECTIBLE_TILE_INDEX;
-            } else {
-                collision_vis_map[y][x] = manager->current_level.background_map[y * LEVEL_WIDTH + x];
-            }
-        }
-    }
+    WITH_BANK(background, build_level_view(&manager->current_level, collision_vis_map));
     
     // Load the collision visualization map
     set_bkg_tiles(0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, (uint8_t*)collision_vis_map);
@@ -336,7 +346,8 @@ void level_handle_collision(Level* level, uint8_t collision_type, uint8_t tile_x
             level->collected_count++;
             sound_play_collect();
             {
-                uint8_t bg_tile = level->background_map[tile_y * LEVEL_WIDTH + tile_x];
+                uint8_t bg_tile;
+                WITH_BANK(background, bg_tile = level->background_map[tile_y * LEVEL_WIDTH + tile_x]);
                 set_bkg_tiles(tile_x, tile_y, 1, 1, &bg_tile);
             }
             break;

@@ -100,3 +100,9 @@ gbdk/*.*
 -p/*.*
 obj/
 obj/*.*
+
+# Python test tools (make venv, make test)
+.venv/
+__pycache__/
+.pytest_cache/
+tests/out/

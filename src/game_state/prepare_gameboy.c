@@ -1,6 +1,8 @@
 #include <gb/cgb.h>
 #include <gb/gb.h>
 
+#include "../engine/platform.h"
+
 void setup_display(void);
 void setup_sound(void);
 
@@ -23,6 +25,8 @@ void setup_sound()
 
 void prepare_gameboy()
 {
+    // Before the display turns on: on GBC this loads palettes, so nothing shows white.
+    platform_init();
     setup_display();
     setup_sound();
 }
