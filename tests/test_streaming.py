@@ -78,22 +78,6 @@ def test_screen_and_collision_match_the_map_while_scrolling(game):
     assert game.state() == COREGAMELOOP
 
 
-def test_no_lag_frames_while_streaming(game):
-    # The game loop must run once per frame, also on frames that draw a column.
-    game.start_on_open_ground()
-    calls = []
-    game.pyboy.hook_register(None, "_main_game_loop", lambda c: c.append(1), calls)
-    per_frame = []
-
-    def count(g):
-        per_frame.append(len(calls))
-        calls.clear()
-
-    run_right_and_back(game, count)
-    lag_frames = [i for i, n in enumerate(per_frame) if n != 1]
-    assert not lag_frames, f"frames without exactly one game loop: {lag_frames}"
-
-
 def test_collected_fragment_stays_gone(game):
     # x = 156 stands on the fragment at column 19, row 13. Go to the far end (its column's
     # place in the background map is drawn over), come back, and look again.

@@ -6,6 +6,7 @@ import pytest
 
 from gamelib import (COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END, HUD_DIGIT_TILE_BASE,
                      HUD_SLASH_TILE, LEVEL_COMPLETE, read_symbol)
+from test_frame_budget import GREYBOX_ROUTE
 
 dmg_only = pytest.mark.parametrize("mode", ["dmg"])  # BGP_REG effects are DMG-only until M4
 
@@ -269,3 +270,18 @@ def test_head_bump_has_no_lag_frame(game):
     game.pyboy.button_release("a")
     game.pyboy.button_release("right")
     assert per_frame == [1] * 6, f"game loops per frame around the head bump: {per_frame}"
+
+
+# Bug 19 --------------------------------------------------------------------------
+
+def test_pickup_while_a_column_is_drawn_is_no_lag_frame(game):
+    # Running right along the floor from the start, the fragment at column 12 is picked
+    # up in the same update that draws column 23. That update used to run past VBlank.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    lines = game.track_frame_lines()
+    pickups, columns = [], []
+    game.pyboy.hook_register(None, "_level_collect_fragment", lambda u: u.append(len(lines)), pickups)
+    game.pyboy.hook_register(None, "Flevel_stream$draw_column$0$0", lambda u: u.append(len(lines)), columns)
+    game.play_route(GREYBOX_ROUTE[:3])
+    assert set(pickups) & set(columns), "no update both picked up a fragment and drew a column"
+    assert game.u8("_lag_frames") == 0, f"the worst update ended at line {max(lines)}"

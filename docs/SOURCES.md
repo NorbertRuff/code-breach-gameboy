@@ -56,7 +56,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Replaying from one frame with `save_state` / `load_state` | PyBoy 2.7.0 docs | `tests/gamelib.py` `save`, `load`; `tests/test_physics.py` | In use |
 | Reading game state at a fixed point in the frame: copy the struct from a `hook_register` callback on `player_draw`; test writes to the player wait for the same point | Own finding (PyBoy frames end mid-update) | `tests/gamelib.py` `player()`, `place_player()` | In use |
 | Reachability by simulating jumps with a copy of the game's physics, from every reachable surface; jump arcs drawn from the simulated paths | Own design (the plan in LEVEL_DESIGN.md section 1, step 3) | `tools/levelpreview.py`, `tools/physics.py` | In use |
-| Finding lag frames: count game-loop calls per frame with a PyBoy hook; time code by reading `LY` at function entries (114 CPU cycles per line) | Own method | `tests/test_streaming.py` `test_no_lag_frames_while_streaming`, `tests/gamelib.py` `track_frame_lines`, `tests/test_frame_budget.py`, `tools/frame_budget.py` | In use |
+| Finding lag frames: count game-loop calls per frame with a PyBoy hook; time code by reading `LY` at function entries (114 CPU cycles per line) | Own method | `tests/gamelib.py` `track_frame_lines`, `tests/test_frame_budget.py`, `tools/frame_budget.py` | In use |
 | GitHub Actions: cached GBDK download, build, test | GitHub-hunt research (sample workflow); mdeclerk/Bananas (MIT) | `.github/workflows/build.yml` | In use |
 
 ## Design

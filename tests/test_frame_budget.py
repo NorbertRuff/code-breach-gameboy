@@ -5,8 +5,6 @@ them in lag_frames (src/main.c). The route test also measures how many screen li
 update takes, to keep a margin for what M3 adds (entities, parallax) and M6 (music).
 """
 
-import pytest
-
 from gamelib import COREGAMELOOP, LINES_PER_FRAME
 
 # The worst update may end this many lines after VBlank starts, of LINES_PER_FRAME. The
@@ -39,7 +37,6 @@ GREYBOX_ROUTE = [
 EXIT_X = 62 * 8          # the exit marker's column
 
 
-@pytest.mark.xfail(strict=True, reason="bug 19 (docs/PROJECT_STATE.md)")
 def test_greybox_route_stays_within_the_frame_budget(game):
     game.wait_for_state(COREGAMELOOP, timeout=300)
     lines = game.track_frame_lines()

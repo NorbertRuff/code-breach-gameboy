@@ -123,7 +123,8 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
       `tests/test_frame_budget.py`. Its route found bug 19 (PROJECT_STATE.md).
 - [x] A cheaper `player_update` (about 44 → 24 lines per frame), and `make budget` to
       see where the frame time goes.
-- [ ] Every update within the frame budget: fix bug 19.
+- [x] Every update within the frame budget: fix bug 19. The route's worst update ends at
+      line 133 of 154.
 - [ ] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
 - [ ] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
       `main.c`, `utils.c`, `sound.c`, `src/game_state/`, `src/enemy/`.

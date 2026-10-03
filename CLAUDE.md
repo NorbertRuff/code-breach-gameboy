@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 4,328 bytes free.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 4,566 bytes free.
 
 ## Build Commands
 
@@ -118,7 +118,7 @@ Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn 
 
 `camera_update()` (`src/engine/camera.c`) keeps the focus (player x + a look-ahead that eases to 24 px in the running direction) within 8 px of screen x 80, clamped to the level; `camera_reset()` snaps it for a level start or respawn, followed by `level_stream_reset()`. `move_bkg()` applies `camera_x`; the player and enemies are drawn at `world_x - camera_x`. Levels are up to 255 tiles wide.
 
-**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 1 an update ends near line 75, one that draws a column near 111, a fragment pickup near 117; a pickup in a column update reaches 157 (bug 19). `make budget` shows where the lines go.
+**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 1 an update ends near line 75, a fragment pickup near 95, one that draws a column near 112; the worst on the route (a pickup in a column update) at 133. `make budget` shows where the lines go.
 
 ## Development Feature Flags (`src/utils.h`)
 
@@ -129,6 +129,7 @@ Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn 
 ## Game Boy Constraints to Keep in Mind
 
 - **No floats**: all physics math uses `int8_t`/`int16_t`/`uint8_t`.
+- **No `/` or `%` in per-frame code**: there is no divide instruction, and SDCC's routine takes about 6 screen lines per call. Shift for powers of two, or count by subtraction.
 - **VRAM timing**: tile/map writes must happen during VBlank or HBlank. Use `wait_vbl_done()` at end of main loop (already in place).
 - **Shared tile memory**: GBDK uses `0x8800` addressing for background tiles, so background tiles 128–255 and sprite tiles 128–255 are the same memory.
 - **Sprite limit**: 10 sprites per scanline, 40 total OAM slots. The player uses 8×16 metasprites (`SPRITES_8x16` mode), 4 OAM entries.

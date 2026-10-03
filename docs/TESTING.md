@@ -42,8 +42,8 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_tiled2c.py` | The level converter: committed output up to date, the test level's contents, the level data in the ROM, and every rule check |
 | `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in the test room `levels/test_jumps.tmj` |
 | `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, passes the greybox level and reports a broken one |
-| `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, no lag frames, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
-| `tests/test_frame_budget.py` | A route through the greybox level from the start to the exit: no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right. The route test is an expected failure until bug 19 is fixed (M3 step 1) |
+| `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
+| `tests/test_frame_budget.py` | A route through the greybox level from the start to the exit: no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
 
