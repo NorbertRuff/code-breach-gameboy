@@ -1,66 +1,23 @@
 #include "input.h"
-#include "../utils.h"
-#include "../sound/sound.h"
 
+// Remembers last frame's buttons and reads this frame's.
 void input_update_joypad_state(uint8_t* joypad_current, uint8_t* joypad_previous)
 {
     *joypad_previous = *joypad_current;
     *joypad_current = joypad();
 }
 
-int8_t input_handle_joystick_input(Player* player, uint8_t joypad_current, uint8_t joypad_previous, uint16_t* scroll_value)
+// Turns the buttons into the player's input fields. player_update() does the rest.
+void input_read_player(Player* player, uint8_t joypad_current, uint8_t joypad_previous)
 {
-    // Reset movement force
-    player->movement_force_x = 0;
-    player->movement_force_y = 0;  // Reset vertical movement force
+    if (joypad_current & J_LEFT) player->input_x = -1;
+    else if (joypad_current & J_RIGHT) player->input_x = 1;
+    else player->input_x = 0;
 
-    if (joypad_current & J_LEFT)
-    {
-        player->movement_force_x = -1;
-        player->direction = 0;
-    }
-    else if (joypad_current & J_RIGHT)
-    {
-        player->movement_force_x = 1;
-        player->direction = 1;
-    }
+    player->jump_held = (joypad_current & J_A) != 0;
 
-    // Jump mechanics (from example code)
-    // Have we jumped? Only on a new press of A: holding A must not hop again on landing.
-    if ((player->underfoot_state & FOOT_ON_LAND) && (joypad_current & J_A) && !(joypad_previous & J_A))
-    {
-        // Mark character as jumped
-        player->is_jumping = 1;
-        player->jump_frames = 0;
-        // Set to frame 4 (running pose) for jumping
-        player->draw_frame = 3;
-        sound_play_jump();
+    // A new press of A (not a held one) is remembered for a few frames: the jump buffer.
+    if ((joypad_current & J_A) && !(joypad_previous & J_A)) {
+        player->jump_buffer_frames = JUMP_BUFFER_FRAMES;
     }
-    // If we are on land again after jumping...
-    else if (player->underfoot_state & FOOT_ON_LAND)
-    {
-        // Reset jump height
-        player->jump_frames = 0;
-
-        // Reset has jumped
-        player->is_jumping = 0;
-    }
-
-    // End jumping if not pressing A or gone above frames
-    if (!(joypad_current & J_A) || player->jump_frames > MAX_JUMP_FRAMES)
-    {
-        player->is_jumping = 0;
-    }
-
-    // If we have jumped and still have button pressed...
-    if (player->is_jumping && (joypad_current & J_A))
-    {
-        // Apply upward velocity
-        player->movement_force_y = -1;
-
-        // Keep track of jumped height
-        player->jump_frames++;
-    }
-    
-    return player->movement_force_x;
 }

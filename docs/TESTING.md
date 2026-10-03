@@ -38,6 +38,7 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_rom.py` | Header bytes, checksums, ROM size, bank 0 layout from the linker map |
 | `tests/test_boot.py` | Hardware detection, reaching gameplay, walking, jumping, screen drawn |
 | `tests/test_regressions.py` | One test per fixed bug |
+| `tests/test_physics.py` | Jump heights, coyote time, jump buffer, ceiling corners, one-way platforms, hazards, never overlapping solid tiles |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
 
@@ -61,12 +62,23 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   SDCC does not pad structs, so the offsets follow `player.h`. The ROM exports
   `player_struct_size`; `test_player_struct_size_matches` fails if the C struct changes
   without the Python mirror.
+- **When a read happens.** A PyBoy frame ends a few lines into VBlank, while the game is
+  in the middle of its update. So `game.player()` returns a copy of the struct taken when
+  the game calls `player_draw`, after that frame's update is complete. The copy is dropped
+  at every new frame: in a frame without a draw (a respawn, a state change) `player()`
+  reads memory directly. The struct then shows the frame that finished during the last
+  `frames()` step; a button pressed now reaches the game one frame later.
+- **Replaying from one frame.** `game.save()` returns a snapshot of the whole machine and
+  `game.load(snapshot)` goes back to it, so a test can try several inputs from the same
+  frame (coyote time, jump buffer).
 - `game.collision(x, y)` reads the level's collision map, `game.window_tile(col, row)`
   the HUD window map, `game.reg("WY")` a hardware register.
 - Some situations can't be reached by input in level 1, or would take minutes of play:
   falling into a pit, finishing the level. For those, tests write the game's variables
-  directly with `set_state`, `set_lives` and `set_player_y`. Keep this rare, and prefer
-  input. Once the game has a level-select cheat (roadmap M3), tests use it instead.
+  directly with `set_state`, `set_lives`, `set_player_y`, `place_player` and
+  `set_collision` (level 1 has no one-way or hazard tiles). `start_on_open_ground()`
+  puts the player at x = 156, where nothing is in the way: at the level start, platform A
+  blocks the path at body height. Keep this rare, and prefer input. Once the game has a level-select cheat (roadmap M3), tests use it instead.
 
 ## Conventions
 
@@ -79,7 +91,10 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 
   The tool exports the commit with `git archive` into a temporary folder (no checkout),
   builds it there, and runs the current tests against that build through
-  `APEXLAB_OBJ`. The `fix-bug` skill in `.claude/skills/` walks through the whole routine.
+  `APEXLAB_OBJ`. Tests that read the `Player` struct give no answer on builds from before
+  M2 (commit `4d93eb2` and older): the struct changed, and only `x` and `y` stayed in
+  place, with `y` in different units. Compare raw values within one build instead, as
+  the bug 6 test does. The `fix-bug` skill in `.claude/skills/` walks through the whole routine.
 - **An open bug can get an expected-failure test** in `test_known_bugs.py`, marked
   `@pytest.mark.xfail(reason=...)`. `pytest.ini` sets `xfail_strict = true`: when the bug
   is fixed, the test passes and the run fails, so the test moves to

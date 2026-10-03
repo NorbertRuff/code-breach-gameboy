@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import struct
 from pathlib import Path
 from types import SimpleNamespace
@@ -26,13 +27,12 @@ REGISTERS = {
 # Mirror of the Player struct in src/player/player.h, in field order. SDCC does not pad
 # structs on the Game Boy CPU, and multi-byte values are little endian.
 # test_player_struct_size_matches fails when the C struct changes without this list.
+# x and y are in 1/32 px; player() adds px and py in whole pixels.
 PLAYER_FIELDS = [
-    ("x", "H"), ("y", "H"), ("draw_x", "H"), ("draw_y", "H"),
-    ("draw_frame", "B"), ("direction", "B"), ("animation_frame_count", "B"),
-    ("movement_frame_count", "B"), ("last_movement_x", "b"),
-    ("movement_force_x", "b"), ("movement_force_y", "b"), ("velocity_x", "b"), ("slowing_x", "b"),
-    ("is_jumping", "B"), ("jump_frames", "B"), ("velocity_y", "b"), ("jump_frame_count", "B"),
-    ("underfoot_state", "B"), ("invincibility_frames", "B"),
+    ("x", "H"), ("y", "H"), ("velocity_x", "b"), ("velocity_y", "b"), ("input_x", "b"),
+    ("jump_held", "B"), ("jump_buffer_frames", "B"), ("coyote_frames", "B"),
+    ("on_ground", "B"), ("touched_hazard", "B"), ("direction", "B"), ("draw_frame", "B"),
+    ("animation_frame_count", "B"), ("invincibility_frames", "B"),
 ]
 PLAYER_FORMAT = "<" + "".join(fmt for _, fmt in PLAYER_FIELDS)
 PLAYER_SIZE = struct.calcsize(PLAYER_FORMAT)
@@ -48,16 +48,23 @@ LEVEL_WIDTH = 32
 LEVEL_HEIGHT = 18
 TILE_SIZE = 8
 COLLISION_MAP_OFFSET = 6
+COLLISION_NONE = 0
 COLLISION_SOLID = 1
+COLLISION_ONE_WAY = 2
+COLLISION_HAZARD = 3
 
 # HUD tiles, from src/level/level_manager.h.
 HUD_DIGIT_TILE_BASE = 133
 HUD_SLASH_TILE = 143
 
-# Player sprite box around its pivot (x = center, y = feet), from src/player/player.h.
+# Player body box around its pivot (x = center, y = lowest row), from src/player/player.h.
+SUBPIXELS = 32
 SPRITE_LEFT_W = 8
 SPRITE_RIGHT_W = 7
-SPRITE_HEAD_OFFSET = 32
+SPRITE_HEAD_OFFSET = 31
+COYOTE_FRAMES = 6
+JUMP_BUFFER_FRAMES = 5
+CORNER_CORRECTION = 4
 
 
 PYBOY_DMG_BOOTROM = Path(pyboy_package.__file__).parent / "core" / "bootrom_dmg.bin"
@@ -105,13 +112,27 @@ class Game:
         self.mode = mode
         self.out_dir = out_dir
         self.test_name = test_name
+        # PyBoy's frames end a few lines into VBlank, in the middle of the game's update.
+        # So player() reads a copy taken when the game starts drawing the player, after
+        # that frame's update is complete. The copy is dropped at every new frame, so a
+        # frame without a draw (like a respawn) reads memory directly (docs/TESTING.md).
+        self._drawn_player = None
+        pyboy.hook_register(None, "_player_draw", self._copy_player, None)
+
+    def _copy_player(self, _context) -> None:
+        self._drawn_player = read_symbol(self.pyboy, "_player", PLAYER_SIZE)
 
     # --- time and input ---------------------------------------------------------
 
+    def tick(self, render: bool = False) -> None:
+        """Step one frame."""
+        self._drawn_player = None
+        self.pyboy.tick(1, render)
+
     def frames(self, n: int) -> None:
         """Step n frames without rendering (fast)."""
-        if n > 0:
-            self.pyboy.tick(n, False)
+        for _ in range(n):
+            self.tick()
 
     def hold(self, button: str, n: int) -> None:
         """Hold a button for n frames, then release it."""
@@ -131,6 +152,17 @@ class Game:
             self.frames(1)
         raise AssertionError(f"state {state} not reached in {timeout} frames (now {self.state()})")
 
+    def save(self) -> io.BytesIO:
+        """Snapshot of the whole machine, to replay from the same frame with load()."""
+        snapshot = io.BytesIO()
+        self.pyboy.save_state(snapshot)
+        return snapshot
+
+    def load(self, snapshot: io.BytesIO) -> None:
+        snapshot.seek(0)
+        self.pyboy.load_state(snapshot)
+        self._drawn_player = None
+
     # --- reading the game -------------------------------------------------------
 
     def u8(self, symbol: str) -> int:
@@ -146,9 +178,25 @@ class Game:
         return self.u8("_lives")
 
     def player(self) -> SimpleNamespace:
-        raw = read_symbol(self.pyboy, "_player", PLAYER_SIZE)
+        """The Player struct as of the last completed frame (live, until the first draw)."""
+        raw = self._drawn_player or read_symbol(self.pyboy, "_player", PLAYER_SIZE)
         values = struct.unpack(PLAYER_FORMAT, raw)
-        return SimpleNamespace(**{name: v for (name, _), v in zip(PLAYER_FIELDS, values)})
+        p = SimpleNamespace(**{name: v for (name, _), v in zip(PLAYER_FIELDS, values)})
+        p.px, p.py = p.x // SUBPIXELS, p.y // SUBPIXELS
+        return p
+
+    def player_box(self) -> tuple:
+        """The player's body box in world pixels: left, top, right, bottom (inclusive)."""
+        p = self.player()
+        return (p.px - SPRITE_LEFT_W, p.py - SPRITE_HEAD_OFFSET, p.px + SPRITE_RIGHT_W, p.py)
+
+    def solid_tiles_overlapped(self) -> list:
+        """Solid level tiles that the player's body box overlaps right now."""
+        left, top, right, bottom = self.player_box()
+        return [(tx, ty)
+                for ty in range(max(top, 0) // TILE_SIZE, bottom // TILE_SIZE + 1)
+                for tx in range(max(left, 0) // TILE_SIZE, right // TILE_SIZE + 1)
+                if ty < LEVEL_HEIGHT and tx < LEVEL_WIDTH and self.collision(tx, ty) == COLLISION_SOLID]
 
     def reg(self, name: str) -> int:
         return self.pyboy.memory[REGISTERS[name]]
@@ -175,36 +223,74 @@ class Game:
         _, addr = self.pyboy.symbol_lookup("_lives")
         self.pyboy.memory[addr] = lives
 
-    def set_player_y(self, y: int) -> None:
+    def _set_player_u16(self, field: str, value: int) -> None:
+        self._drawn_player = None
         _, addr = self.pyboy.symbol_lookup("_player")
-        addr += PLAYER_OFFSETS["y"]
-        self.pyboy.memory[addr] = y & 0xFF
-        self.pyboy.memory[addr + 1] = (y >> 8) & 0xFF
+        addr += PLAYER_OFFSETS[field]
+        self.pyboy.memory[addr] = value & 0xFF
+        self.pyboy.memory[addr + 1] = (value >> 8) & 0xFF
+
+    def set_player_y(self, y_px: int) -> None:
+        self._set_player_u16("y", y_px * SUBPIXELS)
+
+    def place_player(self, x_px: int, y_px: int) -> None:
+        """Put the player at a world position in pixels (x = center, y = lowest row)."""
+        self._set_player_u16("x", x_px * SUBPIXELS)
+        self._set_player_u16("y", y_px * SUBPIXELS)
+
+    def set_collision(self, tile_x: int, tile_y: int, kind: int) -> None:
+        """Change one tile's collision type (the screen keeps the old tile)."""
+        _, addr = self.pyboy.symbol_lookup("_level_manager")
+        self.pyboy.memory[addr + COLLISION_MAP_OFFSET + tile_y * LEVEL_WIDTH + tile_x] = kind
 
     # --- common sequences -------------------------------------------------------
 
+    def start_on_open_ground(self) -> None:
+        """Wait for gameplay, then put the player on the floor at x = 156, with open air above,
+        and patrol bots. At the level start, platform A blocks the way at body height."""
+        self.wait_for_state(COREGAMELOOP, timeout=300)
+        self.frames(5)
+        self.place_player(156, 119)
+        self.frames(2)
+
+    def jump_rise(self, frames_held: int) -> int:
+        """Jump with A held for frames_held; returns the highest rise in units of Player.y."""
+        ground_y = top = self.player().y
+        self.pyboy.button_press("a")
+        for frame in range(90):
+            if frame == frames_held:
+                self.pyboy.button_release("a")
+            self.frames(1)
+            top = min(top, self.player().y)
+        return ground_y - top
+
     def lose_life(self, timeout: int = 400) -> None:
-        """Wait until invincibility is over, then walk right into the first patrol bot."""
+        """Wait until invincibility is over, then jump over platform A and run right into
+        the first patrol bot."""
         lives = self.lives()
         for _ in range(200):
             if self.player().invincibility_frames == 0:
                 break
             self.frames(1)
         self.pyboy.button_press("right")
+        self.pyboy.button_press("a")
         try:
-            for _ in range(timeout):
+            for frame in range(timeout):
+                if frame == 30:
+                    self.pyboy.button_release("a")
                 self.frames(1)
                 if self.lives() != lives:
                     return
         finally:
             self.pyboy.button_release("right")
-        raise AssertionError("walking right never hit an enemy")
+            self.pyboy.button_release("a")
+        raise AssertionError("running right never hit an enemy")
 
     # --- pictures ---------------------------------------------------------------
 
     def screenshot(self, name: str) -> Path:
         """Render one frame and save it as tests/out/<test>_<name>.png."""
-        self.pyboy.tick(1, True)
+        self.tick(render=True)
         self.out_dir.mkdir(parents=True, exist_ok=True)
         safe = self.test_name.replace("[", "_").replace("]", "").replace("/", "_")
         path = self.out_dir / f"{safe}_{name}.png"
@@ -213,6 +299,6 @@ class Game:
 
     def screen_colors(self) -> int:
         """Number of distinct colors in the current frame (renders one frame)."""
-        self.pyboy.tick(1, True)
+        self.tick(render=True)
         pixels = self.pyboy.screen.ndarray[:, :, :3].reshape(-1, 3)
         return len({tuple(p) for p in pixels})

@@ -88,7 +88,7 @@ void hud_update_lives(uint8_t lives);
 
 // Level-specific functions
 void level_1_server_room_init(Level* level);
-uint8_t level_check_collision(Level* level, uint16_t x, uint16_t y, uint16_t scroll_x);
+uint8_t level_collision_at(Level* level, uint8_t tile_x, uint8_t tile_y);
 void level_handle_collision(Level* level, uint8_t collision_type, uint8_t tile_x, uint8_t tile_y);
 
 #endif // LEVEL_MANAGER_H

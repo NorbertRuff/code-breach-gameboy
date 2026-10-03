@@ -337,18 +337,12 @@ void level_1_server_room_init(Level* level)
     level->spawns[2].y = 5;
 }
 
-// Collision detection function
-uint8_t level_check_collision(Level* level, uint16_t x, uint16_t y, uint16_t scroll_x)
+// Collision type of a level tile. Outside the level is open (COLLISION_NONE).
+uint8_t level_collision_at(Level* level, uint8_t tile_x, uint8_t tile_y)
 {
-    // Convert world coordinates to tile coordinates
-    uint8_t tile_x = (x + scroll_x) / TILE_SIZE;
-    uint8_t tile_y = y / TILE_SIZE;
-
-    // Bounds checking — treat out-of-bounds as no collision
     if (tile_x >= LEVEL_WIDTH || tile_y >= LEVEL_HEIGHT) {
         return COLLISION_NONE;
     }
-
     return level->collision_map[tile_y][tile_x];
 }
 

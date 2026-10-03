@@ -5,71 +5,54 @@
 #include <stdint.h>
 #include "../level/level_manager.h"
 
-// Player character constants
-#define FLOOR_Y 128
-#define PROGRAMMER_RUN_FRAMECOUNT 5      // Updated to match actual available frames (0-4)
-#define PROGRAMMER_WALKING_SPEED 2       // Increased for faster horizontal movement
+// Positions are in 1/32 px: pixel = pos >> 5, tile = pos >> 8.
+#define SUBPIXELS 32
+#define TO_PIXELS(pos) ((pos) >> 5)
 
-// Sprite bounds derived from programmer_PIVOT_X=8, programmer_PIVOT_Y=16, size 16x32
-// player->x is the horizontal pivot (center), player->y is the vertical pivot (feet reference)
-#define SPRITE_LEFT_W   8   // pixels from pivot to left edge
-#define SPRITE_RIGHT_W  7   // pixels from pivot to right edge (16px wide, 0-indexed)
-#define SPRITE_HEAD_OFFSET 32  // pixels above pivot to head top (= programmer_HEIGHT)
+// Body box around the pivot (x = center, y = lowest body row), 16x32 px.
+#define SPRITE_LEFT_W   8   // pixels from x to the left edge
+#define SPRITE_RIGHT_W  7   // pixels from x to the right edge
+#define SPRITE_HEAD_OFFSET 31  // pixels from y up to the top row
 
-// Animation system constants
-#define ANIMATION_FRAME_LENGTH 4         // How often to change animation frames (slowed down)
-#define MOVEMENT_FRAME_LENGTH 4          // Reduced for more responsive movement
-#define DECELERATION_FRAMES 3            // Frames to continue moving after releasing button
+// Running, in 1/32 px per frame (RESEARCH.md 2.2).
+#define RUN_SPEED_MAX     48   // 1.5 px/f
+#define RUN_ACCEL          8   // full speed in 6 frames
+#define RUN_DECEL          6   // stop in 8 frames
+#define AIR_ACCEL          5   // 0.65x control in the air
+#define AIR_DECEL          4
 
-// Underfoot detection constants
-#define FOOT_ON_LAND    0x01U
-#define FOOT_IN_AIR     0x02U
+// Jumping, in 1/32 px per frame.
+#define JUMP_SPEED        96   // 3 px/f upward at take-off
+#define GRAVITY_RISE       4   // 0.125 px/f2 while rising with A held
+#define GRAVITY_FALL      12   // 0.375 px/f2 otherwise: falling, or A released (jump cut)
+#define APEX_SPEED        16   // below 0.5 px/f with A held, gravity is halved (apex hang)
+#define FALL_SPEED_MAX   112   // 3.5 px/f, under 8 px/f so no tile is ever skipped
+#define COYOTE_FRAMES      6   // a jump still works this long after walking off a ledge
+#define JUMP_BUFFER_FRAMES 5   // an A press this long before landing still jumps
+#define CORNER_CORRECTION  4   // px the head may slide sideways past a ceiling corner
 
-// Jumping mechanics constants (improved from example)
-#define MAX_JUMP_FRAMES 15      // Maximum frames to hold jump
-#define JUMP_UPWARD_FORCE -1    // Upward movement per frame while jumping
-#define MAX_VELOCITY_Y 3        // Maximum vertical velocity
-#define MIN_VELOCITY_Y -3       // Minimum vertical velocity
+#define ANIMATION_FRAME_LENGTH 4   // frames per run animation frame
+#define JUMP_POSE_FRAME 3
 
-// Player character structure
 typedef struct {
-    // Position
-    uint16_t x;
-    uint16_t y;
-    uint16_t draw_x;
-    uint16_t draw_y;
-    
-    // Animation
+    uint16_t x;                  // body center, world, 1/32 px
+    uint16_t y;                  // lowest body row, world, 1/32 px
+    int8_t velocity_x;           // 1/32 px per frame
+    int8_t velocity_y;           // 1/32 px per frame, positive is down
+    int8_t input_x;              // d-pad: -1 left, 0, 1 right
+    uint8_t jump_held;           // A is down this frame
+    uint8_t jump_buffer_frames;  // counts down after a new press of A
+    uint8_t coyote_frames;       // counts down after leaving the ground
+    uint8_t on_ground;
+    uint8_t touched_hazard;      // set when the body overlaps a hazard tile
+    uint8_t direction;           // 0 left, 1 right
     uint8_t draw_frame;
-    uint8_t direction;
     uint8_t animation_frame_count;
-    uint8_t movement_frame_count;
-    int8_t last_movement_x;     // movement_force_x of the previous frame: -1, 0 or 1
-    
-    // Movement
-    int8_t movement_force_x;
-    int8_t movement_force_y;    // Vertical movement force for jumping
-    int8_t velocity_x;
-    int8_t slowing_x;           // slide direction after releasing left/right: -1, 0 or 1
-    
-    // Jumping (improved physics)
-    uint8_t is_jumping;
-    uint8_t jump_frames;
-    int8_t velocity_y;          // Vertical velocity for smooth falling
-    uint8_t jump_frame_count;   // Counter for jump physics
-    
-    // State
-    uint8_t underfoot_state;
     uint8_t invincibility_frames;  // counts down after taking a hit; sprite flashes while > 0
 } Player;
 
-// Function declarations
-void player_init(Player* player, uint16_t start_x, uint16_t start_y);
-void player_handle_movement_physics(Player* player, Level* current_level, uint16_t scroll_x);
-void player_handle_jumping_physics(Player* player, Level* current_level, uint16_t scroll_x);
-void player_draw(Player* player);
-void player_check_collectibles(Player* player, Level* current_level, uint16_t scroll_x);
-void player_update_underfoot_state(Player* player, Level* current_level, uint16_t scroll_x);
-void player_detect_collisions(Player* player, uint16_t* predicted_x, uint16_t* predicted_y, Level* current_level, uint16_t scroll_x);
+void player_init(Player* player, uint16_t start_x_px, uint16_t start_y_px);
+void player_update(Player* player, Level* level);
+void player_draw(Player* player, int16_t camera_x);
 
 #endif // PLAYER_H

@@ -19,7 +19,6 @@
 // Game state variables
 uint8_t joypad_current = 0;
 uint8_t joypad_previous = 0;
-uint16_t scroll_value = 0;
 int16_t total_scroll_x = 0;  // Accumulated scroll offset for collision detection
 uint16_t text_animation_state = 0;  // frames into the "PRESS START" blink cycle
 uint8_t current_game_state = INTRO_CREDITS_STATE;
@@ -73,7 +72,7 @@ static void spawn_enemies(void)
 // Keeps the player centered, within the level bounds.
 static void update_camera(void)
 {
-    int16_t cam = (int16_t)player.x - 80;
+    int16_t cam = (int16_t)TO_PIXELS(player.x) - 80;
     if (cam < 0) cam = 0;
     if (cam > (int16_t)MAX_SCROLL_X) cam = (int16_t)MAX_SCROLL_X;
     total_scroll_x = cam;
@@ -87,22 +86,17 @@ static void draw_actors(void)
     for (i = 0; i < MAX_ENEMIES; i++) {
         enemy_draw(&enemies[i], ENEMY_OAM_BASE + i * 2, total_scroll_x);
     }
-    player.draw_x = (uint16_t)((int16_t)player.x - total_scroll_x);
-    player_draw(&player);
+    player_draw(&player, total_scroll_x);
 }
 
 // Main game loop
 void main_game_loop()
 {
-    // Handle input (movement_force only; camera handles scrolling)
-    input_handle_joystick_input(&player, joypad_current, joypad_previous, &scroll_value);
-
-    // Update player physics in world coordinates (scroll_x=0: player->x is world X)
-    player_handle_movement_physics(&player, &level_manager.current_level, 0);
-    player_handle_jumping_physics(&player, &level_manager.current_level, 0);
+    input_read_player(&player, joypad_current, joypad_previous);
+    player_update(&player, &level_manager.current_level);
 
     // Fell out of the level? Costs a life, even while invincible.
-    if ((int16_t)player.y > (int16_t)FALL_DEATH_Y) {
+    if (TO_PIXELS(player.y) > FALL_DEATH_Y) {
         sound_play_hit();
         current_game_state = GAMEPLAY_END;
         return;
@@ -113,9 +107,6 @@ void main_game_loop()
     // Update and render level
     level_update(&level_manager);
     level_render(&level_manager);
-
-    // Check collectibles (world coords, no scroll offset needed)
-    player_check_collectibles(&player, &level_manager.current_level, 0);
 
     // Win condition: all collectibles gathered
     if (level_manager.current_level.collectible_count > 0 &&
@@ -136,16 +127,17 @@ void main_game_loop()
     // Invincibility countdown
     if (player.invincibility_frames > 0) player.invincibility_frames--;
 
-    // Update enemies and check player collision (skip if invincible)
+    // Hit by an enemy or a hazard tile? Not while invincible.
     {
         uint8_t i;
+        uint8_t hit = player.touched_hazard;
         for (i = 0; i < MAX_ENEMIES; i++) {
             enemy_update(&enemies[i]);
-            if (!player.invincibility_frames &&
-                enemy_check_player_collision(&enemies[i], player.x, player.y)) {
-                sound_play_hit();
-                current_game_state = GAMEPLAY_END;
-            }
+            hit |= enemy_check_player_collision(&enemies[i], TO_PIXELS(player.x), TO_PIXELS(player.y));
+        }
+        if (hit && !player.invincibility_frames) {
+            sound_play_hit();
+            current_game_state = GAMEPLAY_END;
         }
     }
 

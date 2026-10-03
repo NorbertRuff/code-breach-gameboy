@@ -109,23 +109,27 @@ def run(mode: str, rom: Path) -> None:
     rec.shot("level_start")
     level_map(game).save(OUT / f"{mode}_level_map.png")
 
-    game.hold("right", 6)
-    rec.shot("walking_right")
-    game.frames(20)
-    rec.shot("standing_after_walk")
-
+    # Platform A blocks the way at body height: jump onto it.
+    game.pyboy.button_press("right")
     game.pyboy.button_press("a")
     game.frames(6)
     rec.shot("jump_rising")
-    game.frames(8)
-    game.pyboy.button_release("a")
+    game.frames(14)
     rec.shot("jump_top")
-    game.frames(40)
-    rec.shot("landed")
+    game.pyboy.button_release("a")
+    game.frames(10)
+    game.pyboy.button_release("right")
+    game.frames(20)
+    rec.shot("landed_on_platform")
+
+    game.hold("right", 8)
+    rec.shot("walking_off_platform")
+    game.frames(20)
+    rec.shot("standing_after_walk")
 
     game.hold("left", 10)
     game.frames(3)
-    rec.shot("walking_left")
+    rec.shot("walking_left_into_wall")
 
     walk_until_hit(game, rec)
     rec.shot("hit_by_enemy")
@@ -134,10 +138,11 @@ def run(mode: str, rom: Path) -> None:
     game.frames(2)
     rec.shot("respawn_invincible_b")
 
-    # While invincible, walk right to see the far end of the level.
-    game.pyboy.button_press("right")
-    game.frames(70)
-    game.pyboy.button_release("right")
+    # The far end of the level, once the invincibility blink is over: put the player
+    # past the ground bot, then walk.
+    game.frames(90)
+    game.place_player(200, 119)
+    game.hold("right", 40)
     rec.shot("far_right")
     game.frames(30)
     rec.shot("far_right_standing")

@@ -7,8 +7,6 @@ import pytest
 from gamelib import (COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END, HUD_DIGIT_TILE_BASE,
                      HUD_SLASH_TILE, LEVEL_COMPLETE, LEVEL_WIDTH, read_symbol)
 
-FOOT_ON_LAND = 0x01   # src/player/player.h
-
 dmg_only = pytest.mark.parametrize("mode", ["dmg"])  # BGP_REG effects are DMG-only until M4
 
 
@@ -78,6 +76,50 @@ def test_unused_background_tiles_stay_empty(game):
     assert not any(game.pyboy.memory[first:last])
 
 
+# Bug 5 ---------------------------------------------------------------------------
+
+def test_falling_never_moves_up(game):
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.frames(5)
+    game.set_player_y(40)                 # in the air, above open floor
+    ys = [game.player().y]
+    for _ in range(90):
+        game.frames(1)
+        ys.append(game.player().y)
+    rises = [(i, a, b) for i, (a, b) in enumerate(zip(ys, ys[1:])) if b < a]
+    assert not rises, f"the player moved up while falling: {rises[:5]}"
+
+
+# Bug 6 ---------------------------------------------------------------------------
+
+def test_releasing_a_cuts_the_jump_short(game):
+    # Compares raw y within one build, so it also runs against builds from before the
+    # sub-pixel Player struct (tools/test_against.py).
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.frames(10)
+    start = game.save()
+    tap = game.jump_rise(1)
+    game.load(start)
+    held = game.jump_rise(30)
+    assert held >= 2 * tap, f"a tapped jump rises {tap}, a held one only {held}"
+
+
+# Bug 7 ---------------------------------------------------------------------------
+
+def test_player_never_overlaps_solid_tiles(game):
+    # Walks right from the start into the side of platform A, which is at body height.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.frames(5)
+    game.pyboy.button_press("right")
+    try:
+        for _ in range(40):
+            game.frames(1)
+            hits = game.solid_tiles_overlapped()
+            assert not hits, f"player box {game.player_box()} overlaps {hits}"
+    finally:
+        game.pyboy.button_release("right")
+
+
 # Bug 11 --------------------------------------------------------------------------
 
 def test_falling_below_the_level_costs_a_life(game):
@@ -95,10 +137,7 @@ def test_falling_below_the_level_costs_a_life(game):
 # Bug 13 --------------------------------------------------------------------------
 
 def test_no_slide_to_the_right_after_releasing_left(game):
-    game.wait_for_state(COREGAMELOOP, timeout=300)
-    game.frames(10)
-    game.hold("right", 12)                # make room on the left (the first bot is further right)
-    game.frames(10)
+    game.start_on_open_ground()
     game.hold("left", 8)
     xs = [game.player().x]
     for _ in range(6):
@@ -116,7 +155,7 @@ def test_level_and_player_are_above_the_hud(game):
     game.frames(5)
     assert all(game.collision(x, 15) == COLLISION_SOLID for x in range(LEVEL_WIDTH))
     assert not any(game.collision(x, y) for x in range(LEVEL_WIDTH) for y in (16, 17))
-    assert game.player().y < 128 == game.reg("WY")
+    assert game.player().py < 128 == game.reg("WY")
 
 
 # Review G1: sprite palettes are ordered light to dark ----------------------------
@@ -146,7 +185,7 @@ def test_holding_a_jumps_only_once(game):
     try:
         for _ in range(150):              # long enough for three jumps if it auto-hops
             game.frames(1)
-            grounded = game.player().underfoot_state == FOOT_ON_LAND
+            grounded = game.player().on_ground
             if on_ground and not grounded:
                 takeoffs += 1
             on_ground = grounded
@@ -187,3 +226,24 @@ def test_flashes_are_slow_and_restore_palettes(game, event):
         raise AssertionError("the level never restarted")
     assert flashes_per_second(bgp) <= 3
     assert game.reg("OBP0") == obp0_before, "sprite palette not restored after the flash"
+
+
+# Bug 17 --------------------------------------------------------------------------
+
+def player_sprite_area(game) -> tuple:
+    """Screen rectangle covered by the player's 4 hardware sprites (8x16 each, OAM 0-3)."""
+    oam = game.pyboy.memory[0xFE00:0xFE10]
+    xs = [oam[i + 1] - 8 for i in range(0, 16, 4)]
+    ys = [oam[i] - 16 for i in range(0, 16, 4)]
+    return min(xs), min(ys), max(xs) + 7, max(ys) + 15
+
+
+def test_player_sprite_covers_its_collision_box(game):
+    # Level 1 starts the player at x = 8, y = 119 with the camera at 0: the box is
+    # x 0-15, y 88-119. Holding left turns the player around without moving (level edge).
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.frames(5)
+    assert player_sprite_area(game) == (0, 88, 15, 119), "facing right"
+    game.hold("left", 5)
+    game.frames(2)
+    assert player_sprite_area(game) == (0, 88, 15, 119), "facing left"

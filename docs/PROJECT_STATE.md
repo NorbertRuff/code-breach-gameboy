@@ -12,6 +12,9 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
 - **Still open:** bugs 5, 6 and 7 (physics and collision rewrite in M2; 5 and 7 have
   expected-failure tests in `tests/test_known_bugs.py`). Bug 12 is closed: the owner
   chose 1.5 s, and the comment now says so.
+- **2026-10-03, M2 step 1:** bugs 5, 6 and 7 fixed by the physics rewrite (sub-pixel
+  positions, velocity and gravity, box collision against tiles), with tests in
+  `tests/test_regressions.py`. Bug 17 found and fixed on the way.
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 
@@ -82,6 +85,7 @@ Ordered by how visible they are to the player.
 | 14 | The level-complete flash is too fast for photosensitive players. | `src/game_state/game_over.c:28` | `palette_flash(6, 8)` flashes once every 16 frames: 3.75 per second. The WCAG guideline is at most 3. The game-over flash (`hold` 12) is 2.5 per second, which is fine. | Hold at least 10 frames per half-flash. |
 | 15 | The player is drawn with obsolete API calls. | `src/player/player.c:282,286` | `move_metasprite` and `move_metasprite_vflip` are marked "Obsolete" in GBDK 4.5's `metasprites.h`. | `move_metasprite_ex` and `move_metasprite_flipx`. |
 | 16 | The player starts inside platform A, and 1 px inside the ground. | `src/level/level_manager.c` `level_1_server_room_init` | Start x = 16 puts the 16 px sprite over platform A (x 16–47) at body height. Start y = 136 is the ground tile's top row; every landing puts the feet at 135. | Start at x = 8, y = 135. Found by the PyBoy jump test on 2026-10-02. |
+| 17 | The player sprite is drawn 8 px left of the collision box (4 px when facing left) and 1 px too high. Fixed in M2. | `src/player/player.c` `player_draw` | `move_metasprite_ex` takes hardware sprite coordinates, which start 8 px left of and 16 px above the screen. The code passed screen coordinates, plus a `+ 4` for the flipped sprite. | Pivot = box top-left + `programmer_PIVOT_X/Y` + `DEVICE_SPRITE_PX_OFFSET_X/Y`, the same for both facings. Found while writing the M2 physics tests on 2026-10-03. |
 
 ## Tech debt
 

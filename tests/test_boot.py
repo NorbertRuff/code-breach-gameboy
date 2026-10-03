@@ -2,9 +2,6 @@
 
 from gamelib import COREGAMELOOP, PLAYER_SIZE
 
-FOOT_ON_LAND = 0x01   # src/player/player.h
-
-
 def test_hardware_detected(game):
     # GBDK sets _cpu from the CPU's A register at power-on: 0x11 on GBC, 0x01 on DMG.
     game.frames(5)
@@ -39,8 +36,7 @@ def test_hud_window_at_bottom_after_boot(game):
 
 
 def test_player_walks_right(game):
-    game.wait_for_state(COREGAMELOOP, timeout=300)
-    game.frames(10)
+    game.start_on_open_ground()
     start_x = game.player().x
     game.hold("right", 10)
     assert game.player().x > start_x
@@ -49,10 +45,10 @@ def test_player_walks_right(game):
 def test_player_jumps_and_lands(game):
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.frames(10)
-    ground_y = game.player().y
+    ground_y = game.player().py
     game.hold("a", 10)
-    assert game.player().y < ground_y, "player did not rise"
+    assert game.player().py < ground_y, "player did not rise"
     game.frames(90)
     after = game.player()
-    assert after.underfoot_state == FOOT_ON_LAND, "player is still in the air"
-    assert after.y == ground_y, "player did not land on the same ground"
+    assert after.on_ground, "player is still in the air"
+    assert after.py == ground_y, "player did not land on the same ground"

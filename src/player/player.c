@@ -1,293 +1,257 @@
+#include <string.h>
 #include "player.h"
 #include "../graphics/programmer.h"
-#include "../level/level_manager.h"
+#include "../sound/sound.h"
 #include "../engine/banking.h"
 
 // Read by the tests to notice Player struct changes.
 const uint8_t player_struct_size = sizeof(Player);
 
-void player_init(Player* player, uint16_t start_x, uint16_t start_y)
+// Tile types that stop the feet (landing) and the body (walls and ceilings).
+#define BLOCKS_FEET ((1 << COLLISION_SOLID) | (1 << COLLISION_ONE_WAY))
+#define BLOCKS_BODY (1 << COLLISION_SOLID)
+
+// How far the body center may go: the box stays inside the level.
+#define PLAYER_MIN_X ((uint16_t)SPRITE_LEFT_W * SUBPIXELS)
+#define PLAYER_MAX_X ((uint16_t)(LEVEL_WIDTH * TILE_SIZE - 1 - SPRITE_RIGHT_W) * SUBPIXELS)
+
+#define RUN_LAST_FRAME 4   // run cycle: frames 1-4; frame 0 is standing
+
+// Starts the player standing still, facing right, at a world position in pixels.
+void player_init(Player* player, uint16_t start_x_px, uint16_t start_y_px)
 {
-    // Initialize position
-    player->x = start_x;
-    player->y = start_y;
-    player->draw_x = start_x;
-    player->draw_y = start_y;
-    
-    // Initialize animation
-    player->draw_frame = 0;
-    player->direction = 0;
-    player->animation_frame_count = 0;
-    player->movement_frame_count = 0;
-    player->last_movement_x = 0;
-    
-    // Initialize movement
-    player->movement_force_x = 0;
-    player->movement_force_y = 0;  // Initialize vertical movement force
-    player->velocity_x = 0;
-    player->slowing_x = 0;
-    
-    // Initialize jumping (improved physics)
-    player->is_jumping = 0;
-    player->jump_frames = 0;
-    player->velocity_y = 0;
-    player->jump_frame_count = 0;
-    
-    // Initialize state
-    player->underfoot_state = FOOT_ON_LAND;
-    player->invincibility_frames = 0;
+    memset(player, 0, sizeof(Player));
+    player->x = start_x_px * SUBPIXELS;
+    player->y = start_y_px * SUBPIXELS;
+    player->direction = 1;
 }
 
-void player_update_underfoot_state(Player* player, Level* current_level, uint16_t scroll_x)
+// Does any tile in the pixel row y, between the pixel columns left and right, have one
+// of the collision types? Above the level counts as open.
+static uint8_t row_has(Level* level, int16_t y, int16_t left, int16_t right, uint8_t types)
 {
-    // Check one pixel below, at both sprite edges
-    uint16_t left_x  = (player->x > SPRITE_LEFT_W) ? player->x - SPRITE_LEFT_W : 0;
-    uint16_t right_x = player->x + SPRITE_RIGHT_W;
-    uint8_t col_left  = level_check_collision(current_level, left_x,  player->y + 1, scroll_x);
-    uint8_t col_right = level_check_collision(current_level, right_x, player->y + 1, scroll_x);
-    player->underfoot_state = (col_left == COLLISION_SOLID || col_right == COLLISION_SOLID)
-                              ? FOOT_ON_LAND : FOOT_IN_AIR;
+    if (y < 0) return 0;
+    if (left < 0) left = 0;
+    uint8_t tile_y = y >> 3;
+    uint8_t last_x = right >> 3;
+    for (uint8_t tile_x = left >> 3; tile_x <= last_x; tile_x++) {
+        if (types & (1 << level_collision_at(level, tile_x, tile_y))) return 1;
+    }
+    return 0;
 }
 
-void player_detect_collisions(Player* player, uint16_t* predicted_x, uint16_t* predicted_y, Level* current_level, uint16_t scroll_x)
+// Does any tile in the pixel rectangle have one of the collision types?
+static uint8_t area_has(Level* level, int16_t left, int16_t top, int16_t right, int16_t bottom, uint8_t types)
 {
-    uint16_t check_x_left  = (*predicted_x > SPRITE_LEFT_W) ? *predicted_x - SPRITE_LEFT_W : 0;
-    uint16_t check_x_right = *predicted_x + SPRITE_RIGHT_W;
-
-    if (player->velocity_y > 0) {
-        // Falling — check feet position
-        uint8_t col_left  = level_check_collision(current_level, check_x_left,  *predicted_y, scroll_x);
-        uint8_t col_right = level_check_collision(current_level, check_x_right, *predicted_y, scroll_x);
-        if (col_left == COLLISION_SOLID || col_right == COLLISION_SOLID) {
-            uint8_t tile_y = *predicted_y / TILE_SIZE;
-            *predicted_y = (tile_y * TILE_SIZE) - 1;
-            player->velocity_y = 0;
-            player->underfoot_state = FOOT_ON_LAND;
-        } else {
-            player->underfoot_state = FOOT_IN_AIR;
-        }
-    } else if (player->velocity_y < 0) {
-        // Rising — check head position (SPRITE_HEAD_OFFSET above pivot)
-        uint16_t head_y = (*predicted_y > SPRITE_HEAD_OFFSET) ? *predicted_y - SPRITE_HEAD_OFFSET : 0;
-        uint8_t col_left  = level_check_collision(current_level, check_x_left,  head_y, scroll_x);
-        uint8_t col_right = level_check_collision(current_level, check_x_right, head_y, scroll_x);
-        if (col_left == COLLISION_SOLID || col_right == COLLISION_SOLID) {
-            uint8_t tile_y = head_y / TILE_SIZE;
-            // Push feet down so head sits just below the tile bottom
-            *predicted_y = ((tile_y + 1) * TILE_SIZE) + SPRITE_HEAD_OFFSET;
-            player->velocity_y = 0;
-        }
+    if (top < 0) top = 0;
+    for (int16_t y = top & ~7; y <= bottom; y += TILE_SIZE) {
+        if (row_has(level, y, left, right, types)) return 1;
     }
-
-    // Collectible pickup is handled separately by player_check_collectibles
+    return 0;
 }
 
-void player_handle_movement_physics(Player* player, Level* current_level, uint16_t scroll_x)
+// Moves a speed toward a target by at most step.
+static int8_t approach(int8_t speed, int8_t target, uint8_t step)
 {
-    // Reset frame counters when starting movement (but NOT when stopping)
-    if (player->last_movement_x == 0 && player->movement_force_x != 0)
-    {
-        player->movement_frame_count = 0;
-        player->animation_frame_count = 0;
-    }
+    if (speed < target) return (target - speed > step) ? speed + step : target;
+    if (speed > target) return (speed - target > step) ? speed - step : target;
+    return speed;
+}
 
-    // Flag true when we release from movement (from example)
-    if (player->last_movement_x != 0 && player->movement_force_x == 0)
-    {
-        player->slowing_x = player->last_movement_x > 0 ? 1 : -1;
-    }
-
-    // Handle sprite flipping for direction
-    if (player->last_movement_x <= 0 && player->movement_force_x > 0)
-    {
-        player->direction = 1;  // Facing right
-    }
-    else if (player->last_movement_x >= 0 && player->movement_force_x < 0)
-    {
-        player->direction = 0;  // Facing left
-    }
-
-    // While moving...
-    if (player->movement_force_x != 0)
-    {
-        // Move character by movement force (from example)
-        player->velocity_x = player->movement_force_x;
-
-        // Progress movement counter
-        player->movement_frame_count++;
-        
-        // Roll around after max frame
-        if (player->movement_frame_count == MOVEMENT_FRAME_LENGTH)
-        {
-            player->movement_frame_count = 0;
-        }
-        
-        // Progress animation counter
-        player->animation_frame_count++;
-        
-        // Roll around after max frame
-        if (player->animation_frame_count == ANIMATION_FRAME_LENGTH)
-        {
-            player->animation_frame_count = 0;
-
-            // Move to next animation frame
-            if (player->draw_frame < 4)  // Use frames 0-4 (5 total frames)
-                player->draw_frame++;
-            else
-                player->draw_frame = 1; // Start from frame 1 (skip standing frame)
-        }
-    }
-    // When no longer moving
-    else
-    {
-        if (player->slowing_x && player->movement_frame_count < DECELERATION_FRAMES)
-        {
-            player->movement_frame_count++;
-
-            // Allow character to move one frame before stopping (like example)
-            if (player->movement_frame_count == DECELERATION_FRAMES - 1)
-            {
-                player->velocity_x = 0;
-                player->slowing_x = 0;
-            }
-            else
-                // Continue to move in the direction we were
-                player->velocity_x = player->slowing_x;
-        }
-        else
-        {
-            player->velocity_x = 0;
-        }
-        
-        // Reset to standing frame when fully stopped (but not when jumping)
-        if (player->velocity_x == 0 && !player->is_jumping)
-        {
-            player->draw_frame = 0;
-        }
-    }
-    
-    // Check horizontal collision at body height (not feet — feet are on the ground row)
-    int16_t new_x_signed = (int16_t)player->x + (player->velocity_x * PROGRAMMER_WALKING_SPEED);
-
-    // Clamp to level world bounds
-    if (new_x_signed < 0) new_x_signed = 0;
-    if (new_x_signed > (int16_t)(LEVEL_WIDTH * TILE_SIZE - SPRITE_RIGHT_W)) new_x_signed = (int16_t)(LEVEL_WIDTH * TILE_SIZE - SPRITE_RIGHT_W);
-
-    uint16_t new_x = (uint16_t)new_x_signed;
-    uint16_t body_y = (player->y > TILE_SIZE) ? player->y - TILE_SIZE : player->y;
-    uint8_t collision_x = level_check_collision(current_level, new_x, body_y, scroll_x);
-
-    if (collision_x == COLLISION_SOLID) {
-        player->velocity_x = 0;
+// Speeds up toward the d-pad direction, or slows down when it is released.
+// Control is weaker in the air.
+static void update_run_speed(Player* p)
+{
+    if (p->input_x) {
+        p->direction = p->input_x > 0;
+        p->velocity_x = approach(p->velocity_x, p->input_x * RUN_SPEED_MAX, p->on_ground ? RUN_ACCEL : AIR_ACCEL);
     } else {
-        player->x = new_x;
+        p->velocity_x = approach(p->velocity_x, 0, p->on_ground ? RUN_DECEL : AIR_DECEL);
     }
-    
-    // Update drawing position
-    player->draw_x = player->x;
-    
-    // Remember last movement for next frame
-    player->last_movement_x = player->movement_force_x;
 }
 
-void player_handle_jumping_physics(Player* player, Level* current_level, uint16_t scroll_x)
+// Starts a jump if A was pressed recently (jump buffer) and the player is on the ground
+// or has just left it (coyote time). Otherwise counts both timers down.
+static void try_jump(Player* p)
 {
-    // Update underfoot state based on Y position
-    player_update_underfoot_state(player, current_level, scroll_x);
-    
-    // While jumping...
-    if (player->movement_force_y != 0)
-    {
-        player->velocity_y += player->movement_force_y;
-        player->jump_frame_count = 0;
+    if (p->jump_buffer_frames && (p->on_ground || p->coyote_frames)) {
+        p->velocity_y = -JUMP_SPEED;
+        p->jump_buffer_frames = 0;
+        p->coyote_frames = 0;
+        p->on_ground = 0;
+        sound_play_jump();
+        return;
     }
-    // Otherwise, if in the air...
-    else if (player->underfoot_state & FOOT_IN_AIR)
-    {
-        // Jump frame count from 0 to 60
-        player->jump_frame_count = (player->jump_frame_count + 1) % 60;
-
-        // Apply gravity (from example - variable gravity for smooth feel)
-        if (player->jump_frame_count < 5)
-            player->velocity_y = -2;
-        else if (player->jump_frame_count < 10)
-            player->velocity_y = -1;
-        else if (player->jump_frame_count < 14)
-            player->velocity_y = 0;
-        else if (player->jump_frame_count < 20)
-            player->velocity_y = 1;
-        else
-            player->velocity_y = 2;
-    }
-
-    // Velocity limits (from example)
-    if (player->velocity_y != 0 && player->velocity_y < MIN_VELOCITY_Y)
-        player->velocity_y = MIN_VELOCITY_Y;
-    if (player->velocity_y != 0 && player->velocity_y > MAX_VELOCITY_Y)
-        player->velocity_y = MAX_VELOCITY_Y;
-    
-    // Calculate future position
-    uint16_t predicted_x = player->x;
-    uint16_t predicted_y = player->y + player->velocity_y;
-
-    // Update predictions based on collision
-    player_detect_collisions(player, &predicted_x, &predicted_y, current_level, scroll_x);
-
-    // Move character to new position
-    player->y = predicted_y;
-
-    // Update drawing Y position
-    player->draw_y = player->y;
+    if (p->jump_buffer_frames) p->jump_buffer_frames--;
+    if (p->coyote_frames && !p->on_ground) p->coyote_frames--;
 }
 
-static void check_collect_at(Level* level, uint8_t tile_x, uint8_t tile_y) {
-    if (tile_x < LEVEL_WIDTH && tile_y < LEVEL_HEIGHT) {
-        if (level->collision_map[tile_y][tile_x] == COLLISION_COLLECTIBLE) {
-            level_handle_collision(level, COLLISION_COLLECTIBLE, tile_x, tile_y);
+// Gravity for this frame: light while rising with A held, strong when falling or after
+// A is released (jump cut), and halved around the top of a held jump (apex hang).
+static uint8_t choose_gravity(const Player* p)
+{
+    uint8_t gravity = (p->jump_held && p->velocity_y < 0) ? GRAVITY_RISE : GRAVITY_FALL;
+    if (p->jump_held && p->velocity_y > -APEX_SPEED && p->velocity_y < APEX_SPEED) {
+        gravity >>= 1;
+    }
+    return gravity;
+}
+
+// Pulls the player down while in the air, up to the fall speed limit.
+static void apply_gravity(Player* p)
+{
+    if (p->on_ground) return;
+    int16_t speed = p->velocity_y + choose_gravity(p);
+    p->velocity_y = (speed > FALL_SPEED_MAX) ? FALL_SPEED_MAX : speed;
+}
+
+// Moves sideways. Stops flush against walls and at the level's edges.
+static void move_x(Player* p, Level* level)
+{
+    if (!p->velocity_x) return;
+    uint8_t moving_right = p->velocity_x > 0;
+    uint16_t x = p->x + p->velocity_x;
+    if (x < PLAYER_MIN_X || x > PLAYER_MAX_X) {
+        x = (x < PLAYER_MIN_X) ? PLAYER_MIN_X : PLAYER_MAX_X;
+        p->velocity_x = 0;
+    }
+
+    // Is the leading edge inside a wall, anywhere from head to feet?
+    int16_t feet = TO_PIXELS(p->y);
+    int16_t head = feet - SPRITE_HEAD_OFFSET;
+    int16_t edge = moving_right ? TO_PIXELS(x) + SPRITE_RIGHT_W : TO_PIXELS(x) - SPRITE_LEFT_W;
+    if (area_has(level, edge, head, edge, feet, BLOCKS_BODY)) {
+        int16_t center = moving_right ? (edge & ~7) - 1 - SPRITE_RIGHT_W
+                                      : (edge | 7) + 1 + SPRITE_LEFT_W;
+        x = (uint16_t)center * SUBPIXELS;
+        p->velocity_x = 0;
+    }
+    p->x = x;
+}
+
+// Head against a ceiling corner? Slides up to CORNER_CORRECTION px sideways to get past it.
+// Returns 1 if it found a free spot.
+static uint8_t slide_past_corner(Player* p, Level* level, int16_t head)
+{
+    int16_t center = TO_PIXELS(p->x);
+    int16_t feet = head + SPRITE_HEAD_OFFSET;
+    for (int8_t shift = 1; shift <= CORNER_CORRECTION; shift++) {
+        for (int8_t side = -shift; side <= shift; side += 2 * shift) {
+            int16_t x = center + side;
+            if (!area_has(level, x - SPRITE_LEFT_W, head, x + SPRITE_RIGHT_W, feet, BLOCKS_BODY)) {
+                p->x += side * SUBPIXELS;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+// Moves up or down. Lands on floors and one-way tops, stops the head at ceilings.
+static void move_y(Player* p, Level* level)
+{
+    if (!p->velocity_y) return;
+    uint16_t y = p->y + p->velocity_y;
+    if (p->velocity_y < 0 && y > p->y) y = 0;   // never above the top of the map
+    int16_t feet = TO_PIXELS(y);
+    int16_t left = TO_PIXELS(p->x) - SPRITE_LEFT_W;
+    int16_t right = TO_PIXELS(p->x) + SPRITE_RIGHT_W;
+
+    if (p->velocity_y > 0) {
+        // Did the feet just enter a tile row with a floor or a one-way top?
+        if ((feet >> 3) != (TO_PIXELS(p->y) >> 3) && row_has(level, feet, left, right, BLOCKS_FEET)) {
+            y = (uint16_t)((feet & ~7) - 1) * SUBPIXELS;
+            p->velocity_y = 0;
+        }
+    } else {
+        int16_t head = feet - SPRITE_HEAD_OFFSET;
+        if (row_has(level, head, left, right, BLOCKS_BODY) && !slide_past_corner(p, level, head)) {
+            y = (uint16_t)((head | 7) + 1 + SPRITE_HEAD_OFFSET) * SUBPIXELS;
+            p->velocity_y = 0;
+        }
+    }
+    p->y = y;
+}
+
+// Standing on a floor or a one-way top? On the ground, coyote time is full.
+static void update_ground(Player* p, Level* level)
+{
+    int16_t below = TO_PIXELS(p->y) + 1;
+    int16_t center = TO_PIXELS(p->x);
+    p->on_ground = p->velocity_y >= 0 && (below & 7) == 0 &&
+                   row_has(level, below, center - SPRITE_LEFT_W, center + SPRITE_RIGHT_W, BLOCKS_FEET);
+    if (p->on_ground) {
+        p->velocity_y = 0;
+        p->coyote_frames = COYOTE_FRAMES;
+    }
+}
+
+// Collects the fragments the body overlaps, and notes whether it touches a hazard.
+static void check_touched_tiles(Player* p, Level* level)
+{
+    int16_t center = TO_PIXELS(p->x);
+    int16_t feet = TO_PIXELS(p->y);
+    int16_t head = feet - SPRITE_HEAD_OFFSET;
+    uint8_t first_x = (center - SPRITE_LEFT_W) >> 3, last_x = (center + SPRITE_RIGHT_W) >> 3;
+    uint8_t first_y = (head < 0) ? 0 : head >> 3, last_y = feet >> 3;
+
+    p->touched_hazard = 0;
+    for (uint8_t tile_y = first_y; tile_y <= last_y; tile_y++) {
+        for (uint8_t tile_x = first_x; tile_x <= last_x; tile_x++) {
+            uint8_t type = level_collision_at(level, tile_x, tile_y);
+            if (type == COLLISION_COLLECTIBLE) level_handle_collision(level, type, tile_x, tile_y);
+            if (type == COLLISION_HAZARD) p->touched_hazard = 1;
         }
     }
 }
 
-void player_check_collectibles(Player* player, Level* current_level, uint16_t scroll_x)
+// Picks the sprite frame: jump pose in the air, run cycle while moving, standing otherwise.
+static void update_animation(Player* p)
 {
-    // Sprite occupies player->x-8 to player->x+8 horizontally
-    // Check left and right tile columns at two vertical positions (body and feet)
-    uint8_t tile_x_left  = ((player->x > SPRITE_LEFT_W ? player->x - SPRITE_LEFT_W : 0) + scroll_x) / TILE_SIZE;
-    uint8_t tile_x_right = (player->x + SPRITE_RIGHT_W + scroll_x) / TILE_SIZE;
-
-    uint8_t tile_y_feet = player->y / TILE_SIZE;
-    check_collect_at(current_level, tile_x_left,  tile_y_feet);
-    check_collect_at(current_level, tile_x_right, tile_y_feet);
-
-    if (player->y >= TILE_SIZE) {
-        uint8_t tile_y_body = (player->y - TILE_SIZE) / TILE_SIZE;
-        check_collect_at(current_level, tile_x_left,  tile_y_body);
-        check_collect_at(current_level, tile_x_right, tile_y_body);
+    if (!p->on_ground) {
+        p->draw_frame = JUMP_POSE_FRAME;
+    } else if (!p->velocity_x) {
+        p->draw_frame = 0;
+        p->animation_frame_count = 0;
+    } else if (++p->animation_frame_count == ANIMATION_FRAME_LENGTH) {
+        p->animation_frame_count = 0;
+        p->draw_frame = (p->draw_frame >= RUN_LAST_FRAME) ? 1 : p->draw_frame + 1;
     }
 }
 
-void player_draw(Player* player)
+// One frame of player movement: run, jump, gravity, collision, pickups, animation.
+// Reads the input fields that input_read_player() set this frame.
+void player_update(Player* player, Level* level)
 {
-    // Flash sprite while invincible: hide every other 2-frame window
-    if (player->invincibility_frames > 0 && (player->invincibility_frames & 2)) {
-        move_sprite(0, 0, 0); move_sprite(1, 0, 0);
-        move_sprite(2, 0, 0); move_sprite(3, 0, 0);
+    update_run_speed(player);
+    try_jump(player);
+    apply_gravity(player);
+    move_x(player, level);
+    move_y(player, level);
+    update_ground(player, level);
+    check_touched_tiles(player, level);
+    update_animation(player);
+}
+
+// Draws the player so the sprite covers its collision box. Flashes while invincible.
+void player_draw(Player* player, int16_t camera_x)
+{
+    if (player->invincibility_frames & 2) {
+        hide_sprites_range(0, 4);
         return;
     }
 
-    // Safety check: ensure frame is within valid range
-    uint8_t safe_frame = player->draw_frame;
-    if (safe_frame > 4) safe_frame = 0;  // Clamp to valid range 0-4
-    
-    // Draw the programmer metasprite
-    // Flip the metasprite horizontally (using vflip) if programmer isn't facing right
-    // The metasprite tables live in the programmer asset's ROM bank.
-    if (player->direction == 1)
-    {
-        WITH_BANK(programmer, move_metasprite_ex(programmer_metasprites[safe_frame], 0, 0, 0, player->draw_x, player->draw_y));
-    }
-    else
-    {
-        WITH_BANK(programmer, move_metasprite_flipx(programmer_metasprites[safe_frame], 0, 0, 0, player->draw_x + 4, player->draw_y));
-    }
+    // The metasprite pivot lies programmer_PIVOT_X/Y in from the box's top-left corner,
+    // and hardware sprite coordinates start 8 px left of and 16 px above the screen.
+    uint8_t left = TO_PIXELS(player->x) - SPRITE_LEFT_W - camera_x;
+    uint8_t top = TO_PIXELS(player->y) - SPRITE_HEAD_OFFSET;
+    uint8_t x = left + programmer_PIVOT_X + DEVICE_SPRITE_PX_OFFSET_X;
+    uint8_t y = top + programmer_PIVOT_Y + DEVICE_SPRITE_PX_OFFSET_Y;
+    WITH_BANK(programmer, {
+        if (player->direction) {
+            move_metasprite_ex(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
+        } else {
+            move_metasprite_flipx(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
+        }
+    });
 }

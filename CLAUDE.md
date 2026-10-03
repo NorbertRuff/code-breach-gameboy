@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-02 it has 5,112 bytes free.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 4,215 bytes free.
 
 ## Build Commands
 
@@ -82,8 +82,8 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state live
 |---|---|
 | `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen`, `game_over` (also `level_complete`) |
 | `src/engine/` | `platform.c` (`is_cgb`, GBC setup at boot), `banking.h` (`WITH_BANK` for reading banked assets) |
-| `src/player/` | `Player` struct + physics: `player_handle_movement_physics`, `player_handle_jumping_physics`, `player_draw`, collision and collectible checks |
-| `src/input/` | Joypad polling; turns button state into player movement and jump forces |
+| `src/player/` | `Player` struct + physics: `player_update` (run, jump, gravity, tile collision, pickups, animation), `player_draw` |
+| `src/input/` | Joypad polling; `input_read_player` copies the d-pad and A into the player's input fields |
 | `src/level/` | `LevelManager` + `Level` structs, tile collision map (18 rows × 32 columns), level 1 built in code (`level_1_server_room_init`), HUD drawing |
 | `src/enemy/` | Patrol enemies: update, draw (2 OAM entries each, from OAM 4), AABB hit test |
 | `src/sound/` | Sound effects written straight to the APU registers |
@@ -94,19 +94,20 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state live
 
 ### Player Physics (`src/player/player.h`, `src/player/player.c`)
 
-Physics uses integer arithmetic (no floats — Game Boy has no FPU). Positions are whole pixels in world coordinates (sub-pixel movement is planned for M2):
-- Horizontal: `velocity_x`, `movement_force_x`, `slowing_x` for deceleration over `DECELERATION_FRAMES`
-- Vertical: `velocity_y` clamped to `[MIN_VELOCITY_Y, MAX_VELOCITY_Y]`, `jump_frames` counter up to `MAX_JUMP_FRAMES`; falling speed comes from a table indexed by `jump_frame_count`
-- Ground detection via `underfoot_state` (`FOOT_ON_LAND` / `FOOT_IN_AIR`)
-- `player.x` is the sprite's horizontal center, `player.y` its feet. Collision functions take a `scroll_x` argument, but callers pass `0` because positions are already world coordinates.
+Physics uses integer arithmetic (no floats � Game Boy has no FPU). Values and their sources are in `player.h` and `docs/RESEARCH.md` 2.2.
+- Positions `x`, `y` are `uint16_t` in 1/32 px (`TO_PIXELS(pos)` = `pos >> 5`, tile = `pos >> 8`). `x` is the body's horizontal center, `y` its lowest row; the body box is 16�32 px (`SPRITE_LEFT_W`, `SPRITE_RIGHT_W`, `SPRITE_HEAD_OFFSET`).
+- Velocities are `int8_t` in 1/32 px per frame. Running accelerates toward `input_x * RUN_SPEED_MAX`, weaker in the air.
+- Jump: `JUMP_SPEED` up, light gravity while rising with A held, strong gravity when falling or after A is released (jump cut), half gravity near the top (apex hang). `coyote_frames` and `jump_buffer_frames` are one-byte countdowns.
+- Collision is checked per axis against the tiles the box enters: walls over the full body height, floors and one-way tops only when the feet enter a new tile row going down, ceilings with up to `CORNER_CORRECTION` px of sideways slide. Moves stay under 8 px per frame, so no tile is skipped.
+- `player_draw` places the metasprite so it covers the box: pivot = box top-left + `programmer_PIVOT_X/Y` + `DEVICE_SPRITE_PX_OFFSET_X/Y`.
 
 ### Level Collision (`src/level/level_manager.h`)
 
-`Level.collision_map[LEVEL_HEIGHT][LEVEL_WIDTH]` is an 18×32 byte array in WRAM. Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE` (only SOLID and COLLECTIBLE are handled). `level_check_collision()` converts world pixel coordinates to tile indices; out of bounds returns `COLLISION_NONE`.
+`Level.collision_map[LEVEL_HEIGHT][LEVEL_WIDTH]` is an 18×32 byte array in WRAM. Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE` (SOLID blocks, ONE_WAY blocks from above, HAZARD costs a life, COLLECTIBLE is picked up). `level_collision_at(level, tile_x, tile_y)` returns a tile's type; out of bounds returns `COLLISION_NONE`.
 
 ### Camera
 
-`main_game_loop()` sets `total_scroll_x = clamp(player.x - 80, 0, MAX_SCROLL_X)` and applies it with `move_bkg()`. The player and enemies are drawn at `world_x - total_scroll_x`. Levels are at most 32 tiles (256 px) wide until map streaming lands (M2).
+`main_game_loop()` sets `total_scroll_x = clamp(TO_PIXELS(player.x) - 80, 0, MAX_SCROLL_X)` and applies it with `move_bkg()`. The player and enemies are drawn at `world_x - total_scroll_x`. Levels are at most 32 tiles (256 px) wide until map streaming lands (M2).
 
 ## Development Feature Flags (`src/utils.h`)
 

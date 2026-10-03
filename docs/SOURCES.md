@@ -26,8 +26,11 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Hide sprites over the bottom HUD with the same interrupt (`HIDE_SPRITES` at line 127) | Larold's Flappy Bird tutorial; BlackCastle `src/main.c` (idea only, no license) | Interrupt handler | Planned (M3) |
 | Map streaming: copy the column entering the view with `set_bkg_submap` | GBDK example `cross-platform/large_map`; Larold's "Drawing Large Maps" | Level engine | Planned (M2) |
 | Collision kept in a 32×16 RAM ring, filled from a per-tileset ROM table while streaming | BlackCastle `include/global.h` (idea only), marioland-gbdk, CrossZGB `scroll_collisions[256]` (MIT) | Level engine | Planned (M2) |
-| Positions in 1/32 px; coyote time, jump buffer, hold-to-extend jump as small countdowns | GB Studio engine `gbvm/src/states/platform.c` (MIT) | Player physics | Planned (M2) |
-| Jump values: two gravities (jump cut), apex hang, coyote 6 frames, buffer 5 frames, corner correction | Kyle Pittman "Building a Better Jump" (GDC 2016); Celeste `Player.cs` (Maddy Thorson); SMBpedia movement data | Player physics | Planned (M2) |
+| Positions in 1/32 px; coyote time, jump buffer, hold-to-extend jump as small countdowns | GB Studio engine `gbvm/src/states/platform.c` (MIT) | `player.c` | In use |
+| Jump values: two gravities (jump cut), apex hang, coyote 6 frames, buffer 5 frames, corner correction | Kyle Pittman "Building a Better Jump" (GDC 2016); Celeste `Player.cs` (Maddy Thorson); SMBpedia movement data | `player.h`, `player.c` | In use |
+| Strong gravity on every fall, light gravity only while rising with A held | Super Mario Bros. (SMBpedia movement data) | `player.c` `choose_gravity` | In use |
+| Collision per axis; check points no more than 8 px apart along the box edge (here: every tile row and column the edge spans) | Larold's collision tutorial; RESEARCH.md 2.2 | `player.c` `move_x`, `move_y`, `row_has`, `area_has` | In use |
+| Metasprite position in hardware sprite coordinates: screen origin at (8, 16), `DEVICE_SPRITE_PX_OFFSET_X/Y` | GBDK `gb/metasprites.h` and `gb/hardware.h`; Pan Docs, OAM | `player.c` `player_draw` | In use |
 | Jump only on a new press of A | Own fix (review P1); edge detection as in flozz example 02 | `input.c` | In use |
 | Spawn list sorted by X, read with a cursor, start index per section | BlackCastle `src/monster_data.c` (idea only), marioland-gbdk (idea only) | Level converter, entity system | Planned (M3) |
 | Rebuild the sprite list every frame, then `hide_sprites_range` | zelda-gbdk `objects.c` (idea only); GBDK `metasprites` example | Entity system | Planned (M3) |
@@ -47,6 +50,8 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Save power-cycle test: stop with `ram_file`, boot again with it | struktured-labs/quintra `scripts/test_suspend.py` (MPL-2.0, idea only) | `tests/test_savetest.py` | In use |
 | ROM layout checks: `_HOME` below `0x4000`, header bytes, checksums | quintra `scripts/check_rom_layout.py`, `check_cartridge.py` (idea only) | `tests/test_rom.py` | In use |
 | Known bugs as strict expected failures; regression tests checked against the old build | Own convention | `tests/test_known_bugs.py`, `tests/test_regressions.py` | In use |
+| Replaying from one frame with `save_state` / `load_state` | PyBoy 2.7.0 docs | `tests/gamelib.py` `save`, `load`; `tests/test_physics.py` | In use |
+| Reading game state at a fixed point in the frame: copy the struct from a `hook_register` callback on `player_draw` | Own finding (PyBoy frames end mid-update) | `tests/gamelib.py` `player()` | In use |
 | GitHub Actions: cached GBDK download, build, test | GitHub-hunt research (sample workflow); mdeclerk/Bananas (MIT) | `.github/workflows/build.yml` | In use |
 
 ## Design
