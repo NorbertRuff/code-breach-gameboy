@@ -39,6 +39,13 @@ PLAYER_FIELDS = [
     ("animation_frame_count", "B"), ("invincibility_frames", "B"),
 ]
 PLAYER_FORMAT = "<" + "".join(fmt for _, fmt in PLAYER_FIELDS)
+
+# Mirror of the Actor struct in src/actor/actor.h; type is the address of its ActorType.
+# test_actor_struct_size_matches fails when the C struct changes without this list.
+ACTOR_FIELDS = [("type", "H"), ("x", "H"), ("y", "B"), ("direction", "b"), ("min_x", "H"), ("max_x", "H")]
+ACTOR_FORMAT = "<" + "".join(fmt for _, fmt in ACTOR_FIELDS)
+ACTOR_SIZE = struct.calcsize(ACTOR_FORMAT)
+MAX_ACTORS = 8
 PLAYER_SIZE = struct.calcsize(PLAYER_FORMAT)
 PLAYER_OFFSETS = {}
 _offset = 0
@@ -56,6 +63,9 @@ COLLISION_NONE = 0
 COLLISION_SOLID = 1
 COLLISION_ONE_WAY = 2
 COLLISION_HAZARD = 3
+
+# The patrol bot's two 8x16 sprites use these sprite tiles (src/actor/bot.c).
+BOT_TILES = (40, 42)
 
 # HUD tiles, from src/level/level_manager.h.
 HUD_DIGIT_TILE_BASE = 133
@@ -213,6 +223,26 @@ class Game:
         p = SimpleNamespace(**{name: v for (name, _), v in zip(PLAYER_FIELDS, values)})
         p.px, p.py = p.x // SUBPIXELS, p.y // SUBPIXELS
         return p
+
+    def actors(self) -> list:
+        """The actors in play, in array order. Each has the Actor fields, plus bot: is it
+        a patrol bot."""
+        count = self.u8("_actor_count")
+        raw = read_symbol(self.pyboy, "_actors", ACTOR_SIZE * count)
+        _, bot_type = self.pyboy.symbol_lookup("_bot_type")
+        actors = []
+        for i in range(count):
+            values = struct.unpack_from(ACTOR_FORMAT, raw, i * ACTOR_SIZE)
+            actor = SimpleNamespace(**{name: v for (name, _), v in zip(ACTOR_FIELDS, values)})
+            actor.bot = actor.type == bot_type
+            actors.append(actor)
+        return actors
+
+    def visible_sprites(self) -> list:
+        """The hardware sprites in OAM that are switched on (y not 0): (x, y, tile) each,
+        in screen pixels for the sprite's top-left corner."""
+        oam = self.pyboy.memory[0xFE00:0xFEA0]
+        return [(oam[i + 1] - 8, oam[i] - 16, oam[i + 2]) for i in range(0, 160, 4) if oam[i]]
 
     def player_box(self) -> tuple:
         """The player's body box in world pixels: left, top, right, bottom (inclusive)."""

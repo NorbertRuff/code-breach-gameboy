@@ -28,6 +28,7 @@ typedef struct {
     uint8_t fragment_count;
     uint8_t collected_count;
     uint8_t entity_count;
+    uint8_t section_start[LEVEL_SECTIONS];  // index of each section's first entity
     const uint8_t* map;
     const LevelEntity* entities;
 } Level;

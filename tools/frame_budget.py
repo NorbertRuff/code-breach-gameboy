@@ -34,9 +34,11 @@ PARTS = [
     ("check_touched_tiles", "player: pickups, hazards"),
     ("update_animation", "player: animation"),
     ("update_view", "camera, streaming"),
+    ("actors_spawn", "actors: spawn"),
+    ("actors_update", "actors: update"),
     ("hud_update_count", "HUD count"),
-    ("enemy_update", "enemies"),
-    ("draw_actors", "draw"),
+    ("player_touches_actor", "actors: hit test"),
+    ("draw_sprites", "sprite list"),
     ("wait_vbl_done", "end of update"),
 ]
 

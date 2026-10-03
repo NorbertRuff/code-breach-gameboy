@@ -255,13 +255,11 @@ void player_update(Player* player)
     update_animation(player);
 }
 
-// Draws the player so the sprite covers its collision box. Flashes while invincible.
-void player_draw(Player* player, int16_t camera_x)
+// Puts the player first in the sprite list, so the sprite covers its collision box.
+// Flashes while invincible. Returns the number of hardware sprites used.
+uint8_t player_draw(Player* player, int16_t camera_x)
 {
-    if (player->invincibility_frames & 2) {
-        hide_sprites_range(0, 4);
-        return;
-    }
+    if (player->invincibility_frames & 2) return 0;
 
     // The metasprite pivot lies programmer_PIVOT_X/Y in from the box's top-left corner,
     // and hardware sprite coordinates start 8 px left of and 16 px above the screen.
@@ -269,11 +267,13 @@ void player_draw(Player* player, int16_t camera_x)
     uint8_t top = TO_PIXELS(player->y) - SPRITE_HEAD_OFFSET;
     uint8_t x = left + programmer_PIVOT_X + DEVICE_SPRITE_PX_OFFSET_X;
     uint8_t y = top + programmer_PIVOT_Y + DEVICE_SPRITE_PX_OFFSET_Y;
+    uint8_t used;
     WITH_BANK(programmer, {
         if (player->direction) {
-            move_metasprite_ex(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
+            used = move_metasprite_ex(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
         } else {
-            move_metasprite_flipx(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
+            used = move_metasprite_flipx(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
         }
     });
+    return used;
 }

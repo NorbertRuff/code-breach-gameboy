@@ -4,8 +4,8 @@ import hashlib
 
 import pytest
 
-from gamelib import (COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END, HUD_DIGIT_TILE_BASE,
-                     HUD_SLASH_TILE, LEVEL_COMPLETE, read_symbol)
+from gamelib import (BOT_TILES, COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END,
+                     HUD_DIGIT_TILE_BASE, HUD_SLASH_TILE, LEVEL_COMPLETE, read_symbol)
 from test_frame_budget import GREYBOX_ROUTE
 
 dmg_only = pytest.mark.parametrize("mode", ["dmg"])  # BGP_REG effects are DMG-only until M4
@@ -285,3 +285,15 @@ def test_pickup_while_a_column_is_drawn_is_no_lag_frame(game):
     game.play_route(GREYBOX_ROUTE[:3])
     assert set(pickups) & set(columns), "no update both picked up a fragment and drew a column"
     assert game.u8("_lag_frames") == 0, f"the worst update ended at line {max(lines)}"
+
+
+# Bug 20 --------------------------------------------------------------------------
+
+def test_bot_sprites_stand_on_their_feet_row(game):
+    # At the level start, the only bot on screen is the one on platform B, feet on row 71.
+    # The lowest row of its 8x16 sprites must be that row, not the one above.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.frames(2)
+    oam = game.pyboy.memory[0xFE00:0xFEA0]
+    bottoms = [oam[i] - 16 + 15 for i in range(0, 160, 4) if oam[i] and oam[i + 2] in BOT_TILES]
+    assert bottoms == [71, 71]

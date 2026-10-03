@@ -34,8 +34,10 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Collision per axis; check points no more than 8 px apart along the box edge (here: every tile row and column the edge spans) | Larold's collision tutorial; RESEARCH.md 2.2 | `player.c` `move_x`, `move_y`, `column_has`, `area_has` | In use |
 | Metasprite position in hardware sprite coordinates: screen origin at (8, 16), `DEVICE_SPRITE_PX_OFFSET_X/Y` | GBDK `gb/metasprites.h` and `gb/hardware.h`; Pan Docs, OAM | `player.c` `player_draw` | In use |
 | Jump only on a new press of A | Own fix (review P1); edge detection as in flozz example 02 | `input.c` | In use |
-| Spawn list sorted by X, read with a cursor, start index per section | BlackCastle `src/monster_data.c` (idea only), marioland-gbdk (idea only) | Level converter, entity system | Planned (M3) |
-| Rebuild the sprite list every frame, then `hide_sprites_range` | zelda-gbdk `objects.c` (idea only); GBDK `metasprites` example | Entity system | Planned (M3) |
+| Spawn list sorted by X, read with a cursor, start index per section | BlackCastle `src/monster_data.c` (idea only), marioland-gbdk (idea only) | `tools/tiled2c.py`, `src/actor/actor.c` `actors_spawn`, `actors_reset` | In use |
+| Removing actors that are off screen | GB Studio engine `src/core/actor.c` (MIT): off-screen actors are deactivated (here: removed a screen behind the camera) | `src/actor/actor.c` `actors_update` | In use |
+| One table entry per actor type (update, art, hit box) instead of copied code per enemy | RESEARCH.md 2.4: BlackCastle's copied draw blocks as the counter-example | `src/actor/actor.c` `actor_types`, `src/actor/bot.c` `bot_type` | In use |
+| Rebuild the sprite list every frame, then `hide_sprites_range` | zelda-gbdk `objects.c` (idea only); GBDK `metasprites` example | `main.c` `draw_sprites`, `src/actor/actor.c` `actors_draw` | In use |
 | Object pools with a free list, fixed sprite ranges | cuphead_gb `bullet_pool.c` (MIT) | Projectiles, particles | Planned (M3/M8) |
 | Boss drawn with background tiles, poses in the off-screen map, switched by scrolling | cuphead_gb README and maps (MIT) | KERNEL boss | Planned (M8) |
 | Sound effects over music: channel mute mask and priority | untoxa/VGM2GBSFX (MIT); used the same way in GB Studio and CrossZGB | Audio | Planned (M6) |
@@ -81,7 +83,7 @@ games ships (decision 2026-10-03).
 | Asset | Origin | Status |
 |---|---|---|
 | `graphics/player/programmer.png` | Early prototype; partly based on a Mario sprite (owner, 2026-10-03) | **Replace** in M5 (new art from Claude Design) |
-| `graphics/enemies/Mushroom.png`, mushroom tiles in `src/enemy/enemy.c` | Copied from Mario | **Replace** in M5 (security bot) |
+| `graphics/enemies/Mushroom.png`, mushroom tiles in `src/actor/bot.c` | Copied from Mario | **Replace** in M5 (security bot) |
 | `graphics/background/background.png` | Early placeholder, origin unclear | **Replace** in M5 (Server Room tileset and parallax band) |
 | `graphics/hud/hud_a.png` | Early placeholder, Mario-like bricks and coin | **Replace** in M5 |
 | `graphics/hud/Font.png` | Unknown | Check origin, or use a CC0 font (RESEARCH.md section 4) |

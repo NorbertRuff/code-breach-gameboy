@@ -7,7 +7,7 @@
 #include "./level/level_manager.h"
 #include "./player/player.h"
 #include "./input/input.h"
-#include "./enemy/enemy.h"
+#include "./actor/actor.h"
 #include "./sound/sound.h"
 
 #include "./game_state/game_over.h"
@@ -24,9 +24,6 @@ uint8_t current_game_state = INTRO_CREDITS_STATE;
 // Player instance
 Player player;
 
-// Enemy instances
-Enemy enemies[MAX_ENEMIES];
-
 // Lives left; refilled on game over.
 uint8_t lives = 3;
 
@@ -39,44 +36,43 @@ uint8_t lag_frames = 0;
 // Feet below this y: the player fell out of the level.
 #define FALL_DEATH_Y (DEVICE_SCREEN_PX_HEIGHT + SPRITE_HEAD_OFFSET)
 
-// Places the level's enemies at the left end of their patrols, up to MAX_ENEMIES.
-static void spawn_enemies(void)
+// Starts the section again: the player at the start, the actors from the section's first
+// entity, and the camera on the player with everything it shows drawn. For a level start
+// and after losing a life.
+static void restart_section(void)
 {
-    LevelEntity entity;
-    uint8_t count = 0;
-    for (uint8_t i = 0; i < current_level.entity_count && count < MAX_ENEMIES; i++) {
-        level_read_entity(i, &entity);
-        if (entity.type != ENTITY_ENEMY) continue;
-        // The patrol range is for the 16 px body: its center stays 8 px inside.
-        enemy_init(&enemies[count++], entity.x + 8, entity.y, entity.x + 8, entity.x + entity.param - 8);
-    }
-    while (count < MAX_ENEMIES) enemies[count++].active = 0;
-}
-
-// Puts the camera on the player at once and draws what it shows: level start, respawn.
-static void reset_view(void)
-{
+    player_init(&player, current_level.player_start_x, current_level.player_start_y);
+    actors_reset(0);
     camera_reset(TO_PIXELS(player.x), current_level.width_px);
     level_stream_reset(camera_x);
     move_bkg((uint8_t)camera_x, 0);
+    actors_spawn(camera_x);
 }
 
-// Follows the player and draws the columns that scroll into view.
+// Follows the player, draws the columns that scroll into view, and spawns the actors the
+// camera reaches.
 static void update_view(void)
 {
     camera_update(TO_PIXELS(player.x), current_level.width_px);
     level_stream_update(camera_x);
     move_bkg((uint8_t)camera_x, 0);
+    actors_spawn(camera_x);
 }
 
-// Draws enemies and the player at their screen positions.
-static void draw_actors(void)
+// Does the player's body touch an actor?
+static uint8_t player_touches_actor(void)
 {
-    uint8_t i;
-    for (i = 0; i < MAX_ENEMIES; i++) {
-        enemy_draw(&enemies[i], ENEMY_OAM_BASE + i * 2, camera_x);
-    }
-    player_draw(&player, camera_x);
+    int16_t x = TO_PIXELS(player.x), y = TO_PIXELS(player.y);
+    return actors_touch(x - SPRITE_LEFT_W, y - SPRITE_HEAD_OFFSET, x + SPRITE_RIGHT_W, y);
+}
+
+// Builds this frame's sprite list: the player first, then the actors, then hides the
+// hardware sprites left over.
+static void draw_sprites(void)
+{
+    uint8_t used = player_draw(&player, camera_x);
+    used = actors_draw(used, camera_x);
+    hide_sprites_range(used, MAX_HARDWARE_SPRITES);
 }
 
 // Main game loop
@@ -93,6 +89,7 @@ void main_game_loop()
     }
 
     update_view();
+    actors_update(camera_x);
 
     // Win condition: all fragments collected
     if (current_level.fragment_count > 0 &&
@@ -113,21 +110,13 @@ void main_game_loop()
     // Invincibility countdown
     if (player.invincibility_frames > 0) player.invincibility_frames--;
 
-    // Hit by an enemy or a hazard tile? Not while invincible.
-    {
-        uint8_t i;
-        uint8_t hit = player.touched_hazard;
-        for (i = 0; i < MAX_ENEMIES; i++) {
-            enemy_update(&enemies[i]);
-            hit |= enemy_check_player_collision(&enemies[i], TO_PIXELS(player.x), TO_PIXELS(player.y));
-        }
-        if (hit && !player.invincibility_frames) {
-            sound_play_hit();
-            current_game_state = GAMEPLAY_END;
-        }
+    // Hit by an actor or a hazard tile? Not while invincible.
+    if (!player.invincibility_frames && (player.touched_hazard || player_touches_actor())) {
+        sound_play_hit();
+        current_game_state = GAMEPLAY_END;
     }
 
-    draw_actors();
+    draw_sprites();
 }
 
 void main(void)
@@ -167,12 +156,10 @@ void main(void)
             BGP_REG = 0xFF;
             HIDE_SPRITES;
             level_load(level_index);
-            player_init(&player, current_level.player_start_x, current_level.player_start_y);
-            enemy_init_sprite_data();
-            spawn_enemies();
+            actors_load_tiles();
             hud_update_lives(lives);
-            reset_view();
-            draw_actors();
+            restart_section();
+            draw_sprites();
             fade_in_screen(10);
             SHOW_SPRITES;
             current_game_state = COREGAMELOOP;
@@ -199,12 +186,10 @@ void main(void)
                 fade_out_screen(10);
                 current_game_state = GAMEPLAY_START;
             } else {
-                // Respawn: reset player and enemies, grant invincibility frames
-                player_init(&player, current_level.player_start_x, current_level.player_start_y);
+                // Lost a life: start the section again, invincible for a moment.
+                restart_section();
                 player.invincibility_frames = RESPAWN_INVINCIBILITY_FRAMES;
-                spawn_enemies();
                 hud_update_lives(lives);
-                reset_view();
                 current_game_state = COREGAMELOOP;
             }
             break;

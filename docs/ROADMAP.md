@@ -104,11 +104,12 @@ new physics, and the jump metrics are written into [LEVEL_DESIGN.md](LEVEL_DESIG
 Done when level 1 is playable start to finish in greybox, and a replay test finishes it.
 
 - [x] **(owner)** React to the level 1 brief in [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
-- [ ] Entities: spawn from the level table with a cursor and a start index per section,
-      per-type update and draw from a type table, despawn off-screen.
-- [ ] Sprites: rebuild the sprite list every frame with `move_metasprite_ex` /
-      `move_metasprite_flipx`, then `hide_sprites_range`. Fixed pools with free lists for
-      particles and projectiles. Keep sprites out of the HUD rows.
+- [x] Entities: spawn from the level table with a cursor and a start index per section,
+      per-type update and draw from a type table, despawn off-screen (`src/actor/`).
+- [x] Sprites: rebuild the sprite list every frame with `move_metasprite_ex` /
+      `move_metasprite_flipx`, then `hide_sprites_range`.
+- [ ] Fixed pools with free lists for particles and projectiles, once the first one is
+      needed. Keep sprites out of the HUD rows (with the parallax interrupt).
 - [ ] Security gates with a fragment quota. Checkpoints at opened gates. Exit elevator.
       The camera locks behind an opened gate (`camera.c` gets a left limit).
 - [ ] HUD: lives and fragments against the current quota.
@@ -127,7 +128,8 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
       line 133 of 154.
 - [ ] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
 - [ ] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
-      `main.c`, `utils.c`, `sound.c`, `src/game_state/`, `src/enemy/`.
+      `main.c`, `utils.c`, `sound.c`, `src/game_state/` (`src/enemy/` was replaced by
+      `src/actor/` in step 2).
 
 ## M4 — Game Boy Color support
 

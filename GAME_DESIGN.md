@@ -69,7 +69,7 @@ Full bug list with causes: [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
 - **Width**: 32 tiles (256px), single horizontal scroll
 - **Ground**: Full bottom row
 - **Platforms**: 5 platforms at varying heights (staircase path upward right)
-- **Enemies**: 3 patrol bots (OAM 4–9), fixed patrol ranges
+- **Enemies**: 3 patrol bots, fixed patrol ranges
 - **Collectibles**: 12 code fragments, placed above each surface cluster
 - **Objective**: Collect all 12 fragments to trigger level complete
 
@@ -165,8 +165,8 @@ Integer-only, no floats. Horizontal: `velocity_x`, `movement_force_x`, `slowing_
 
 **ONE_WAY todo**: When landing from above (`velocity_y > 0`), treat as solid. When moving upward or already overlapping, ignore.
 
-### Enemy System (src/enemy/)
-`Enemy { x, y, dir, patrol_min, patrol_max, active }`. OAM slots 4–9 (2 per enemy, 8×16 sprites). AABB collision in world coords. Mushroom tiles currently used as placeholder — to be replaced with security bot PNG via png2asset.
+### Actors (src/actor/)
+Enemies are actors, spawned from the level's entity list as the camera reaches them and removed a screen behind it. One type table entry per kind (spawn, update, metasprite, hit box); the patrol bot is the first. The sprite list is rebuilt every frame: the player first, then the actors on screen. Mushroom tiles currently used as placeholder — to be replaced with security bot PNG via png2asset.
 
 ### State Machine (src/main.c)
 ```
@@ -184,8 +184,8 @@ INTRO_CREDITS → TITLE_SCREEN → GAMEPLAY_START → COREGAMELOOP
 - Tiles 133–142: Digit tiles 0–9 (hand-drawn 8×8)
 - Tile 143: Slash `/`
 - Tile 144: Heart `♥`
-- Sprite VRAM 0–3: Player programmer (bank 0, 4 tiles for 16×32)
-- Sprite VRAM 4+: Enemy tiles
+- Sprite VRAM 0–39: Player programmer (5 frames of 16×32)
+- Sprite VRAM 40–43: Patrol bot
 
 ### ROM Banking
 Assets compiled with `-bank 1 -org 0x8000` (background, hud, mushroom, apexLogo, press_start). Accessed via GBDK's banked data mechanism. Code runs from bank 0.
@@ -270,7 +270,7 @@ Needed for: "GAME OVER" screen, "LEVEL COMPLETE" text, score display. GBDK provi
 ## GB Hardware Constraints
 
 - **No floats**: all math uses int8_t / int16_t / uint8_t
-- **Sprite limit**: 40 OAM slots total, 10 per scanline. Player = 4 slots (OAM 0–3), each enemy = 2 slots (OAM 4–9)
+- **Sprite limit**: 40 OAM slots total, 10 per scanline. Player = 4 slots (OAM 0–3), each bot = 2 slots, given out in order each frame
 - **VRAM timing**: tile writes must happen during VBlank — GBDK buffers this; `wait_vbl_done()` at end of main loop
 - **Stack**: tiny — avoid deep recursion, declare large arrays as `static`
 - **ROM banking**: bank 0 fixed (code), bank 1 switchable (large assets) — always `SWITCH_ROM_BANK` before accessing banked data if explicitly needed

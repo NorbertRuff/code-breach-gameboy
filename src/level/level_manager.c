@@ -1,3 +1,4 @@
+#include <string.h>
 #include "level_manager.h"
 #include "../graphics/greybox.h"
 #include "../graphics/hud.h"
@@ -102,6 +103,7 @@ static void copy_header(const LevelData* data)
     current_level.player_start_y = data->player_start_y;
     current_level.fragment_count = data->fragment_count;
     current_level.entity_count = data->entity_count;
+    memcpy(current_level.section_start, data->section_start, LEVEL_SECTIONS);
     current_level.map = data->map;
     current_level.entities = data->entities;
 }

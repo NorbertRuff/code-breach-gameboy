@@ -43,6 +43,7 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in the test room `levels/test_jumps.tmj` |
 | `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, passes the greybox level and reports a broken one |
 | `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
+| `tests/test_actors.py` | Actors: bots in reach spawn at the start, a bot spawns as the camera nears, patrols, removal a screen behind until a restart, hits and invincibility, the sprite list every frame |
 | `tests/test_frame_budget.py` | A route through the greybox level from the start to the exit: no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
@@ -85,6 +86,9 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 - **Levels.** The game plays `levels/greybox_test.tmj`. `game.load_level(LEVEL_TEST_JUMPS)`
   restarts in the test room with the jump metric fixtures. Test geometry lives in Tiled
   levels: writing collision from a test doesn't last once columns stream.
+- `game.actors()` reads the actors in play through `ACTOR_FIELDS` (checked like the
+  Player mirror, with `actor_struct_size`); `bot` says whether one is a patrol bot.
+  `game.visible_sprites()` lists the OAM entries that are switched on.
 - `game.collision(x, y)` reads the collision ring (screen rows; only the columns around
   the camera), `game.bkg_tile(x, y)` the background map at a level column,
   `game.camera_x()` the camera, `game.window_tile(col, row)` the HUD window map,

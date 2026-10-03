@@ -26,7 +26,7 @@ GREYBOX_ROUTE = [
     (18, "right"),
     (6, "a right"),      # hop off the shelf over the spikes, a fragment
     (24, "right"),
-    (52, ""),            # wait for the floor bot to turn
+    (31, ""),            # wait for the floor bot to turn
     (20, "a right"),     # over the bot
     (16, "right"),
     (12, "a right"),     # up the two steps
