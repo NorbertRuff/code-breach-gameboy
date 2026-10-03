@@ -10,8 +10,8 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
 - **2026-10-03, M1:** bugs 1, 2, 3, 4, 8, 9, 10, 11, 13, 14, 15 and 16 fixed, each with a
   test in `tests/test_regressions.py` that fails on the old code.
 - **Still open:** bugs 5, 6 and 7 (physics and collision rewrite in M2; 5 and 7 have
-  expected-failure tests in `tests/test_known_bugs.py`), and bug 12, which needs the
-  owner to pick the invincibility time.
+  expected-failure tests in `tests/test_known_bugs.py`). Bug 12 is closed: the owner
+  chose 1.5 s, and the comment now says so.
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 

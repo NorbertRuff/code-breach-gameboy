@@ -3,8 +3,7 @@
 #include "../level/level_manager.h"
 #include "../engine/banking.h"
 
-// Read by the PyBoy tests (tests/gamelib.py) to catch Player struct changes that the
-// Python mirror of the struct doesn't know about yet.
+// Read by the tests to notice Player struct changes.
 const uint8_t player_struct_size = sizeof(Player);
 
 void player_init(Player* player, uint16_t start_x, uint16_t start_y)

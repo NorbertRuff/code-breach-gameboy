@@ -5,6 +5,8 @@ deleting an entry.
 
 | Date | Decision | Reason | Status |
 |---|---|---|---|
+| 2026-10-03 | **Code style: self-explanatory and short.** Clear names, one short comment per function saying what it handles, brief walk-through comments only where needed, no long explanations in code. | The owner walks through the code to understand and explain it. Rules in CLAUDE.md. | Accepted |
+| 2026-10-03 | **Invincibility after losing a life: 1.5 s** (90 frames). | Owner's choice; closes bug 12. | Accepted |
 | 2026-10-03 | **Vision: a cozy little game** that looks good, has solid logic, runs on real DMG and GBC hardware, and that the owner can explain end to end. | The owner's goal for the revival: learn C and make a Game Boy game they love. It guides trade-offs: forgiving rules, readable visuals, simple code over clever code. | Accepted |
 | 2026-10-03 | **Documentation: a running record now, the full explainer at the end.** DECISIONS.md (what and why) and SOURCES.md (where each idea and asset came from, where it's used) are kept current. The final "how it works" document is written from them in M9. | Owner's choice: one good document when the game is done, built from records that can be reused. | Accepted |
 | 2026-10-03 | **No copied assets in the final game.** No Mario, mushrooms or other copied art; every asset is original (owner or Claude Design) or openly licensed and credited. The list of what must be replaced is in SOURCES.md. | Owner's choice. It also keeps the game legal to share. | Accepted |

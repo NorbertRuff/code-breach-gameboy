@@ -33,19 +33,15 @@ LevelManager level_manager;
 // Enemy instances
 Enemy enemies[MAX_ENEMIES];
 
-// Lives (persists across respawns; resets to 3 on full game over)
+// Lives left; refilled on game over.
 uint8_t lives = 3;
 
-// Invincibility after losing a life: 90 frames = 1.5 s at 60 fps.
-#define RESPAWN_INVINCIBILITY_FRAMES 90
+#define RESPAWN_INVINCIBILITY_FRAMES 90   // 1.5 s at 60 fps
 
-// Below this feet position the player has fallen out of the level: the playfield
-// is LEVEL_HEIGHT tiles tall and the whole 32 px sprite must be gone.
+// Feet below this y: the player fell out of the level.
 #define FALL_DEATH_Y (LEVEL_HEIGHT * TILE_SIZE + SPRITE_HEAD_OFFSET)
 
-// Level 1 enemies: start x (center), feet y, patrol range for the center.
-// Used for the first spawn and every respawn. Replaced by the level's spawn table
-// from Tiled in roadmap M3.
+// Level 1 enemies: start x, feet y, patrol range.
 typedef struct {
     uint16_t x;
     uint8_t  y;
@@ -60,6 +56,7 @@ static const EnemySpawn level1_enemies[] = {
 };
 #define LEVEL1_ENEMY_COUNT (sizeof(level1_enemies) / sizeof(level1_enemies[0]))
 
+// Places the level's enemies at their start positions.
 static void spawn_enemies(void)
 {
     uint8_t i;
@@ -73,7 +70,7 @@ static void spawn_enemies(void)
     }
 }
 
-// Camera follow: center the player on screen, clamped to the level bounds.
+// Keeps the player centered, within the level bounds.
 static void update_camera(void)
 {
     int16_t cam = (int16_t)player.x - 80;
@@ -83,7 +80,7 @@ static void update_camera(void)
     move_bkg((uint8_t)total_scroll_x, 0);
 }
 
-// Put enemies and the player into OAM at their screen positions.
+// Draws enemies and the player at their screen positions.
 static void draw_actors(void)
 {
     uint8_t i;
@@ -104,8 +101,7 @@ void main_game_loop()
     player_handle_movement_physics(&player, &level_manager.current_level, 0);
     player_handle_jumping_physics(&player, &level_manager.current_level, 0);
 
-    // Falling out of the bottom of the level costs a life, even while invincible.
-    // Signed compare: a jump above the top of the screen must not count.
+    // Fell out of the level? Costs a life, even while invincible.
     if ((int16_t)player.y > (int16_t)FALL_DEATH_Y) {
         sound_play_hit();
         current_game_state = GAMEPLAY_END;
@@ -179,8 +175,7 @@ void main(void)
             break;
         case TITLE_SCREEN_STATE:
             init_splash_screen();
-            // Wait for the player to press start. One loop per frame, so the
-            // "PRESS START" blink has the same speed on every CPU.
+            // Wait for START, one frame per loop.
             while (!(joypad() & J_START))
             {
                 update_splash_screen(&text_animation_state);
@@ -190,9 +185,7 @@ void main(void)
             current_game_state = GAMEPLAY_START;
             break;
         case GAMEPLAY_START:
-            // Build the level while the screen is black and sprites are hidden, then
-            // fade in, so the player never sees tiles change. (BGP fades are DMG-only
-            // until the palette module in roadmap M4.)
+            // Build the level behind a black screen, then fade in.
             BGP_REG = 0xFF;
             HIDE_SPRITES;
             // Initialize level system (includes HUD and sprite setup)

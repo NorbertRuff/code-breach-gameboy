@@ -57,8 +57,8 @@ Done when each bug in [PROJECT_STATE.md](PROJECT_STATE.md) has a fix and a regre
 - [x] One place for enemy spawns (removes the copy in `main.c`).
 - [x] Player started inside platform A and 1 px into the ground (bug 16).
 - [x] Flashes restore the palettes they found (bug 9).
-- [ ] **(owner)** Decide the invincibility time after losing a life. It is 90 frames
-      (1.5 s); the old comment said 3 s.
+- [x] **(owner)** Invincibility time after losing a life: 1.5 s (90 frames), decided
+      2026-10-03.
 - [x] Review pass, asked for by the owner on 2026-10-03: findings in
       [REVIEW.md](REVIEW.md), screenshots from `make shots`.
 - [x] Quick wins from [REVIEW.md](REVIEW.md), all five picked by the owner: level 1
@@ -112,6 +112,8 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
       lives and restarts the current section (DECISIONS.md 2026-10-03).
 - [ ] Frame budget counter and a lag test.
 - [ ] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
+- [ ] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
+      `main.c`, `utils.c`, `sound.c`, `src/game_state/`, `src/enemy/`.
 
 ## M4 — Game Boy Color support
 

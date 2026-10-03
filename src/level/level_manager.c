@@ -5,13 +5,12 @@
 #include "../sound/sound.h"
 #include "../engine/banking.h"
 
-// Background tiles for the level's debug view (shared VRAM block 128-255).
+// Tiles for the level view: solid block and collectible diamond.
 #define SOLID_TILE_INDEX       128
 #define COLLECTIBLE_TILE_INDEX 132
 
-// 8x8 2bpp block for solid ground: black border, white top-left bevel, light gray
-// face, dark gray bottom-right shade. Readable in 4 shades. (Review G2; becomes the
-// first greybox tile in roadmap M2.) Each row: low bit-plane byte, high bit-plane byte.
+// Solid block: black border, light face, dark lower-right edge.
+// Each row: low bit-plane byte, high bit-plane byte (shades shown on the right).
 static const uint8_t solid_block_tile_data[16] = {
     0xFF,0xFF,   // 3 3 3 3 3 3 3 3
     0x83,0x81,   // 3 0 0 0 0 0 1 3
@@ -70,9 +69,7 @@ void set_hud_window_tiles()
 {
     SHOW_WIN;
     
-    // Position HUD window at bottom of screen. move_win() is absolute; scroll_win() is
-    // relative and would move the window again on every level load. WX = 7 is the
-    // left screen edge.
+    // HUD window at the bottom (x 7 is the left screen edge).
     move_win(7, 128);
     
     // Set the tiles for our HUD window in VRAM
@@ -251,9 +248,8 @@ void level_1_server_room_init(Level* level)
     level->background_map = background_map;
     
     // Set player start position (bottom left of screen)
-    level->player_start_x = 8;   // sprite spans x 0-15, clear of platform A (x 16-47)
-    level->player_start_y = 119; // feet on the pixel row above the ground tiles (row 15 starts at 120),
-                                 // where the collision code puts them after every landing
+    level->player_start_x = 8;   // left of platform A
+    level->player_start_y = 119; // feet just above the ground (row 15)
     
     // Set level exit (top right area)
     level->exit_x = 144;  // 18 tiles from left
@@ -266,9 +262,7 @@ void level_1_server_room_init(Level* level)
         }
     }
 
-    // The HUD window covers rows 16-17, so the level uses rows 0-15 and the ground is
-    // row 15. (Review L1: everything was 2 rows lower and the floor was under the HUD.)
-    // Rows 16-17 stay empty; falling into them leads to the fall death below the level.
+    // The level uses rows 0-15; the HUD covers rows 16-17.
 
     // Ground: full bottom row (all 32 cols)
     for (int x = 0; x < LEVEL_WIDTH; x++) {

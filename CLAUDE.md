@@ -54,6 +54,19 @@ make clean      # delete obj/
 
 Research on techniques, reference code, licensed assets and tool flags is in `docs/RESEARCH.md`. Check a reference repo's license there before copying code: several have none (ideas only). The planned Claude Design → `tools/gbconvert.py` → png2asset flow is in `docs/ART_PIPELINE.md`.
 
+## Code Style (owner's rule)
+
+The owner walks through every file and must be able to say what each part does, so the
+code explains itself and stays short:
+- **Names say what it does:** `update_camera`, `spawn_enemies`, `RESPAWN_INVINCIBILITY_FRAMES`.
+  Units go in the name or a short trailing comment (`// 1.5 s at 60 fps`).
+- **One short comment above each function:** what it handles, in plain words.
+- **Short walk-through comments** inside a function only where a step isn't obvious, like
+  `// Have we jumped? Only on a new press of A.`
+- **No long explanations in code.** Reasons, history and sources go to `docs/DECISIONS.md`
+  and `docs/SOURCES.md`.
+- **Keep it short:** small functions, no dead or commented-out code, no duplication.
+
 ## Architecture
 
 ### Game State Machine (`src/main.c`)

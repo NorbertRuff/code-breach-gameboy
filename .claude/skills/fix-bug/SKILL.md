@@ -19,7 +19,8 @@ Conventions this follows are in `docs/TESTING.md`. The owner runs git; don't com
      `test_regressions.py` and drop the marker.
 3. **See it fail** on the current code:
    `.venv/Scripts/python.exe -m pytest tests/test_regressions.py -k <test name>`
-4. **Fix it** in `src/`. Name constants, and comment why, not what.
+4. **Fix it** in `src/`, following Code Style in `CLAUDE.md`: clear names, one short
+   comment per function, short walk-through comments only where needed.
    Banked asset data is only readable inside `WITH_BANK(name, ...)`.
 5. **Run everything:** `make test`. Watch the `romusage` lines: bank 0 must keep headroom.
 6. **Prove the test catches the bug** on the last commit (without your fix):
