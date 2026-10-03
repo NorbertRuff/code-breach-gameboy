@@ -3,6 +3,7 @@
 
 #include <gb/gb.h>
 #include <stdint.h>
+#include "level_data.h"
 
 // Level system constants
 #define MAX_LEVELS 5
@@ -17,12 +18,6 @@
 #define LEVEL_STATE_COMPLETED 2
 #define LEVEL_STATE_FAILED 3
 
-// Collision types for tiles
-#define COLLISION_NONE 0
-#define COLLISION_SOLID 1
-#define COLLISION_ONE_WAY 2
-#define COLLISION_HAZARD 3
-#define COLLISION_COLLECTIBLE 4
 
 // Level data structure (memory-efficient for Game Boy)
 typedef struct {

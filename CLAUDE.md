@@ -38,13 +38,16 @@ make shots      # build, then a scripted playthrough: screenshots, contact sheet
 make venv       # create .venv with the test tools (once)
 make savetest   # build obj/savetest.gb, the cartridge RAM persistence test
 make usage      # ROM and RAM use per bank, with areas
-make assets     # regenerate src/graphics/*.c from graphics/*.png
+make assets     # regenerate src/graphics/*.c from graphics/*.png (and draw the greybox tileset)
+make levels     # regenerate src/levels/*.c from the Tiled maps in levels/*.tmj
 make clean      # delete obj/
 ```
 
 `RELEASE=1` adds size-optimizing compilation (slower). The cartridge is MBC5 + RAM + battery with a GBC-enhanced header (`-Wm-yc`); flags are in the Makefile and `docs/CGB_PLAN.md`. The build writes `obj/ApexLab.sym`, which the tests use to read globals by name.
 
 **Tests** (`tests/`, details in `docs/TESTING.md`): run `make test` after every change. A fixed bug gets a regression test in `tests/test_regressions.py` that fails on the old code (check it with `APEXLAB_OBJ`, see `docs/TESTING.md`). An open bug can be written as a test marked `xfail` in `tests/test_known_bugs.py`; fixing the bug makes that test pass, which fails the run until the test moves to `test_regressions.py`. For a one-off build variant use `make OBJDIR=<scratch folder> EXTRA_CFLAGS=-D...`, never the normal `obj/`. Failing tests save screenshots to `tests/out/`; look at them.
+
+**Level pipeline** (`docs/LEVEL_PIPELINE.md`): maps are made in Tiled and saved as `levels/*.tmj` (13 rows tall = screen rows 3â€“15). `make levels` runs `tools/tiled2c.py`, which checks the rules and writes banked `LevelData` (`src/level/level_data.h`) to `src/levels/`. Commit the `.tmj` and the generated files together; `tests/test_tiled2c.py` fails when they are out of date.
 
 **Asset pipeline**: PNG files in `graphics/` are converted to GBDK-compatible C source files via `png2asset`. Run `make assets` after modifying any PNG, then commit both the PNG and the regenerated `.c`/`.h` in `src/graphics/`. Assets use `-b 255` (autobank). png2asset only warns about unknown options and still succeeds, so read its output for `not recognized`.
 
@@ -88,14 +91,16 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state live
 | `src/enemy/` | Patrol enemies: update, draw (2 OAM entries each, from OAM 4), AABB hit test |
 | `src/sound/` | Sound effects written straight to the APU registers |
 | `src/graphics/` | Generated asset files from `make assets` (plus the older hand-made `splashscreen.c`), all banked |
-| `graphics/` | Source PNG files for the asset pipeline |
+| `src/levels/` | Generated level data and tileset collision tables from `make levels`, all banked |
+| `graphics/` | Source PNG files for the asset pipeline; `graphics/tilesets/` also holds the Tiled `.tsx` files |
+| `levels/` | Tiled maps (`.tmj`) |
 | `tests/` | PyBoy tests (`gamelib.py` helpers, `conftest.py` fixtures) |
-| `tools/` | `requirements.txt` for the test tools, `savetest/` save-persistence ROM |
+| `tools/` | `tiled2c.py` (levels), `greybox_tileset.py`, screenshot tools, `requirements.txt` for the test tools, `savetest/` save-persistence ROM |
 
 ### Player Physics (`src/player/player.h`, `src/player/player.c`)
 
-Physics uses integer arithmetic (no floats — Game Boy has no FPU). Values and their sources are in `player.h` and `docs/RESEARCH.md` 2.2.
-- Positions `x`, `y` are `uint16_t` in 1/32 px (`TO_PIXELS(pos)` = `pos >> 5`, tile = `pos >> 8`). `x` is the body's horizontal center, `y` its lowest row; the body box is 16×32 px (`SPRITE_LEFT_W`, `SPRITE_RIGHT_W`, `SPRITE_HEAD_OFFSET`).
+Physics uses integer arithmetic (no floats â€” Game Boy has no FPU). Values and their sources are in `player.h` and `docs/RESEARCH.md` 2.2.
+- Positions `x`, `y` are `uint16_t` in 1/32 px (`TO_PIXELS(pos)` = `pos >> 5`, tile = `pos >> 8`). `x` is the body's horizontal center, `y` its lowest row; the body box is 16Ã—32 px (`SPRITE_LEFT_W`, `SPRITE_RIGHT_W`, `SPRITE_HEAD_OFFSET`).
 - Velocities are `int8_t` in 1/32 px per frame. Running accelerates toward `input_x * RUN_SPEED_MAX`, weaker in the air.
 - Jump: `JUMP_SPEED` up, light gravity while rising with A held, strong gravity when falling or after A is released (jump cut), half gravity near the top (apex hang). `coyote_frames` and `jump_buffer_frames` are one-byte countdowns.
 - Collision is checked per axis against the tiles the box enters: walls over the full body height, floors and one-way tops only when the feet enter a new tile row going down, ceilings with up to `CORNER_CORRECTION` px of sideways slide. Moves stay under 8 px per frame, so no tile is skipped.

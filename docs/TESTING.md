@@ -39,6 +39,7 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_boot.py` | Hardware detection, reaching gameplay, walking, jumping, screen drawn |
 | `tests/test_regressions.py` | One test per fixed bug |
 | `tests/test_physics.py` | Jump heights, coyote time, jump buffer, ceiling corners, one-way platforms, hazards, never overlapping solid tiles |
+| `tests/test_tiled2c.py` | The level converter: committed output up to date, the test level's contents, the level data in the ROM, and every rule check |
 | `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in an empty room |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |

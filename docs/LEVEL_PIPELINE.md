@@ -1,10 +1,15 @@
 # Level Pipeline
 
-**Recommendation: Tiled 1.12 with our own Python converter.** Status: proposed. Confirm
-before milestone M2.
+**Tiled 1.12 with our own Python converter.** Status: confirmed 2026-10-02, converter in
+use since M2.
 
-Levels today are `for` loops in `level_1_server_room_init`. Five levels need a visual
+Level 1 was `for` loops in `level_1_server_room_init`. Five levels need a visual
 editor, a data format in ROM, and maps wider than one 256 px background.
+
+**Files:** maps in `levels/*.tmj`, tilesets in `graphics/tilesets/*.tsx` next to their
+PNG, generated C in `src/levels/`, the data format in `src/level/level_data.h`. Until the
+Server Room art (M5), levels use the greybox tileset drawn by
+`tools/greybox_tileset.py`.
 
 ## 1. Options compared
 
@@ -41,25 +46,35 @@ Python and fits our collision and palette needs exactly.
   - `entities`: object layer. Object classes: `player_start`, `enemy` (property `kind`;
     the object's width is the patrol range), `fragment`, `gate` (property `quota`; also
     the checkpoint), `exit` (the elevator). Each fragment belongs to the section it sits in,
-    by X position between gates. Level structure rules are in [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
+    by X position between gates; a gate belongs to the section it closes. Level structure
+    rules are in [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
+  - **Placing them:** `enemy` is a rectangle: its left and right edges are the body's
+    patrol range, its bottom edge the floor it walks on. Everything else is a tile object
+    (Insert Tile) with the matching marker tile from the tileset, which already carries
+    the class, on the 8 px grid. The player's body starts with its left edge on the
+    `player_start` marker's left edge and its feet on the marker's bottom.
+  - **Boss level:** map property `boss` = true; it needs no gates.
 - **Saved as `.tmj`** (JSON) with CSV layer encoding, so diffs are readable in PRs.
 
 ## 3. Converter: `tools/tiled2c.py`
 
-Runs from `make levels` and writes `src/levels/level_N.c` and `.h`.
+Runs from `make levels` and writes `src/levels/<map name>.c` and `.h`, plus
+`<tileset>_tileset.c` and `.h` for the map's tileset. The output is committed;
+`tests/test_tiled2c.py` fails when it is older than the maps.
 
 | Output | Content |
 |---|---|
-| `level_N_map[]` | Tile index per map cell, row-major |
-| `level_N_attr[]` | GBC palette index per map cell |
-| `level_N_entities[]` | `{type, x, y, param}` sorted by X, so entities spawn as the camera reaches them. A cursor walks the list. |
-| `level_N_section_start[]` | Index of each section's first entity, so a checkpoint restart only resets the cursor |
-| `level_N` header struct | Width, tileset reference, player start, fragment count |
+| `<name>_map[]` | Tile index per map cell, row-major, 13 rows (screen rows 3–15) |
+| `<name>_entities[]` | `{type, x, y, param}` sorted by X, so entities spawn as the camera reaches them. A cursor walks the list. Coordinates per type are in `level_data.h`. |
+| `<name>` (`LevelData`) | Width, player start, fragment count, entity count, `section_start[]` (index of each section's first entity, so a checkpoint restart only resets the cursor), pointers to the map and entities |
+| `<tileset>_tileset_collision[]` | One collision type per tileset tile, from the `collision` property |
+| GBC attribute map | Planned for M4, with the palette module |
 
-All of it is banked ROM data (`BANKREF`, `-b 255`).
+All of it is banked ROM data (`BANKREF`, `#pragma bank 255`): the level in one bank, its
+tileset table in another, both picked by autobank.
 
 **Collision lives in a 32×16 RAM ring, filled from the tileset** (decided 2026-10-02).
-Each tileset gets a 256-byte ROM table `tileset_collision[tile]`. When a column streams
+Each tileset gets a ROM table `<tileset>_tileset_collision[tile]`, one byte per tile. When a column streams
 into VRAM, its 16 collision values are looked up once and written into a 512-byte WRAM
 ring indexed by `((x & 31) << 4) + y`, the same wrap as the VRAM map. A collision check
 is a RAM read: no bank switch, no multiplication. Opening a gate or collecting a fragment

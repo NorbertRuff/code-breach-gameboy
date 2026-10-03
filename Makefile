@@ -10,6 +10,7 @@
 #   make savetest   build obj/savetest.gb, the cartridge RAM persistence test
 #   make usage      show ROM and RAM use per bank
 #   make assets     regenerate src/graphics/*.c from the PNGs in graphics/
+#   make levels     regenerate src/levels/*.c from the Tiled maps in levels/
 #   make clean      delete obj/
 #
 # RELEASE=1 turns on slower, size-optimizing compilation (about 4x compile time).
@@ -79,7 +80,7 @@ vpath %.c $(sort $(dir $(CSOURCES)))
 
 SAVETEST := $(OBJDIR)/savetest.gb
 
-.PHONY: all rebuild run test shots venv savetest usage assets clean
+.PHONY: all rebuild run test shots venv savetest usage assets levels clean
 
 all: $(ROM)
 
@@ -129,10 +130,17 @@ usage: $(ROM)
 # -b 255 puts the data in a ROM bank picked by autobank, so code must switch to
 # BANK(name) before reading it (see src/engine/banking.h).
 assets:
+	$(PYTHON) tools/greybox_tileset.py
+	$(PNG2ASSET) graphics/tilesets/greybox.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/greybox.c
 	$(PNG2ASSET) graphics/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255 -o src/graphics/programmer.c
 	$(PNG2ASSET) graphics/hud/hud_a.png -map -noflip -b 255 -o src/graphics/hud.c
 	$(PNG2ASSET) graphics/background/background.png -map -noflip -b 255 -o src/graphics/background.c
 	$(PNG2ASSET) graphics/enemies/Mushroom.png -map -noflip -b 255 -o src/graphics/mushroom.c
+
+# tools/tiled2c.py output is committed too. Run this after saving a map in Tiled.
+# A level that breaks a rule (docs/LEVEL_PIPELINE.md) stops with a message.
+levels:
+	$(PYTHON) tools/tiled2c.py $(wildcard levels/*.tmj) -o src/levels
 
 clean:
 	@$(call RMDIR,$(OBJDIR))
