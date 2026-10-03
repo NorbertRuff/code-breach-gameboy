@@ -249,11 +249,17 @@ class Game:
     def camera_x(self) -> int:
         return int.from_bytes(read_symbol(self.pyboy, "_camera_x", 2), "little", signed=True)
 
+    def lines_since_vblank(self, vblanks_at_start: int) -> int:
+        """Screen lines since the start of the VBlank where sys_time was vblanks_at_start:
+        LY counted from VBlank, plus LINES_PER_FRAME for every VBlank since."""
+        vblanks = (self.u8("_sys_time") - vblanks_at_start) & 0xFF
+        return (self.reg("LY") - VBLANK_LINE) % LINES_PER_FRAME + vblanks * LINES_PER_FRAME
+
     def track_frame_lines(self) -> list:
         """From now on, add to the returned list, for every gameplay update, how many screen
         lines passed from the start of VBlank to the end of the update (when the game
         starts waiting for the next VBlank). A frame has LINES_PER_FRAME lines: an update
-        that ends later caused a lag frame. sys_time counts the VBlanks in between."""
+        that ends later caused a lag frame."""
         lines = []
         start = {}
 
@@ -262,9 +268,7 @@ class Game:
 
         def at_update_end(_):
             if "vblanks" in start:
-                vblanks = (self.u8("_sys_time") - start.pop("vblanks")) & 0xFF
-                line = (self.reg("LY") - VBLANK_LINE) % LINES_PER_FRAME
-                lines.append(line + vblanks * LINES_PER_FRAME)
+                lines.append(self.lines_since_vblank(start.pop("vblanks")))
 
         self.pyboy.hook_register(None, "_main_game_loop", at_update_start, None)
         self.pyboy.hook_register(None, "_wait_vbl_done", at_update_end, None)

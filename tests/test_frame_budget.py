@@ -39,8 +39,7 @@ GREYBOX_ROUTE = [
 EXIT_X = 62 * 8          # the exit marker's column
 
 
-@pytest.mark.xfail(strict=True, reason="pickup updates take up to 142 lines, and bug 19 "
-                                       "(docs/PROJECT_STATE.md): step 1d of M3")
+@pytest.mark.xfail(strict=True, reason="bug 19 (docs/PROJECT_STATE.md)")
 def test_greybox_route_stays_within_the_frame_budget(game):
     game.wait_for_state(COREGAMELOOP, timeout=300)
     lines = game.track_frame_lines()

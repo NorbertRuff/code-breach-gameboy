@@ -52,7 +52,7 @@ typedef struct {
 } Player;
 
 void player_init(Player* player, uint16_t start_x_px, uint16_t start_y_px);
-void player_update(Player* player, Level* level);
+void player_update(Player* player);
 void player_draw(Player* player, int16_t camera_x);
 
 #endif // PLAYER_H

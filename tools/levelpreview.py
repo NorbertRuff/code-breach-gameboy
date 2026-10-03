@@ -29,8 +29,8 @@ from PIL import Image, ImageDraw
 import tiled2c
 from physics import (BLOCKS_BODY, BLOCKS_FEET, COYOTE_FRAMES, HAZARD, NONE, ONE_WAY,
                      RUN_SPEED_MAX, SOLID, SPRITE_HEAD_OFFSET, SPRITE_LEFT_W,
-                     SPRITE_RIGHT_W, SUBPIXELS, Body, Room, area_has, body_tiles, row_has,
-                     step)
+                     SPRITE_RIGHT_W, SUBPIXELS, Body, Room, area_has, body_tiles, step,
+                     tile_of)
 
 ROOT = Path(__file__).resolve().parent.parent
 TILE = 8
@@ -95,9 +95,10 @@ def section_at(x: int, gates: list[int]) -> int:
 
 
 def can_stand(room: Room, x: int, feet: int) -> bool:
-    left, right = x - SPRITE_LEFT_W, x + SPRITE_RIGHT_W
-    return ((feet + 1) % TILE == 0 and row_has(room, feet + 1, left, right, BLOCKS_FEET)
-            and not area_has(room, left, feet - SPRITE_HEAD_OFFSET, right, feet, BLOCKS_BODY | 1 << HAZARD))
+    left, right = tile_of(x - SPRITE_LEFT_W), tile_of(x + SPRITE_RIGHT_W)
+    below, top = tile_of(feet + 1), tile_of(feet - SPRITE_HEAD_OFFSET)
+    return ((feet + 1) % TILE == 0 and area_has(room, left, below, right, below, BLOCKS_FEET)
+            and not area_has(room, left, top, right, tile_of(feet), BLOCKS_BODY | 1 << HAZARD))
 
 
 def find_surfaces(level: tiled2c.Level, room: Room, gates: list[int]) -> list[Surface]:

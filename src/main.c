@@ -83,7 +83,7 @@ static void draw_actors(void)
 void main_game_loop()
 {
     input_read_player(&player, joypad_current, joypad_previous);
-    player_update(&player, &current_level);
+    player_update(&player);
 
     // Fell out of the level? Costs a life, even while invincible.
     if (TO_PIXELS(player.y) > FALL_DEATH_Y) {

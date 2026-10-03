@@ -6,6 +6,7 @@
 #   make run        build, then open the ROM in Emulicious
 #   make test       build, then run the PyBoy tests (DMG and GBC mode)
 #   make shots      build, then save review screenshots to tests/out/shots/
+#   make budget     build, then print where the frame time goes (tools/frame_budget.py)
 #   make venv       create .venv with the test tools from tools/requirements.txt
 #   make savetest   build obj/savetest.gb, the cartridge RAM persistence test
 #   make usage      show ROM and RAM use per bank
@@ -81,7 +82,7 @@ vpath %.c $(sort $(dir $(CSOURCES)))
 
 SAVETEST := $(OBJDIR)/savetest.gb
 
-.PHONY: all rebuild run test shots venv savetest usage assets levels preview clean
+.PHONY: all rebuild run test shots budget venv savetest usage assets levels preview clean
 
 all: $(ROM)
 
@@ -111,6 +112,10 @@ test: $(ROM) $(SAVETEST)
 # in tests/out/shots/, for visual review.
 shots: $(ROM)
 	$(PYTHON) tools/shots.py
+
+# Screen lines per part of a gameplay update, over the frame budget test's route.
+budget: $(ROM)
+	$(PYTHON) tools/frame_budget.py
 
 venv:
 	python -m venv .venv

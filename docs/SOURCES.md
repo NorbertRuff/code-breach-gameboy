@@ -31,7 +31,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Positions in 1/32 px; coyote time, jump buffer, hold-to-extend jump as small countdowns | GB Studio engine `gbvm/src/states/platform.c` (MIT) | `player.c` | In use |
 | Jump values: two gravities (jump cut), apex hang, coyote 6 frames, buffer 5 frames, corner correction | Kyle Pittman "Building a Better Jump" (GDC 2016); Celeste `Player.cs` (Maddy Thorson); SMBpedia movement data | `player.h`, `player.c` | In use |
 | Strong gravity on every fall, light gravity only while rising with A held | Super Mario Bros. (SMBpedia movement data) | `player.c` `choose_gravity` | In use |
-| Collision per axis; check points no more than 8 px apart along the box edge (here: every tile row and column the edge spans) | Larold's collision tutorial; RESEARCH.md 2.2 | `player.c` `move_x`, `move_y`, `row_has`, `area_has` | In use |
+| Collision per axis; check points no more than 8 px apart along the box edge (here: every tile row and column the edge spans) | Larold's collision tutorial; RESEARCH.md 2.2 | `player.c` `move_x`, `move_y`, `column_has`, `area_has` | In use |
 | Metasprite position in hardware sprite coordinates: screen origin at (8, 16), `DEVICE_SPRITE_PX_OFFSET_X/Y` | GBDK `gb/metasprites.h` and `gb/hardware.h`; Pan Docs, OAM | `player.c` `player_draw` | In use |
 | Jump only on a new press of A | Own fix (review P1); edge detection as in flozz example 02 | `input.c` | In use |
 | Spawn list sorted by X, read with a cursor, start index per section | BlackCastle `src/monster_data.c` (idea only), marioland-gbdk (idea only) | Level converter, entity system | Planned (M3) |
@@ -56,7 +56,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Replaying from one frame with `save_state` / `load_state` | PyBoy 2.7.0 docs | `tests/gamelib.py` `save`, `load`; `tests/test_physics.py` | In use |
 | Reading game state at a fixed point in the frame: copy the struct from a `hook_register` callback on `player_draw`; test writes to the player wait for the same point | Own finding (PyBoy frames end mid-update) | `tests/gamelib.py` `player()`, `place_player()` | In use |
 | Reachability by simulating jumps with a copy of the game's physics, from every reachable surface; jump arcs drawn from the simulated paths | Own design (the plan in LEVEL_DESIGN.md section 1, step 3) | `tools/levelpreview.py`, `tools/physics.py` | In use |
-| Finding lag frames: count game-loop calls per frame with a PyBoy hook; time code by reading `LY` at function entries (114 CPU cycles per line) | Own method | `tests/test_streaming.py` `test_no_lag_frames_while_streaming`, `tests/gamelib.py` `track_frame_lines`, `tests/test_frame_budget.py` | In use |
+| Finding lag frames: count game-loop calls per frame with a PyBoy hook; time code by reading `LY` at function entries (114 CPU cycles per line) | Own method | `tests/test_streaming.py` `test_no_lag_frames_while_streaming`, `tests/gamelib.py` `track_frame_lines`, `tests/test_frame_budget.py`, `tools/frame_budget.py` | In use |
 | GitHub Actions: cached GBDK download, build, test | GitHub-hunt research (sample workflow); mdeclerk/Bananas (MIT) | `.github/workflows/build.yml` | In use |
 
 ## Design

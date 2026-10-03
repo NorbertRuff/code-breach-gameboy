@@ -121,7 +121,9 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
       lives and restarts the current section (DECISIONS.md 2026-10-03).
 - [x] Frame budget counter and a lag test: `lag_frames` in the ROM,
       `tests/test_frame_budget.py`. Its route found bug 19 (PROJECT_STATE.md).
-- [ ] Every update within the frame budget: a cheaper `player_update`, fix bug 19.
+- [x] A cheaper `player_update` (about 44 → 24 lines per frame), and `make budget` to
+      see where the frame time goes.
+- [ ] Every update within the frame budget: fix bug 19.
 - [ ] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
 - [ ] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
       `main.c`, `utils.c`, `sound.c`, `src/game_state/`, `src/enemy/`.

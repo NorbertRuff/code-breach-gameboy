@@ -25,6 +25,7 @@ SCRIPTS = {
     "run, jump and land": (156, 119, [(10, 1, False), (25, 1, True), (30, 1, False), (20, 0, False)]),
     "slide past platform D's corner": (164, 119, [(40, 0, True), (30, 0, False)]),
     "up through the one-way shelf": (336, 119, [(60, 0, True), (20, -1, False), (10, 1, True)]),
+    "into both sides of platform A": (60, 119, [(20, -1, False), (30, -1, True), (40, -1, False), (20, 1, False)]),
 }
 
 

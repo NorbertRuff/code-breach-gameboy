@@ -14,6 +14,16 @@ const uint8_t player_struct_size = sizeof(Player);
 // How far left the body center may go: the box stays inside the level.
 #define PLAYER_MIN_X ((uint16_t)SPRITE_LEFT_W * SUBPIXELS)
 
+// A position in 1/32 px: a tile is 256 units, so the tile is the high byte, and bits 5-7
+// are the pixel (0-7) within the tile.
+#define TILE_OF(pos) ((uint8_t)((pos) >> 8))
+#define PIXEL_IN_TILE(pos) ((uint8_t)(pos) >> 5)
+
+// Tile columns and rows of the body's edges, from x (center) and y (lowest row).
+#define LEFT_COLUMN(x)  TILE_OF((x) - SPRITE_LEFT_W * SUBPIXELS)
+#define RIGHT_COLUMN(x) TILE_OF((x) + SPRITE_RIGHT_W * SUBPIXELS)
+#define FEET_ROW(y)     TILE_OF(y)
+
 #define RUN_LAST_FRAME 4   // run cycle: frames 1-4; frame 0 is standing
 
 // Starts the player standing still, facing right, at a world position in pixels.
@@ -25,32 +35,40 @@ void player_init(Player* player, uint16_t start_x_px, uint16_t start_y_px)
     player->direction = 1;
 }
 
-// Pixel to tile. Above or left of the level gives tile 0: rows 0-2 (the parallax band)
-// are always open, and the body never goes left of column 0.
+// Pixel to tile. Left of the level gives column 0.
 static uint8_t tile_of(int16_t px)
 {
     return (px < 0) ? 0 : px >> 3;
 }
 
-// Does any tile in the pixel rectangle have one of the collision types?
-// Works in 8-bit tile coordinates once the corners are converted.
-static uint8_t area_has(Level* level, int16_t left, int16_t top, int16_t right, int16_t bottom, uint8_t types)
+// Tile row of the body's top. Above the map is row 0: rows 0-2 (the parallax band) are
+// always open. A function, not a macro: SDCC miscompiles this ?: as a call argument.
+static uint8_t head_row(uint16_t y)
 {
-    if (bottom < 0) return 0;
-    uint8_t first_x = tile_of(left), last_x = tile_of(right), last_y = tile_of(bottom);
-    for (uint8_t tile_y = tile_of(top); tile_y <= last_y; tile_y++) {
-        for (uint8_t tile_x = first_x; tile_x <= last_x; tile_x++) {
-            if (types & (1 << LEVEL_COLLISION_AT(level, tile_x, tile_y))) return 1;
-        }
+    return (y < SPRITE_HEAD_OFFSET * SUBPIXELS) ? 0 : TILE_OF(y - SPRITE_HEAD_OFFSET * SUBPIXELS);
+}
+
+// Does any tile of one column, from row top to row bottom, have one of the collision
+// types? The ring keeps a column's rows next to each other, so a pointer walks them.
+// Columns past the level's end and rows below the ring are open.
+static uint8_t column_has(uint8_t column, uint8_t top, uint8_t bottom, uint8_t types)
+{
+    if (column >= current_level.width) return 0;
+    if (bottom >= RING_ROWS) bottom = RING_ROWS - 1;
+    const uint8_t* cell = &collision_ring[RING_INDEX(column, top)];
+    for (; top <= bottom; top++, cell++) {
+        if (types & (1 << *cell)) return 1;
     }
     return 0;
 }
 
-// Does any tile in the pixel row y, between the pixel columns left and right, have one
-// of the collision types?
-static uint8_t row_has(Level* level, int16_t y, int16_t left, int16_t right, uint8_t types)
+// Does any tile from column first to last, row top to bottom, have one of the types?
+static uint8_t area_has(uint8_t first, uint8_t top, uint8_t last, uint8_t bottom, uint8_t types)
 {
-    return area_has(level, left, y, right, y, types);
+    for (; first <= last; first++) {
+        if (column_has(first, top, bottom, types)) return 1;
+    }
+    return 0;
 }
 
 // Moves a speed toward a target by at most step.
@@ -109,25 +127,23 @@ static void apply_gravity(Player* p)
 }
 
 // Moves sideways. Stops flush against walls and at the level's edges.
-static void move_x(Player* p, Level* level)
+static void move_x(Player* p)
 {
     if (!p->velocity_x) return;
     uint8_t moving_right = p->velocity_x > 0;
-    uint16_t max_x = (level->width_px - 1 - SPRITE_RIGHT_W) * SUBPIXELS;
+    uint16_t max_x = (current_level.width_px - 1 - SPRITE_RIGHT_W) * SUBPIXELS;
     uint16_t x = p->x + p->velocity_x;
     if (x < PLAYER_MIN_X || x > max_x) {
         x = (x < PLAYER_MIN_X) ? PLAYER_MIN_X : max_x;
         p->velocity_x = 0;
     }
 
-    // Is the leading edge inside a wall, anywhere from head to feet?
-    int16_t feet = TO_PIXELS(p->y);
-    int16_t head = feet - SPRITE_HEAD_OFFSET;
-    int16_t edge = moving_right ? TO_PIXELS(x) + SPRITE_RIGHT_W : TO_PIXELS(x) - SPRITE_LEFT_W;
-    if (area_has(level, edge, head, edge, feet, BLOCKS_BODY)) {
-        int16_t center = moving_right ? (edge & ~7) - 1 - SPRITE_RIGHT_W
-                                      : (edge | 7) + 1 + SPRITE_LEFT_W;
-        x = (uint16_t)center * SUBPIXELS;
+    // Is the leading edge's column a wall anywhere from head to feet? Then the edge
+    // stops on the last pixel before the wall tile.
+    uint8_t column = moving_right ? RIGHT_COLUMN(x) : LEFT_COLUMN(x);
+    if (column_has(column, head_row(p->y), FEET_ROW(p->y), BLOCKS_BODY)) {
+        x = moving_right ? ((uint16_t)column << 8) - SUBPIXELS - SPRITE_RIGHT_W * SUBPIXELS
+                         : ((uint16_t)(column + 1) << 8) + SPRITE_LEFT_W * SUBPIXELS;
         p->velocity_x = 0;
     }
     p->x = x;
@@ -135,45 +151,46 @@ static void move_x(Player* p, Level* level)
 
 // Head against a ceiling corner? If only the tile at one end of the head row is solid,
 // and the body reaches into it by at most CORNER_CORRECTION px, slides out of it, as long
-// as the body fits there. Returns 1 if it slid.
-static uint8_t slide_past_corner(Player* p, Level* level, int16_t head)
+// as the body (rows top to bottom) fits there. Returns 1 if it slid.
+static uint8_t slide_past_corner(Player* p, uint8_t top, uint8_t bottom)
 {
     int16_t left = TO_PIXELS(p->x) - SPRITE_LEFT_W;
     int16_t right = TO_PIXELS(p->x) + SPRITE_RIGHT_W;
-    uint8_t row = tile_of(head), first_col = left >> 3, last_col = right >> 3;
-    uint8_t first_solid = LEVEL_COLLISION_AT(level, first_col, row) == COLLISION_SOLID;
-    uint8_t last_solid = LEVEL_COLLISION_AT(level, last_col, row) == COLLISION_SOLID;
+    uint8_t first_col = left >> 3, last_col = right >> 3;
+    uint8_t first_solid = LEVEL_COLLISION_AT(&current_level, first_col, top) == COLLISION_SOLID;
+    uint8_t last_solid = LEVEL_COLLISION_AT(&current_level, last_col, top) == COLLISION_SOLID;
 
     int16_t shift;
     if (first_solid && !last_solid) shift = ((first_col + 1) << 3) - left;      // out to the right
     else if (last_solid && !first_solid) shift = (last_col << 3) - 1 - right;   // out to the left
     else return 0;
     if (shift > CORNER_CORRECTION || shift < -CORNER_CORRECTION) return 0;
-    if (area_has(level, left + shift, head, right + shift, head + SPRITE_HEAD_OFFSET, BLOCKS_BODY)) return 0;
+    if (area_has(tile_of(left + shift), top, tile_of(right + shift), bottom, BLOCKS_BODY)) return 0;
     p->x += shift * SUBPIXELS;
     return 1;
 }
 
 // Moves up or down. Lands on floors and one-way tops, stops the head at ceilings.
-static void move_y(Player* p, Level* level)
+static void move_y(Player* p)
 {
     if (!p->velocity_y) return;
     uint16_t y = p->y + p->velocity_y;
     if (p->velocity_y < 0 && y > p->y) y = 0;   // never above the top of the map
-    int16_t feet = TO_PIXELS(y);
-    int16_t left = TO_PIXELS(p->x) - SPRITE_LEFT_W;
-    int16_t right = TO_PIXELS(p->x) + SPRITE_RIGHT_W;
+    uint8_t left = LEFT_COLUMN(p->x), right = RIGHT_COLUMN(p->x);
 
     if (p->velocity_y > 0) {
-        // Did the feet just enter a tile row with a floor or a one-way top?
-        if ((feet >> 3) != (TO_PIXELS(p->y) >> 3) && row_has(level, feet, left, right, BLOCKS_FEET)) {
-            y = (uint16_t)((feet & ~7) - 1) * SUBPIXELS;
+        // Did the feet just enter a tile row with a floor or a one-way top? Then they stop
+        // on the last pixel row above it.
+        uint8_t feet = FEET_ROW(y);
+        if (feet != FEET_ROW(p->y) && area_has(left, feet, right, feet, BLOCKS_FEET)) {
+            y = ((uint16_t)feet << 8) - SUBPIXELS;
             p->velocity_y = 0;
         }
     } else {
-        int16_t head = feet - SPRITE_HEAD_OFFSET;
-        if (row_has(level, head, left, right, BLOCKS_BODY) && !slide_past_corner(p, level, head)) {
-            y = (uint16_t)((head | 7) + 1 + SPRITE_HEAD_OFFSET) * SUBPIXELS;
+        // Head in a ceiling? Then it stops on the first pixel row below it.
+        uint8_t head = head_row(y);
+        if (area_has(left, head, right, head, BLOCKS_BODY) && !slide_past_corner(p, head, FEET_ROW(y))) {
+            y = ((uint16_t)(head + 1) << 8) + SPRITE_HEAD_OFFSET * SUBPIXELS;
             p->velocity_y = 0;
         }
     }
@@ -181,12 +198,12 @@ static void move_y(Player* p, Level* level)
 }
 
 // Standing on a floor or a one-way top? On the ground, coyote time is full.
-static void update_ground(Player* p, Level* level)
+static void update_ground(Player* p)
 {
-    int16_t below = TO_PIXELS(p->y) + 1;
-    int16_t center = TO_PIXELS(p->x);
-    p->on_ground = p->velocity_y >= 0 && (below & 7) == 0 &&
-                   row_has(level, below, center - SPRITE_LEFT_W, center + SPRITE_RIGHT_W, BLOCKS_FEET);
+    // Only feet on a tile's lowest pixel row can stand on the row below.
+    uint8_t below = FEET_ROW(p->y) + 1;
+    p->on_ground = p->velocity_y >= 0 && PIXEL_IN_TILE(p->y) == 7 &&
+                   area_has(LEFT_COLUMN(p->x), below, RIGHT_COLUMN(p->x), below, BLOCKS_FEET);
     if (p->on_ground) {
         p->velocity_y = 0;
         p->coyote_frames = COYOTE_FRAMES;
@@ -194,19 +211,17 @@ static void update_ground(Player* p, Level* level)
 }
 
 // Collects the fragments the body overlaps, and notes whether it touches a hazard.
-static void check_touched_tiles(Player* p, Level* level)
+static void check_touched_tiles(Player* p)
 {
-    int16_t center = TO_PIXELS(p->x);
-    int16_t feet = TO_PIXELS(p->y);
-    int16_t head = feet - SPRITE_HEAD_OFFSET;
-    uint8_t first_x = (center - SPRITE_LEFT_W) >> 3, last_x = (center + SPRITE_RIGHT_W) >> 3;
-    uint8_t first_y = (head < 0) ? 0 : head >> 3, last_y = feet >> 3;
+    uint8_t top = head_row(p->y), bottom = FEET_ROW(p->y), last = RIGHT_COLUMN(p->x);
+    if (bottom >= RING_ROWS) bottom = RING_ROWS - 1;
 
     p->touched_hazard = 0;
-    for (uint8_t tile_y = first_y; tile_y <= last_y; tile_y++) {
-        for (uint8_t tile_x = first_x; tile_x <= last_x; tile_x++) {
-            uint8_t type = LEVEL_COLLISION_AT(level, tile_x, tile_y);
-            if (type == COLLISION_COLLECTIBLE) level_collect_fragment(tile_x, tile_y);
+    for (uint8_t column = LEFT_COLUMN(p->x); column <= last && column < current_level.width; column++) {
+        const uint8_t* cell = &collision_ring[RING_INDEX(column, top)];
+        for (uint8_t row = top; row <= bottom; row++, cell++) {
+            uint8_t type = *cell;
+            if (type == COLLISION_COLLECTIBLE) level_collect_fragment(column, row);
             if (type == COLLISION_HAZARD) p->touched_hazard = 1;
         }
     }
@@ -228,15 +243,15 @@ static void update_animation(Player* p)
 
 // One frame of player movement: run, jump, gravity, collision, pickups, animation.
 // Reads the input fields that input_read_player() set this frame.
-void player_update(Player* player, Level* level)
+void player_update(Player* player)
 {
     update_run_speed(player);
     try_jump(player);
     apply_gravity(player);
-    move_x(player, level);
-    move_y(player, level);
-    update_ground(player, level);
-    check_touched_tiles(player, level);
+    move_x(player);
+    move_y(player);
+    update_ground(player);
+    check_touched_tiles(player);
     update_animation(player);
 }
 

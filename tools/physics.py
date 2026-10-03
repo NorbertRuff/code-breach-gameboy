@@ -72,16 +72,33 @@ def tile_of(px: int) -> int:
     return 0 if px < 0 else px >> 3
 
 
-def area_has(room: Room, left: int, top: int, right: int, bottom: int, types: int) -> bool:
-    if bottom < 0:
-        return False
-    return any(types & (1 << room.at(tile_x, tile_y))
-               for tile_y in range(tile_of(top), tile_of(bottom) + 1)
-               for tile_x in range(tile_of(left), tile_of(right) + 1))
+# Tile columns and rows of the body's edges, from x and y in 1/32 px (LEFT_COLUMN etc.).
+def left_column(x: int) -> int:
+    return (x - SPRITE_LEFT_W * SUBPIXELS) >> 8
 
 
-def row_has(room: Room, y: int, left: int, right: int, types: int) -> bool:
-    return area_has(room, left, y, right, y, types)
+def right_column(x: int) -> int:
+    return (x + SPRITE_RIGHT_W * SUBPIXELS) >> 8
+
+
+def feet_row(y: int) -> int:
+    return y >> 8
+
+
+def head_row(y: int) -> int:
+    return 0 if y < SPRITE_HEAD_OFFSET * SUBPIXELS else (y - SPRITE_HEAD_OFFSET * SUBPIXELS) >> 8
+
+
+def pixel_in_tile(pos: int) -> int:
+    return (pos & 0xFF) >> 5
+
+
+def column_has(room: Room, column: int, top: int, bottom: int, types: int) -> bool:
+    return any(types & (1 << room.at(column, row)) for row in range(top, bottom + 1))
+
+
+def area_has(room: Room, first: int, top: int, last: int, bottom: int, types: int) -> bool:
+    return any(column_has(room, column, top, bottom, types) for column in range(first, last + 1))
 
 
 def approach(speed: int, target: int, step: int) -> int:
@@ -132,20 +149,19 @@ def move_x(p: Body, room: Room) -> None:
     if x < room.min_x or x > max_x:
         x = room.min_x if x < room.min_x else max_x
         p.velocity_x = 0
-    feet = p.py
-    edge = (x >> 5) + SPRITE_RIGHT_W if moving_right else (x >> 5) - SPRITE_LEFT_W
-    if area_has(room, edge, feet - SPRITE_HEAD_OFFSET, edge, feet, BLOCKS_BODY):
-        center = (edge & ~7) - 1 - SPRITE_RIGHT_W if moving_right else (edge | 7) + 1 + SPRITE_LEFT_W
-        x = center * SUBPIXELS
+    column = right_column(x) if moving_right else left_column(x)
+    if column_has(room, column, head_row(p.y), feet_row(p.y), BLOCKS_BODY):
+        x = ((column << 8) - SUBPIXELS - SPRITE_RIGHT_W * SUBPIXELS if moving_right
+             else ((column + 1) << 8) + SPRITE_LEFT_W * SUBPIXELS)
         p.velocity_x = 0
     p.x = x
 
 
-def slide_past_corner(p: Body, room: Room, head: int) -> bool:
+def slide_past_corner(p: Body, room: Room, top: int, bottom: int) -> bool:
     left, right = p.px - SPRITE_LEFT_W, p.px + SPRITE_RIGHT_W
-    row, first_col, last_col = tile_of(head), left >> 3, right >> 3
-    first_solid = room.at(first_col, row) == SOLID
-    last_solid = room.at(last_col, row) == SOLID
+    first_col, last_col = left >> 3, right >> 3
+    first_solid = room.at(first_col, top) == SOLID
+    last_solid = room.at(last_col, top) == SOLID
     if first_solid and not last_solid:
         shift = ((first_col + 1) << 3) - left
     elif last_solid and not first_solid:
@@ -154,7 +170,7 @@ def slide_past_corner(p: Body, room: Room, head: int) -> bool:
         return False
     if abs(shift) > CORNER_CORRECTION:
         return False
-    if area_has(room, left + shift, head, right + shift, head + SPRITE_HEAD_OFFSET, BLOCKS_BODY):
+    if area_has(room, tile_of(left + shift), top, tile_of(right + shift), bottom, BLOCKS_BODY):
         return False
     p.x += shift * SUBPIXELS
     return True
@@ -164,24 +180,24 @@ def move_y(p: Body, room: Room) -> None:
     if not p.velocity_y:
         return
     y = max(p.y + p.velocity_y, 0)          # never above the top of the map
-    feet = y >> 5
-    left, right = p.px - SPRITE_LEFT_W, p.px + SPRITE_RIGHT_W
+    left, right = left_column(p.x), right_column(p.x)
     if p.velocity_y > 0:
-        if feet >> 3 != p.py >> 3 and row_has(room, feet, left, right, BLOCKS_FEET):
-            y = ((feet & ~7) - 1) * SUBPIXELS
+        feet = feet_row(y)
+        if feet != feet_row(p.y) and area_has(room, left, feet, right, feet, BLOCKS_FEET):
+            y = (feet << 8) - SUBPIXELS
             p.velocity_y = 0
     else:
-        head = feet - SPRITE_HEAD_OFFSET
-        if row_has(room, head, left, right, BLOCKS_BODY) and not slide_past_corner(p, room, head):
-            y = ((head | 7) + 1 + SPRITE_HEAD_OFFSET) * SUBPIXELS
+        head = head_row(y)
+        if area_has(room, left, head, right, head, BLOCKS_BODY) and not slide_past_corner(p, room, head, feet_row(y)):
+            y = ((head + 1) << 8) + SPRITE_HEAD_OFFSET * SUBPIXELS
             p.velocity_y = 0
     p.y = y
 
 
 def update_ground(p: Body, room: Room) -> None:
-    below = p.py + 1
-    p.on_ground = (p.velocity_y >= 0 and below & 7 == 0 and
-                   row_has(room, below, p.px - SPRITE_LEFT_W, p.px + SPRITE_RIGHT_W, BLOCKS_FEET))
+    below = feet_row(p.y) + 1
+    p.on_ground = (p.velocity_y >= 0 and pixel_in_tile(p.y) == 7 and
+                   area_has(room, left_column(p.x), below, right_column(p.x), below, BLOCKS_FEET))
     if p.on_ground:
         p.velocity_y = 0
         p.coyote_frames = COYOTE_FRAMES
@@ -189,10 +205,9 @@ def update_ground(p: Body, room: Room) -> None:
 
 def body_tiles(p: Body) -> list[tuple[int, int]]:
     """The tiles the body overlaps (check_touched_tiles in player.c)."""
-    head = p.py - SPRITE_HEAD_OFFSET
-    return [(tile_x, tile_y)
-            for tile_y in range(tile_of(head), (p.py >> 3) + 1)
-            for tile_x in range((p.px - SPRITE_LEFT_W) >> 3, ((p.px + SPRITE_RIGHT_W) >> 3) + 1)]
+    return [(column, row)
+            for column in range(left_column(p.x), right_column(p.x) + 1)
+            for row in range(head_row(p.y), feet_row(p.y) + 1)]
 
 
 def step(p: Body, room: Room, input_x: int, a_down: bool, a_was_down: bool) -> None:

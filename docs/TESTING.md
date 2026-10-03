@@ -99,7 +99,9 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   lines from the start of VBlank to the end of the update: `LY` when the game starts
   waiting for VBlank, plus 154 for every VBlank in between (from `sys_time`). A frame
   has 154 lines; `test_frame_budget.py` allows 140, a margin because PyBoy's timing is
-  close to the hardware's but not exact.
+  close to the hardware's but not exact. `make budget` (`tools/frame_budget.py`) plays the
+  same route and prints the lines each part of an update takes, and the worst update
+  part by part.
 - Some situations would take minutes of play: finishing the level, losing all lives.
   For those, tests write the game's variables directly with `set_state`, `set_lives`,
   `set_player_y` and `place_player`. `start_on_open_ground()` puts the player at x = 156,
