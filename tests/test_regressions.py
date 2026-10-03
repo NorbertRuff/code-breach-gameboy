@@ -23,8 +23,8 @@ def test_hud_window_stays_at_bottom_after_game_over(game):
     for _ in range(2):
         game.lose_life()
         game.wait_for_state(COREGAMELOOP)
-    game.lose_life()                      # third hit: game over, then the level reloads
-    for _ in range(1200):                 # game over flash, fade, reload
+    game.lose_life()                      # third hit: game over, then the section restarts
+    for _ in range(1200):                 # game over flash, fade, restart
         game.frames(1)
         if game.lives() == 3 and game.state() == COREGAMELOOP:
             break
@@ -39,11 +39,12 @@ def test_hud_window_stays_at_bottom_after_game_over(game):
 # Bug 2 ---------------------------------------------------------------------------
 
 def test_hud_counter_shows_two_digits(game):
+    # At the start the count shows section A: none collected, of a quota of 1.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.frames(2)
-    digits = [game.window_tile(col, 0) for col in range(15, 20)]
     d = HUD_DIGIT_TILE_BASE
-    assert digits == [d + 0, d + 0, HUD_SLASH_TILE, d + 1, d + 5], "expected '00/15'"
+    assert [game.window_tile(col, 0) for col in range(15, 20)] == [d + 0, d + 0, HUD_SLASH_TILE, d + 0, d + 1], \
+        "expected '00/01', section A's quota"
 
 
 # Bug 3 ---------------------------------------------------------------------------

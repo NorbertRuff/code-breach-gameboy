@@ -10,12 +10,15 @@
 #define LEVEL_MAP_ROWS 13
 #define LEVEL_MAP_TOP_ROW 3
 
-// Collision types, one per tileset tile (<tileset>_collision[] tables).
+// Collision types, one per tileset tile (<tileset>_collision[] tables). The types from
+// FIRST_TOUCHED_TYPE on act when the body touches them.
 #define COLLISION_NONE 0
 #define COLLISION_SOLID 1
 #define COLLISION_ONE_WAY 2
 #define COLLISION_HAZARD 3
 #define COLLISION_COLLECTIBLE 4
+#define COLLISION_EXIT 5
+#define FIRST_TOUCHED_TYPE COLLISION_HAZARD
 
 // Entity types. x and y are world pixels (screen rows, so y includes the band).
 #define ENTITY_ENEMY    0   // x: left end of the patrol, y: feet row, param: patrol width in px

@@ -173,7 +173,7 @@ Enemies are actors, spawned from the level's entity list as the camera reaches t
 INTRO_CREDITS → TITLE_SCREEN → GAMEPLAY_START → COREGAMELOOP
                                      ↑                  ↓
                                 GAMEPLAY_END ← enemy/pit/hazard hit
-                                LEVEL_COMPLETE ← all collectibles collected
+                                LEVEL_COMPLETE ← exit elevator reached
 ```
 
 ### VRAM Layout

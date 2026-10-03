@@ -44,7 +44,8 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, passes the greybox level and reports a broken one |
 | `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
 | `tests/test_actors.py` | Actors: bots in reach spawn at the start, a bot spawns as the camera nears, patrols, removal a screen behind until a restart, hits and invincibility, the sprite list every frame |
-| `tests/test_frame_budget.py` | A route through the greybox level from the start to the exit: no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right |
+| `tests/test_sections.py` | Gates as solid columns, closed below the quota, opening on touch, the opened gate as checkpoint, the camera and player lock, lives and game over per section, the exit |
+| `tests/test_frame_budget.py` | A route that finishes the greybox level (both gates, the exit): no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
 
@@ -110,7 +111,12 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   For those, tests write the game's variables directly with `set_state`, `set_lives`,
   `set_player_y` and `place_player`. `start_on_open_ground()` puts the player at x = 156,
   where nothing is in the way: at the level start, platform A blocks the path at body
-  height. `lose_life()` runs into the pit at column 35. Keep this rare, and prefer input.
+  height. It also picks up the fragment at column 19, which opens gate A (quota 1).
+  `lose_life()` drops the player below the screen, which costs a life even while
+  invincible. Keep this rare, and prefer input. Only move the player forward past an
+  opened gate: behind the camera's left limit, columns aren't drawn and the collision
+  ring holds other columns. `game.level()` reads the level's state (section, gates,
+  fragments per section) through `LEVEL_FIELDS`.
 
 ## Conventions
 

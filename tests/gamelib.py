@@ -35,7 +35,7 @@ LINES_PER_FRAME = 154
 PLAYER_FIELDS = [
     ("x", "H"), ("y", "H"), ("velocity_x", "b"), ("velocity_y", "b"), ("input_x", "b"),
     ("jump_held", "B"), ("jump_buffer_frames", "B"), ("coyote_frames", "B"),
-    ("on_ground", "B"), ("touched_hazard", "B"), ("direction", "B"), ("draw_frame", "B"),
+    ("on_ground", "B"), ("touched_hazard", "B"), ("touched_exit", "B"), ("direction", "B"), ("draw_frame", "B"),
     ("animation_frame_count", "B"), ("invincibility_frames", "B"),
 ]
 PLAYER_FORMAT = "<" + "".join(fmt for _, fmt in PLAYER_FIELDS)
@@ -46,6 +46,18 @@ ACTOR_FIELDS = [("type", "H"), ("x", "H"), ("y", "B"), ("direction", "b"), ("min
 ACTOR_FORMAT = "<" + "".join(fmt for _, fmt in ACTOR_FIELDS)
 ACTOR_SIZE = struct.calcsize(ACTOR_FORMAT)
 MAX_ACTORS = 8
+
+# Mirror of the Level struct in src/level/level_manager.h (gates: 2 of 4 bytes each).
+# test_level_struct_size_matches fails when the C struct changes without this list.
+LEVEL_FIELDS = [
+    ("bank", "B"), ("width", "B"), ("width_px", "H"), ("player_start_x", "H"),
+    ("player_start_y", "B"), ("fragment_count", "B"), ("entity_count", "B"),
+    ("section_start", "3s"), ("map", "H"), ("entities", "H"), ("gate_count", "B"),
+    ("gates", "8s"), ("exit_column", "B"), ("exit_row", "B"), ("section", "B"),
+    ("section_fragments", "3s"), ("section_collected", "3s"),
+]
+LEVEL_FORMAT = "<" + "".join(fmt for _, fmt in LEVEL_FIELDS)
+LEVEL_SIZE = struct.calcsize(LEVEL_FORMAT)
 PLAYER_SIZE = struct.calcsize(PLAYER_FORMAT)
 PLAYER_OFFSETS = {}
 _offset = 0
@@ -238,6 +250,16 @@ class Game:
             actors.append(actor)
         return actors
 
+    def level(self) -> SimpleNamespace:
+        """The loaded level's state. gates is a list of (column, bottom_row, quota,
+        open_rows); section_fragments and section_collected are lists per section."""
+        values = struct.unpack(LEVEL_FORMAT, read_symbol(self.pyboy, "_current_level", LEVEL_SIZE))
+        level = SimpleNamespace(**{name: v for (name, _), v in zip(LEVEL_FIELDS, values)})
+        level.gates = [tuple(level.gates[i:i + 4]) for i in range(0, 4 * level.gate_count, 4)]
+        level.section_fragments = list(level.section_fragments)
+        level.section_collected = list(level.section_collected)
+        return level
+
     def visible_sprites(self) -> list:
         """The hardware sprites in OAM that are switched on (y not 0): (x, y, tile) each,
         in screen pixels for the sprite's top-left corner."""
@@ -359,23 +381,19 @@ class Game:
             top = min(top, self.player().y)
         return ground_y - top
 
-    def lose_life(self, timeout: int = 400) -> None:
-        """Jump onto platform A and run right until the pit at column 35 costs a life
-        (falling costs one even while invincible)."""
+    FALL_OUT_Y = 144 + SPRITE_HEAD_OFFSET + 8   # feet below this: fell out (FALL_DEATH_Y, main.c)
+
+    def lose_life(self, timeout: int = 30) -> None:
+        """Drop the player below the screen: falling out costs a life, even while
+        invincible, and the game restarts the section the player is in. A write, not
+        input: with the gates closed, not every section has a pit within reach."""
         lives = self.lives()
-        self.pyboy.button_press("right")
-        self.pyboy.button_press("a")
-        try:
-            for frame in range(timeout):
-                if frame == 30:
-                    self.pyboy.button_release("a")
-                self.frames(1)
-                if self.lives() != lives:
-                    return
-        finally:
-            self.pyboy.button_release("right")
-            self.pyboy.button_release("a")
-        raise AssertionError("running right never cost a life")
+        self.set_player_y(self.FALL_OUT_Y)
+        for _ in range(timeout):
+            self.frames(1)
+            if self.lives() != lives:
+                return
+        raise AssertionError("falling out never cost a life")
 
     # --- pictures ---------------------------------------------------------------
 

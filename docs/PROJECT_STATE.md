@@ -36,6 +36,11 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
   list with a cursor, one type table, removed a screen behind the camera, and a sprite
   list rebuilt every frame. Bug 20 (bots drawn 1 px above the floor) found and fixed.
   138 tests pass. The frame budget route's worst update ends at line 123.
+- **2026-10-03, M3 step 3:** gates with a fragment quota, opened gates as checkpoints,
+  the camera lock, the exit, the HUD count per section, and restarts behind a fade (the
+  respawn hitch is hidden). Game over restarts the section. The frame budget route now
+  finishes the greybox level; its worst update ends at line 122. 158 tests pass. Bank 0
+  has 2,836 bytes free.
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 

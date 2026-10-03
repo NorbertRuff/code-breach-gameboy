@@ -56,7 +56,7 @@ def test_bot_patrols_between_its_ends(game):
 
 def test_bots_a_screen_behind_are_removed_until_a_restart(game):
     game.start_on_open_ground()
-    game.place_player(490, 103)                 # far end: the camera is at 352
+    game.place_player(480, 103)                 # far end, left of the exit: the camera is at 352
     game.frames(32)                             # bot D's patrol dips below 352 - 160
     assert patrol_starts(game) == [FLOOR_BOT]
     game.place_player(156, 119)                 # back: bots B and D stay gone

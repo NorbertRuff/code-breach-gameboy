@@ -88,6 +88,11 @@ def remove_gid(tmj, gid):
     objects(tmj)[:] = [o for o in objects(tmj) if o.get("gid") != gid]
 
 
+def dig_pit_right_of_first_gate(tmj):
+    for column in (6, 7):                               # the gate is at column 5
+        tmj["layers"][0]["data"][12 * 20 + column] = EMPTY
+
+
 RULE_BREAKS = {
     "12 rows tall": (lambda t: t.update(height=12), "must be 13"),
     "19 tiles wide": (lambda t: t.update(width=19), "20 to 255"),
@@ -99,6 +104,8 @@ RULE_BREAKS = {
     "two exits": (lambda t: objects(t).append(dict(tile_object(EXIT, 15, 11), id=99)), "exactly one exit"),
     "one gate": (lambda t: objects(t).pop(4), "exactly 2 gates"),
     "quota too high": (lambda t: objects(t)[2]["properties"][0].update(value=2), "asks for 2 fragments"),
+    "wall right of a gate": (lambda t: t["layers"][0]["data"].__setitem__(11 * 20 + 6, SOLID), "room to restart"),
+    "pit right of a gate": (lambda t: dig_pit_right_of_first_gate(t), "room to restart"),
     "off the grid": (lambda t: objects(t)[1].update(x=27), "8 px grid"),
     "patrol too short": (lambda t: objects(t)[6].update(width=8), "patrol width"),
 }

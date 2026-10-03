@@ -2,24 +2,37 @@
 #include "camera.h"
 
 int16_t camera_x;
+int16_t camera_left_limit;
 
+static int16_t next_left_limit;  // becomes camera_left_limit once the camera gets there
 static int8_t look_ahead;        // current lead in px, eases toward look_direction * LOOK_AHEAD
 static int8_t look_direction;    // 1 right, -1 left
 static uint8_t turn_distance;    // px run against look_direction since the last flip
 static uint16_t last_player_px;
 
-// Keeps the focus point inside the deadzone, and the screen inside the level.
+// Keeps the focus point inside the deadzone, and the screen inside the level and right
+// of the left limit.
 static void follow_focus(int16_t focus, uint16_t level_width_px)
 {
     if (focus < camera_x + CAMERA_CENTER - CAMERA_DEADZONE) camera_x = focus - (CAMERA_CENTER - CAMERA_DEADZONE);
     if (focus > camera_x + CAMERA_CENTER + CAMERA_DEADZONE) camera_x = focus - (CAMERA_CENTER + CAMERA_DEADZONE);
     if (camera_x > (int16_t)(level_width_px - DEVICE_SCREEN_PX_WIDTH)) camera_x = level_width_px - DEVICE_SCREEN_PX_WIDTH;
-    if (camera_x < 0) camera_x = 0;
+    if (camera_x >= next_left_limit) camera_left_limit = next_left_limit;
+    if (camera_x < camera_left_limit) camera_x = camera_left_limit;
 }
 
-// Puts the camera on the player at once, looking right: for a level start or a respawn.
+// Sets a new left limit, behind an opened gate. It takes force once the camera has
+// scrolled to it, so the camera never jumps.
+void camera_lock_left(int16_t x)
+{
+    next_left_limit = x;
+}
+
+// Puts the camera on the player at once, looking right, with the left limit in force:
+// for a level start or a restart.
 void camera_reset(uint16_t player_px, uint16_t level_width_px)
 {
+    camera_left_limit = next_left_limit;
     look_ahead = 0;
     look_direction = 1;
     turn_distance = 0;

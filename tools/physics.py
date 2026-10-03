@@ -30,7 +30,9 @@ FALL_DEATH_Y = 144 + SPRITE_HEAD_OFFSET
 @dataclass
 class Room:
     """What the physics collides with: the level's width and its tile collision types
-    (tile_y in screen rows). min_x is the leftmost body center in 1/32 px."""
+    (tile_y in screen rows). min_x is the leftmost body center in 1/32 px: in the game,
+    the camera's left limit plus SPRITE_LEFT_W (the level's left edge, or just past the
+    last opened gate)."""
     width_px: int
     collision: Callable[[int, int], int]
     min_x: int = SPRITE_LEFT_W * SUBPIXELS

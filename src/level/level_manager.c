@@ -10,6 +10,9 @@
 Level current_level;
 uint8_t level_index = LEVEL_GREYBOX_TEST;
 
+// Read by the tests to notice Level struct changes.
+const uint8_t level_struct_size = sizeof(Level);
+
 // 8x8 2bpp digit tiles for HUD counter.
 // Each row: two identical bytes (same bit pattern for both bit-planes → color 0 or 3 only).
 // Tiles 0-9 map to digits '0'-'9', tile 10 maps to '/'.
@@ -119,7 +122,6 @@ void level_load(uint8_t index)
         current_level.bank = BANK(greybox_test);
         WITH_BANK(greybox_test, copy_header(&greybox_test));
     }
-    current_level.collected_count = 0;
     level_stream_start();
 
     WITH_BANK(greybox, set_bkg_data(0, greybox_TILE_COUNT, greybox_tiles));
@@ -127,7 +129,6 @@ void level_load(uint8_t index)
     fill_bkg_rect(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, 0);   // the parallax band, empty until M3
     set_hud_window_tiles();
     set_programmer_metasprite();
-    hud_update_count(0, current_level.fragment_count);
 }
 
 // Copies entity number index of the level out of ROM.

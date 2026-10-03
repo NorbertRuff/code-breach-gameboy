@@ -15,17 +15,21 @@ import tiled2c  # noqa: E402
 
 LEVEL = tiled2c.load_level(ROOT / "levels" / "greybox_test.tmj")
 COLLISION = {"": 0, "solid": 1, "one_way": 2, "hazard": 3}
-COLLECTIBLE = 4
-FRAGMENT_TILE = next(i for i, c in LEVEL.tileset.classes.items() if c == "fragment")
-FRAGMENTS = {(e.x // 8, e.y // 8) for e in LEVEL.entities if e.kind == "fragment"}
+SOLID, COLLECTIBLE, EXIT = 1, 4, 5
+MARKER_TILE = {c: i for i, c in LEVEL.tileset.classes.items()}
 MAP_TOP_ROW = 3
+FRAGMENTS = {(e.x // 8, e.y // 8) for e in LEVEL.entities if e.kind == "fragment"}
+GATE_CELLS = {(e.x // 8, row) for e in LEVEL.entities if e.kind == "gate"
+              for row in range(MAP_TOP_ROW, e.y // 8 + 1)}
+EXIT_CELL = next((e.x // 8, e.y // 8) for e in LEVEL.entities if e.kind == "exit")
 
 CAMERA_CENTER, CAMERA_DEADZONE, LOOK_AHEAD = 80, 8, 24    # src/engine/camera.h
 
 
 def screen_mismatches(game) -> list:
-    """Visible cells whose tile or collision differs from the map. A fragment cell may
-    show the fragment (not collected yet) or the map tile under it (collected)."""
+    """Visible cells whose tile or collision differs from the map and its objects. A
+    fragment cell may show the fragment (not collected yet) or the map tile under it, a
+    gate cell the gate (closed) or the map tile (open); the exit cell shows the exit."""
     wrong = []
     first = game.camera_x() // 8
     for col in range(first, min(first + 21, LEVEL.width)):
@@ -33,7 +37,11 @@ def screen_mismatches(game) -> list:
             tile = LEVEL.tiles[(row - MAP_TOP_ROW) * LEVEL.width + col]
             expected = {(tile, COLLISION[LEVEL.tileset.collision[tile]])}
             if (col, row) in FRAGMENTS:
-                expected.add((FRAGMENT_TILE, COLLECTIBLE))
+                expected.add((MARKER_TILE["fragment"], COLLECTIBLE))
+            if (col, row) in GATE_CELLS:
+                expected.add((MARKER_TILE["gate"], SOLID))
+            if (col, row) == EXIT_CELL:
+                expected = {(MARKER_TILE["exit"], EXIT)}
             seen = (game.bkg_tile(col, row), game.collision(col, row))
             if seen not in expected:
                 wrong.append((col, row, seen))
@@ -83,12 +91,12 @@ def test_collected_fragment_stays_gone(game):
     # place in the background map is drawn over), come back, and look again.
     game.start_on_open_ground()
     assert game.collision(19, 13) != COLLECTIBLE
-    game.place_player(490, 103)                 # on the step at the far end
+    game.place_player(480, 103)                 # on the step at the far end, left of the exit
     game.frames(10)
     assert game.camera_x() == LEVEL.width * 8 - 160
     game.place_player(156, 119)
     game.frames(10)
-    assert game.bkg_tile(19, 13) != FRAGMENT_TILE
+    assert game.bkg_tile(19, 13) != MARKER_TILE["fragment"]
     assert game.collision(19, 13) != COLLECTIBLE
     assert not screen_mismatches(game)
 

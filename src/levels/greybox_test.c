@@ -37,7 +37,7 @@ static const LevelEntity greybox_test_entities[21] = {
     { ENTITY_FRAGMENT, 184, 64, 0 },
     { ENTITY_FRAGMENT, 208, 104, 0 },
     { ENTITY_FRAGMENT, 224, 40, 0 },
-    { ENTITY_GATE, 264, 112, 3 },
+    { ENTITY_GATE, 264, 112, 1 },
     { ENTITY_FRAGMENT, 328, 72, 0 },
     { ENTITY_FRAGMENT, 376, 80, 0 },
     { ENTITY_GATE, 400, 112, 1 },

@@ -176,6 +176,7 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
     if level.fragment_count > MAX_FRAGMENTS:
         fail(f"{level.fragment_count} fragments, at most {MAX_FRAGMENTS}")
     check_quotas(level, gates, fail)
+    check_checkpoints(level, fail)
     warn_about_patrols(level)
     return level
 
@@ -201,6 +202,25 @@ def check_quotas(level: Level, gates: list[int], fail) -> None:
         found = sum(e.kind == "fragment" and section_of(e.x, gates) == section for e in level.entities)
         if not 1 <= gate.param <= found:
             fail(f"gate at x {gate.x} asks for {gate.param} fragments, section {'ABC'[section]} has {found}")
+
+
+def check_checkpoints(level: Level, fail) -> None:
+    """The player restarts just right of an opened gate, feet on the gate's bottom row
+    (src/level/section.c): the two columns there need the body's 4 rows free of solid and
+    hazard tiles, and ground under at least one of them."""
+    def collision(column: int, row: int) -> str:
+        if not (0 <= row < MAP_ROWS and column < level.width):
+            return "outside"
+        return level.tileset.collision[level.tiles[row * level.width + column]]
+
+    for gate in (e for e in level.entities if e.kind == "gate"):
+        bottom = gate.y // TILE - MAP_TOP_ROW
+        columns = (gate.x // TILE + 1, gate.x // TILE + 2)
+        body = {collision(c, r) for c in columns for r in range(bottom - 3, bottom + 1)}
+        ground = {collision(c, bottom + 1) for c in columns}
+        if body & {"solid", "hazard", "outside"} or not ground & {"solid", "one_way"}:
+            fail(f"gate at x {gate.x}: no room to restart right of it (2 free columns, 4 rows up "
+                 f"from its bottom tile, ground below)")
 
 
 def warn_about_patrols(level: Level) -> None:

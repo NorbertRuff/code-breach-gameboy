@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 4,173 bytes free.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 2,836 bytes free. SDCC's code is bulky (step 3 alone took about 1.3 KB), so code that isn't per-frame will need `#pragma bank 255` before long.
 
 ## Build Commands
 
@@ -78,6 +78,7 @@ code explains itself and stays short:
 
 The main loop is a state machine with these states (defined in `src/utils.h`):
 - `INTRO_CREDITS_STATE` → `TITLE_SCREEN_STATE` → `GAMEPLAY_START` → `COREGAMELOOP` → `GAMEPLAY_END` / `LEVEL_COMPLETE`
+- `GAMEPLAY_END` (a life lost) restarts the current section behind a fade (`restart_behind_fade`), and on game over first refills the lives and puts the section's fragments back. `LEVEL_COMPLETE` (the exit reached) reloads the level for now.
 
 The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in `main.c` `joypad_current`, `joypad_previous`, `current_game_state`, `lives`, `lag_frames`, `Player player`; in `actor.c` `actors[]` and `actor_count`; in `level_manager.c` `Level current_level` and `level_index` (the level `GAMEPLAY_START` loads); in `camera.c` `camera_x`.
 
@@ -89,7 +90,7 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in 
 | `src/engine/` | `platform.c` (`is_cgb`, GBC setup at boot), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK` for banked data), `camera.c` (deadzone, look-ahead) |
 | `src/player/` | `Player` struct + physics: `player_update` (run, jump, gravity, tile collision, pickups, animation), `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad and A into the player's input fields |
-| `src/level/` | `level_data.h` (the ROM level format), `level_manager.c` (`level_load`, the `Level` state, HUD drawing), `level_stream.c` (collision ring, column streaming, fragments) |
+| `src/level/` | `level_data.h` (the ROM level format), `level_manager.c` (`level_load`, the `Level` state, HUD drawing), `level_stream.c` (collision ring, column streaming, fragments, gates and the exit drawn into columns), `section.c` (quotas, opening gates, checkpoints) |
 | `src/actor/` | `actor.c`: actors spawned from the level's entity list, the type table, update, hit test, drawing; `bot.c`: the patrol bot type |
 | `src/sound/` | Sound effects written straight to the APU registers |
 | `src/graphics/` | Generated asset files from `make assets` (plus the older hand-made `splashscreen.c`), all banked |
@@ -112,7 +113,9 @@ Physics uses integer arithmetic (no floats — Game Boy has no FPU). Values and 
 
 ### Level Collision and Streaming (`src/level/`)
 
-Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn at screen rows 3–15. `collision_ring[32 * 16]` in WRAM holds the collision of the 32 background-map columns, indexed `RING_INDEX(tile_x, tile_y)` with `tile_y` in screen rows; `level_stream_update(camera_x)` draws each column that enters the view (both directions) and fills its ring column. Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE` (SOLID blocks, ONE_WAY blocks from above, HAZARD costs a life, COLLECTIBLE is a fragment). `LEVEL_COLLISION_AT(level, tile_x, tile_y)` (a macro, pass plain variables) returns a tile's type; outside the level or in a HUD row it is `COLLISION_NONE`. Collected fragments are a bitset, so they stay gone when their column is drawn again.
+Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn at screen rows 3–15. `collision_ring[32 * 16]` in WRAM holds the collision of the 32 background-map columns, indexed `RING_INDEX(tile_x, tile_y)` with `tile_y` in screen rows; `level_stream_update(camera_x)` draws each column that enters the view (both directions) and fills its ring column. Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE`, `COLLISION_EXIT` (SOLID blocks, ONE_WAY blocks from above, HAZARD costs a life, COLLECTIBLE is a fragment, EXIT completes the level). `LEVEL_COLLISION_AT(level, tile_x, tile_y)` (a macro, pass plain variables) returns a tile's type; outside the level or in a HUD row it is `COLLISION_NONE`. Collected fragments are a bitset, so they stay gone when their column is drawn again.
+
+Fragments, gates and the exit are tile objects in Tiled, so `draw_column` puts their marker tiles over the map (a closed gate fills its column from its bottom row up to row 3), and the marker tiles get their object's collision. `current_level` holds the play state: `gates[]` (column, bottom row, quota, rows opened), `section` (0 = A), fragments per section and collected per section. `section.c` opens the current section's gate when the player walks into it with the quota: one row every 2 frames, the next section starts, the camera gets a left limit just past the gate, and a restart puts the player just right of it.
 
 ### Actors (`src/actor/`)
 
@@ -120,9 +123,9 @@ Moving level objects (the patrol bots) are actors; the player is not. `actors_sp
 
 ### Camera
 
-`camera_update()` (`src/engine/camera.c`) keeps the focus (player x + a look-ahead that eases to 24 px in the running direction) within 8 px of screen x 80, clamped to the level; `camera_reset()` snaps it for a level start or respawn, followed by `level_stream_reset()`. `move_bkg()` applies `camera_x`; the player and enemies are drawn at `world_x - camera_x`. Levels are up to 255 tiles wide.
+`camera_update()` (`src/engine/camera.c`) keeps the focus (player x + a look-ahead that eases to 24 px in the running direction) within 8 px of screen x 80, clamped to the level and to `camera_left_limit`; `camera_reset()` snaps it for a level start or respawn, followed by `level_stream_reset()`. `camera_lock_left(x)` sets a new left limit (an opened gate) that takes force once the camera gets there; the player can't go left of it either. Teleport the player (tests) only forward past an opened gate: columns behind the limit aren't drawn. `move_bkg()` applies `camera_x`; the player and enemies are drawn at `world_x - camera_x`. Levels are up to 255 tiles wide.
 
-**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 2 an update ends near line 63, a fragment pickup near 82, one that draws a column near 100; the worst on the route (a pickup in a column update) at 123. `make budget` shows where the lines go.
+**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 3 an update ends near line 68, a fragment pickup near 85, one that draws a column near 101; the worst on the route (a pickup in a column update) at 122. `make budget` shows where the lines go.
 
 ## Development Feature Flags (`src/utils.h`)
 

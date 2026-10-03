@@ -44,7 +44,8 @@ document or a person, add a row here in the same change. Status is *in use* or
 | hUGEDriver music from the VBlank handler, `NONBANKED` wrapper for banked songs | Larold's hUGEDriver tutorial; hUGEDriver `gbdk_example` | Audio | Planned (M6) |
 | Save header: magic value, version, size, checksum | CrossZGB `SRAM.c` (MIT); Larold's saving tutorial | Saves | Planned (M7); test ROM in use |
 | Counting lag frames with the VBlank counter: every VBlank during an update is a frame without one | GBDK docs, `sys_time` in `gb/gb.h` | `src/main.c` `lag_frames` | In use |
-| Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT); Itay Keren, "Scroll Back" | `src/engine/camera.c` | In use (gate lock planned, M3) |
+| Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT), camera locks; Itay Keren, "Scroll Back" | `src/engine/camera.c` | In use |
+| A gate that retracts one row at a time when it opens | Game-feel research, RESEARCH.md section 3 ("bars retract one tile every 3 frames") | `src/level/section.c`, `level_stream.c` `level_open_gate_row` | In use |
 
 ## Testing
 
@@ -66,7 +67,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Idea | Source | Where | Status |
 |---|---|---|---|
 | Story: a programmer escapes ApexLab after the AI security goes haywire | Owner | GAME_DESIGN.md | In use |
-| Key-gated sections, fragment quota, gates as checkpoints, elevator exit | Owner decisions 2026-10-02; Donkey Kong '94 key-to-door idea (game-feel research) | LEVEL_DESIGN.md | Planned (M3) |
+| Key-gated sections, fragment quota, gates as checkpoints, elevator exit | Owner decisions 2026-10-02; Donkey Kong '94 key-to-door idea (game-feel research) | LEVEL_DESIGN.md, `src/level/section.c` | In use |
 | 16×32 multi-sprite player | Owner (early decision, kept 2026-10-03) | `player.c`, ART_PIPELINE.md | In use |
 | "PATCH n/5" story tie-in, boot screen lines, AI log per elevator ride | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md | Planned (M7) |
 | KERNEL boss concept | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md | Planned (M8) |

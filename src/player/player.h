@@ -45,6 +45,7 @@ typedef struct {
     uint8_t coyote_frames;       // counts down after leaving the ground
     uint8_t on_ground;
     uint8_t touched_hazard;      // set when the body overlaps a hazard tile
+    uint8_t touched_exit;        // set when the body overlaps the exit
     uint8_t direction;           // 0 left, 1 right
     uint8_t draw_frame;
     uint8_t animation_frame_count;

@@ -40,7 +40,10 @@ them. Examples: "col 42: gap too wide", "section B drags", "the bot at col 88 is
 - **A security gate closes each of sections A and B.** The gate opens when the player has
   collected the section's **quota** of code fragments, for example 3 of 5. Extra
   fragments are a bonus: score, and a 100% mark on the level-select screen.
-- **An opened gate is a checkpoint.** Losing a life restarts at the last opened gate.
+- **A gate fills its column** from its tile up to the top of the playfield, so it can't
+  be jumped. It opens when the player walks into it with the quota collected.
+- **An opened gate is a checkpoint.** Losing a life restarts at the last opened gate,
+  just right of it: leave 2 free columns there with ground below (the converter checks).
   Collected fragments stay collected. 3 lives. Game over refills the lives and restarts
   the current section: fragments collected since the last gate are reset.
 - **The camera locks behind an opened gate.** The player can't go back to an earlier
@@ -55,7 +58,9 @@ them. Examples: "col 42: gap too wide", "section B drags", "the bot at col 88 is
 - **One new mechanic per level** (from GAME_DESIGN.md): L1 basics, L2 one-way platforms,
   L3 vertical movers and chasers, L4 hazard tiles, L5 boss.
 - **The HUD shows** lives, plus fragments collected against the quota of the current
-  section, for example `◆ 2/3`.
+  section, for example `◆ 2/3`. In section C, which has no gate, it counts against all
+  of C's fragments.
+- **The level ends** when the player walks into the exit elevator.
 
 ## 3. Screen and hardware limits
 

@@ -30,6 +30,16 @@ void sound_play_collect(void)
     NR24_REG = 0x87;  // trigger, freq high=7
 }
 
+void sound_play_gate(void)
+{
+    // CH1 slow upward sweep from ~256 Hz (0x600): a gate opening
+    NR10_REG = 0x36;  // sweep period=3 (23 ms/step), direction=up, shifts=6
+    NR11_REG = 0x80;  // 50% duty
+    NR12_REG = 0xF3;  // vol=15, decay, period=3
+    NR13_REG = 0x00;  // freq low  (combined: 0x600)
+    NR14_REG = 0x86;  // trigger, freq high=6
+}
+
 void sound_play_hit(void)
 {
     // CH1 low thud at ~85 Hz (0x200)

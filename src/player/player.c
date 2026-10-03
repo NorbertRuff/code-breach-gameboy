@@ -3,6 +3,7 @@
 #include "../graphics/programmer.h"
 #include "../sound/sound.h"
 #include "../engine/banking.h"
+#include "../engine/camera.h"
 
 // Read by the tests to notice Player struct changes.
 const uint8_t player_struct_size = sizeof(Player);
@@ -10,9 +11,6 @@ const uint8_t player_struct_size = sizeof(Player);
 // Tile types that stop the feet (landing) and the body (walls and ceilings).
 #define BLOCKS_FEET ((1 << COLLISION_SOLID) | (1 << COLLISION_ONE_WAY))
 #define BLOCKS_BODY (1 << COLLISION_SOLID)
-
-// How far left the body center may go: the box stays inside the level.
-#define PLAYER_MIN_X ((uint16_t)SPRITE_LEFT_W * SUBPIXELS)
 
 // A position in 1/32 px: a tile is 256 units, so the tile is the high byte, and bits 5-7
 // are the pixel (0-7) within the tile.
@@ -126,15 +124,17 @@ static void apply_gravity(Player* p)
     p->velocity_y = (speed > FALL_SPEED_MAX) ? FALL_SPEED_MAX : speed;
 }
 
-// Moves sideways. Stops flush against walls and at the level's edges.
+// Moves sideways. Stops flush against walls, at the level's right edge, and at the
+// camera's left limit (the level's left edge, or just past an opened gate).
 static void move_x(Player* p)
 {
     if (!p->velocity_x) return;
     uint8_t moving_right = p->velocity_x > 0;
+    uint16_t min_x = (uint16_t)(camera_left_limit + SPRITE_LEFT_W) * SUBPIXELS;
     uint16_t max_x = (current_level.width_px - 1 - SPRITE_RIGHT_W) * SUBPIXELS;
     uint16_t x = p->x + p->velocity_x;
-    if (x < PLAYER_MIN_X || x > max_x) {
-        x = (x < PLAYER_MIN_X) ? PLAYER_MIN_X : max_x;
+    if (x < min_x || x > max_x) {
+        x = (x < min_x) ? min_x : max_x;
         p->velocity_x = 0;
     }
 
@@ -210,19 +210,23 @@ static void update_ground(Player* p)
     }
 }
 
-// Collects the fragments the body overlaps, and notes whether it touches a hazard.
+// Collects the fragments the body overlaps, and notes whether it touches a hazard or
+// the exit.
 static void check_touched_tiles(Player* p)
 {
     uint8_t top = head_row(p->y), bottom = FEET_ROW(p->y), last = RIGHT_COLUMN(p->x);
     if (bottom >= RING_ROWS) bottom = RING_ROWS - 1;
 
     p->touched_hazard = 0;
+    p->touched_exit = 0;
     for (uint8_t column = LEFT_COLUMN(p->x); column <= last && column < current_level.width; column++) {
         const uint8_t* cell = &collision_ring[RING_INDEX(column, top)];
         for (uint8_t row = top; row <= bottom; row++, cell++) {
             uint8_t type = *cell;
+            if (type < FIRST_TOUCHED_TYPE) continue;    // most tiles: nothing to do
             if (type == COLLISION_COLLECTIBLE) level_collect_fragment(column, row);
-            if (type == COLLISION_HAZARD) p->touched_hazard = 1;
+            else if (type == COLLISION_HAZARD) p->touched_hazard = 1;
+            else p->touched_exit = 1;
         }
     }
 }

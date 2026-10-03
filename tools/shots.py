@@ -5,9 +5,9 @@ Run with "make shots". Writes, per mode (dmg, cgb):
   tests/out/shots/<mode>_contact.png     all steps on one sheet, 2x, with labels
   tests/out/shots/<mode>_level_map.png   the whole 32x18 background map from VRAM, 2x
 
-The script uses the same helpers as the tests (tests/gamelib.py). Steps that can't be
-reached by input in level 1 (level complete, game over) are forced by writing the
-game state, as the regression tests do.
+The script uses the same helpers as the tests (tests/gamelib.py). Long ways are skipped
+by moving the player (place_player), lives are lost with lose_life, and game over comes
+from setting the lives to 1 first, as the tests do.
 """
 
 from __future__ import annotations
@@ -21,8 +21,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import (COREGAMELOOP, GAMEPLAY_END, LEVEL_COMPLETE,  # noqa: E402
-                     Game, boot)
+from gamelib import COREGAMELOOP, Game, boot  # noqa: E402
 
 OUT = ROOT / "tests" / "out" / "shots"
 SHADES = [(232, 232, 232), (160, 160, 160), (88, 88, 88), (16, 16, 16)]
@@ -137,10 +136,13 @@ def run(mode: str, rom: Path) -> None:
     game.frames(3)
     rec.shot("walking_left_into_wall")
 
-    # Across the level: past the first 256 px, over the pit, the one-way shelf, spikes.
+    # Across the level: gate A (open with a fragment of section A), past the first 256 px,
+    # over the pit, the one-way shelf, spikes. Only teleport forward: behind an opened gate
+    # the camera stops, and columns behind it are not drawn.
     game.place_player(230, 119)
+    rec.shot("gate_a_closed")
     run_right_until(game, 262)
-    rec.shot("scrolled_past_256_px")
+    rec.shot("gate_a_opening")
     run_right_until(game, 290, jump_at=262)
     rec.shot("jump_over_pit")
     run_right_until(game, 336)
@@ -151,32 +153,28 @@ def run(mode: str, rom: Path) -> None:
     rec.shot("on_one_way_shelf")
     game.place_player(350, 119)
     rec.shot("spikes_ahead")
-    game.place_player(490, 103)
+    game.place_player(480, 103)
     game.frames(20)
-    rec.shot("far_end")
+    rec.shot("far_end_exit")
 
-    # Fall into the pit: lose a life, respawn at the start.
-    game.place_player(250, 119)
-    lives = game.lives()
-    game.pyboy.button_press("right")
-    while game.lives() == lives:
-        game.frames(1)
-    game.pyboy.button_release("right")
+    # Fall out: lose a life, fade, restart at gate A, the last one opened.
+    game.lose_life()
     rec.shot("lost_a_life")
-    game.frames(4)
-    rec.shot("respawn_invincible_a")
+    game.wait_for_state(COREGAMELOOP)
+    rec.shot("respawn_at_gate_a")
     game.frames(2)
-    rec.shot("respawn_invincible_b")
+    rec.shot("respawn_invincible")
 
-    game.set_state(LEVEL_COMPLETE)
-    game.frames(5)
+    # Into the exit elevator.
+    game.place_player(480, 103)
+    game.hold("right", 10)
     rec.shot("level_complete_flash")
     game.wait_for_state(COREGAMELOOP, timeout=600)
     game.frames(20)
     rec.shot("after_level_complete")
 
     game.set_lives(1)
-    game.set_state(GAMEPLAY_END)
+    game.lose_life()
     game.frames(5)
     rec.shot("game_over_flash")
     game.frames(120)

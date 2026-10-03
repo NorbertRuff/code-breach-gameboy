@@ -5,6 +5,7 @@
 #include "./utils.h"
 #include "./engine/camera.h"
 #include "./level/level_manager.h"
+#include "./level/section.h"
 #include "./player/player.h"
 #include "./input/input.h"
 #include "./actor/actor.h"
@@ -32,21 +33,42 @@ uint8_t lives = 3;
 uint8_t lag_frames = 0;
 
 #define RESPAWN_INVINCIBILITY_FRAMES 90   // 1.5 s at 60 fps
+#define RESTART_FADE_FRAMES 4             // per fade step: about half a second out and in
 
 // Feet below this y: the player fell out of the level.
 #define FALL_DEATH_Y (DEVICE_SCREEN_PX_HEIGHT + SPRITE_HEAD_OFFSET)
 
-// Starts the section again: the player at the start, the actors from the section's first
-// entity, and the camera on the player with everything it shows drawn. For a level start
-// and after losing a life.
+// What the HUD's fragment count shows, so it's redrawn only when it changes.
+static uint8_t shown_collected, shown_quota;
+
+// Shows the current section's collected fragments against its quota, if either changed.
+static void update_hud_count(void)
+{
+    uint8_t collected = current_level.section_collected[current_level.section];
+    uint8_t quota = section_quota();
+    if (collected == shown_collected && quota == shown_quota) return;
+    hud_update_count(collected, quota);
+    shown_collected = collected;
+    shown_quota = quota;
+}
+
+// Starts the current section again: the player at its start, the gates and actors as
+// they were when it began, the camera on the player with everything it shows drawn, and
+// the HUD count. For a level start and after losing a life.
 static void restart_section(void)
 {
-    player_init(&player, current_level.player_start_x, current_level.player_start_y);
-    actors_reset(0);
+    uint16_t x;
+    uint8_t y;
+    section_start_position(&x, &y);
+    player_init(&player, x, y);
+    sections_restart();
+    actors_reset(current_level.section);
     camera_reset(TO_PIXELS(player.x), current_level.width_px);
     level_stream_reset(camera_x);
     move_bkg((uint8_t)camera_x, 0);
     actors_spawn(camera_x);
+    shown_collected = 0xFF;    // nothing shown yet
+    update_hud_count();
 }
 
 // Follows the player, draws the columns that scroll into view, and spawns the actors the
@@ -75,6 +97,20 @@ static void draw_sprites(void)
     hide_sprites_range(used, MAX_HARDWARE_SPRITES);
 }
 
+// Restarts the section while the screen is dark, then fades back in. After a lost life
+// (not a game over) the player is invincible for a moment.
+static void restart_behind_fade(uint8_t invincible)
+{
+    fade_out_screen(RESTART_FADE_FRAMES);
+    HIDE_SPRITES;
+    restart_section();
+    if (invincible) player.invincibility_frames = RESPAWN_INVINCIBILITY_FRAMES;
+    hud_update_lives(lives);
+    draw_sprites();
+    fade_in_screen(RESTART_FADE_FRAMES);
+    SHOW_SPRITES;
+}
+
 // Main game loop
 void main_game_loop()
 {
@@ -88,24 +124,13 @@ void main_game_loop()
         return;
     }
 
+    // Reached the exit elevator?
+    if (player.touched_exit) current_game_state = LEVEL_COMPLETE;
+
+    sections_update(&player);
     update_view();
     actors_update(camera_x);
-
-    // Win condition: all fragments collected
-    if (current_level.fragment_count > 0 &&
-        current_level.collected_count >= current_level.fragment_count) {
-        current_game_state = LEVEL_COMPLETE;
-    }
-
-    // Update HUD counter when count changes
-    {
-        static uint8_t prev_collected = 0xFF;
-        uint8_t cur = current_level.collected_count;
-        if (cur != prev_collected) {
-            hud_update_count(cur, current_level.fragment_count);
-            prev_collected = cur;
-        }
-    }
+    update_hud_count();
 
     // Invincibility countdown
     if (player.invincibility_frames > 0) player.invincibility_frames--;
@@ -180,18 +205,15 @@ void main(void)
         case GAMEPLAY_END:
             lives--;
             if (lives == 0) {
-                // All lives spent — show game over and do a full restart
-                lives = 3;
+                // Game over: the lives refill and the section's fragments come back.
                 game_over();
-                fade_out_screen(10);
-                current_game_state = GAMEPLAY_START;
+                lives = 3;
+                level_reset_fragments(current_level.section);
+                restart_behind_fade(0);
             } else {
-                // Lost a life: start the section again, invincible for a moment.
-                restart_section();
-                player.invincibility_frames = RESPAWN_INVINCIBILITY_FRAMES;
-                hud_update_lives(lives);
-                current_game_state = COREGAMELOOP;
+                restart_behind_fade(1);
             }
+            current_game_state = COREGAMELOOP;
             break;
         default:
             break;

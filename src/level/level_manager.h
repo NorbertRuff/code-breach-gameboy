@@ -17,6 +17,17 @@
 #define RING_ROWS 16
 #define RING_INDEX(tile_x, tile_y) ((((tile_x) & (RING_COLUMNS - 1)) << 4) | (tile_y))
 
+#define MAX_GATES (LEVEL_SECTIONS - 1)
+
+// A security gate: a column of gate tiles from its bottom row up to the map's top row,
+// solid until it opens, one row at a time from the bottom.
+typedef struct {
+    uint8_t column;             // tile column
+    uint8_t bottom_row;         // screen row of its lowest tile
+    uint8_t quota;              // fragments of its section that open it
+    uint8_t open_rows;          // rows opened from the bottom: 0 while closed
+} Gate;
+
 // The loaded level: a copy of its LevelData header, plus what changes while playing.
 // map and entities point into ROM bank `bank`.
 typedef struct {
@@ -26,11 +37,17 @@ typedef struct {
     uint16_t player_start_x;
     uint8_t player_start_y;
     uint8_t fragment_count;
-    uint8_t collected_count;
     uint8_t entity_count;
     uint8_t section_start[LEVEL_SECTIONS];  // index of each section's first entity
     const uint8_t* map;
     const LevelEntity* entities;
+
+    uint8_t gate_count;
+    Gate gates[MAX_GATES];                  // gates[i] closes section i
+    uint8_t exit_column, exit_row;
+    uint8_t section;                        // 0 for section A; goes up as gates open
+    uint8_t section_fragments[LEVEL_SECTIONS];
+    uint8_t section_collected[LEVEL_SECTIONS];
 } Level;
 
 extern Level current_level;
@@ -52,6 +69,8 @@ void level_stream_start(void);
 void level_stream_reset(int16_t camera_x);
 void level_stream_update(int16_t camera_x);
 void level_collect_fragment(uint8_t tile_x, uint8_t tile_y);
+void level_reset_fragments(uint8_t section);
+uint8_t level_open_gate_row(Gate* gate);
 
 // HUD tiles: the window frame from the hud asset, then digits, '/' and a heart.
 #define HUD_TILE_BASE       64

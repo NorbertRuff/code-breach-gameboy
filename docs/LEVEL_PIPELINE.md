@@ -46,7 +46,9 @@ Python and fits our collision and palette needs exactly.
   - `entities`: object layer. Object classes: `player_start`, `enemy` (property `kind`;
     the object's width is the patrol range), `fragment`, `gate` (property `quota`; also
     the checkpoint), `exit` (the elevator). Each fragment belongs to the section it sits in,
-    by X position between gates; a gate belongs to the section it closes. Level structure
+    by X position between gates; a gate belongs to the section it closes. The game draws
+    a gate as a column from its marker's tile up to the map's top row, solid until it
+    opens; after it opens, the player restarts just right of it, feet on its bottom row. Level structure
     rules are in [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
   - **Placing them:** `enemy` is a rectangle: its left and right edges are the body's
     patrol range, its bottom edge the floor it walks on. Everything else is a tile object
@@ -107,6 +109,8 @@ The converter fails the build when:
 - there isn't exactly one `player_start` and one `exit`;
 - a level other than the boss level doesn't have exactly two `gate`s;
 - there are more than 32 fragments;
+- a gate asks for more fragments than its section has, or has no room to restart right
+  of it (2 free columns, the body's 4 rows free of solid and hazard tiles, ground below);
 - the tileset has more unique tiles than the budget in [ART_PIPELINE.md](ART_PIPELINE.md).
 
 It warns when an enemy's patrol range has no ground under it.
