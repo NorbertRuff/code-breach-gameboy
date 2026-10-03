@@ -3,6 +3,18 @@
 Snapshot of the codebase on 2026-10-02 at commit `bea580b` (master).
 This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
 
+## Status since the audit
+
+- **2026-10-02, M0:** toolchain installed, MBC5 + GBC header, assets banked (bank 0 went
+  from 85 to about 4,900 bytes free), dead code removed, PyBoy tests and CI added.
+- **2026-10-03, M1:** bugs 1, 2, 3, 4, 8, 9, 10, 11, 13, 14, 15 and 16 fixed, each with a
+  test in `tests/test_regressions.py` that fails on the old code.
+- **Still open:** bugs 5, 6 and 7 (physics and collision rewrite in M2; 5 and 7 have
+  expected-failure tests in `tests/test_known_bugs.py`), and bug 12, which needs the
+  owner to pick the invincibility time.
+- The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
+  have many rough parts. A review pass is in the roadmap after M1.
+
 ## Summary
 
 The game is a working prototype: one 256 px wide test level with movement, jumping,
@@ -69,6 +81,7 @@ Ordered by how visible they are to the player.
 | 13 | Releasing left makes the player slide right for a moment. | `src/player/player.c:93`, `player.h` (`last_movement_x`, `slowing_x`) | Both fields are `uint8_t` but store `-1`, which becomes 255. `last_movement_x > 0` is then true after moving left, so `slowing_x` gets `1`. The compiler warns at `player.c:101`: "comparison is always true". | Make both fields `int8_t`. |
 | 14 | The level-complete flash is too fast for photosensitive players. | `src/game_state/game_over.c:28` | `palette_flash(6, 8)` flashes once every 16 frames: 3.75 per second. The WCAG guideline is at most 3. The game-over flash (`hold` 12) is 2.5 per second, which is fine. | Hold at least 10 frames per half-flash. |
 | 15 | The player is drawn with obsolete API calls. | `src/player/player.c:282,286` | `move_metasprite` and `move_metasprite_vflip` are marked "Obsolete" in GBDK 4.5's `metasprites.h`. | `move_metasprite_ex` and `move_metasprite_flipx`. |
+| 16 | The player starts inside platform A, and 1 px inside the ground. | `src/level/level_manager.c` `level_1_server_room_init` | Start x = 16 puts the 16 px sprite over platform A (x 16–47) at body height. Start y = 136 is the ground tile's top row; every landing puts the feet at 135. | Start at x = 8, y = 135. Found by the PyBoy jump test on 2026-10-02. |
 
 ## Tech debt
 

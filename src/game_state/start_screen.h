@@ -1,10 +1,14 @@
 #ifndef START_SCREEN_H_
 #define START_SCREEN_H_
 
-#define ANIMATION_COUNTER_TIME 3000
+// "PRESS START" blink, in frames: shown for the first PRESS_START_SHOWN_FRAMES of
+// every PRESS_START_CYCLE_FRAMES (one blink per second at 60 fps).
+#define PRESS_START_CYCLE_FRAMES 60
+#define PRESS_START_SHOWN_FRAMES 40
 
 void init_splash_screen();
 
-void update_splash_screen(uint16_t *text_animation_state);
+// Call once per frame while the title screen waits for START.
+void update_splash_screen(uint16_t *frame_counter);
 
 #endif // START_SCREEN_H_

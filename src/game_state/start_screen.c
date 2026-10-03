@@ -15,23 +15,16 @@ void init_splash_screen()
 	fade_in_screen(10);
 }
 
-void update_splash_screen(uint16_t *text_animation_counter)
+void update_splash_screen(uint16_t *frame_counter)
 {
-	if (*text_animation_counter == 8000)
+	(*frame_counter)++;
+	if (*frame_counter == PRESS_START_SHOWN_FRAMES)
 	{
 		WITH_BANK(splashscreen, set_bkg_tiles(press_start_tileset_X, press_start_tileset_Y, press_start_tileset_width, press_start_tileset_height, press_start_blank_tilemap));
-		(*text_animation_counter) = 0;
-		return;
 	}
-	else if (*text_animation_counter == 4000)
+	else if (*frame_counter >= PRESS_START_CYCLE_FRAMES)
 	{
 		WITH_BANK(splashscreen, set_bkg_tiles(press_start_tileset_X, press_start_tileset_Y, press_start_tileset_width, press_start_tileset_height, press_start_tilemap));
-		(*text_animation_counter)++;
-		return;
-	}
-	else
-	{
-		(*text_animation_counter)++;
-		return;
+		*frame_counter = 0;
 	}
 }

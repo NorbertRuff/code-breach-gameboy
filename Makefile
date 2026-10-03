@@ -5,6 +5,7 @@
 #   make rebuild    clean, then build
 #   make run        build, then open the ROM in Emulicious
 #   make test       build, then run the PyBoy tests (DMG and GBC mode)
+#   make shots      build, then save review screenshots to tests/out/shots/
 #   make venv       create .venv with the test tools from tools/requirements.txt
 #   make savetest   build obj/savetest.gb, the cartridge RAM persistence test
 #   make usage      show ROM and RAM use per bank
@@ -12,6 +13,7 @@
 #   make clean      delete obj/
 #
 # RELEASE=1 turns on slower, size-optimizing compilation (about 4x compile time).
+# OBJDIR=<folder> builds into another folder, e.g. for a variant with EXTRA_CFLAGS.
 #
 
 PROJECTNAME := ApexLab
@@ -53,7 +55,9 @@ CART_FLAGS := -Wl-yt0x1B -Wm-yoA -Wm-ya1 -Wm-yc -Wm-ynAPEXLAB
 # -debug: .cdb/.noi/.map for Emulicious. -Wm-yS: .sym for PyBoy.
 LCCFLAGS := -debug
 # -MMD/-MP: write obj/*.d header dependency files.
-CFLAGS   := -Wf-MMD -Wf-Wp-MP
+# EXTRA_CFLAGS: one-off defines, e.g. make EXTRA_CFLAGS=-DSKIP_INTRO_AND_START=0
+# (use with a separate OBJDIR, or run "make rebuild" afterwards).
+CFLAGS   := -Wf-MMD -Wf-Wp-MP $(EXTRA_CFLAGS)
 # -autobank: place data and code marked "#pragma bank 255" into ROM banks.
 LDFLAGS  := -autobank -Wb-ext=.rel -Wm-yS $(CART_FLAGS)
 
@@ -75,7 +79,7 @@ vpath %.c $(sort $(dir $(CSOURCES)))
 
 SAVETEST := $(OBJDIR)/savetest.gb
 
-.PHONY: all rebuild run test venv savetest usage assets clean
+.PHONY: all rebuild run test shots venv savetest usage assets clean
 
 all: $(ROM)
 
@@ -100,6 +104,11 @@ run: $(ROM)
 
 test: $(ROM) $(SAVETEST)
 	$(PYTHON) -m pytest tests
+
+# Scripted playthrough of level 1: screenshots, contact sheets and the level map
+# in tests/out/shots/, for visual review.
+shots: $(ROM)
+	$(PYTHON) tools/shots.py
 
 venv:
 	python -m venv .venv

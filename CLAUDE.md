@@ -23,6 +23,8 @@ The toolchain is **not** in git. `gbdk/` and `emulicious/` are gitignored and in
 
 If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
+The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
+
 Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-02 it has 5,112 bytes free.
 
 ## Build Commands
@@ -32,6 +34,7 @@ make            # build obj/ApexLab.gb (incremental; header changes are tracked)
 make rebuild    # clean, then build
 make run        # build, then open the ROM in Emulicious (Java)
 make test       # build, then run the PyBoy tests in DMG and GBC mode
+make shots      # build, then a scripted playthrough: screenshots, contact sheets and the level map in tests/out/shots/
 make venv       # create .venv with the test tools (once)
 make savetest   # build obj/savetest.gb, the cartridge RAM persistence test
 make usage      # ROM and RAM use per bank, with areas
@@ -41,9 +44,13 @@ make clean      # delete obj/
 
 `RELEASE=1` adds size-optimizing compilation (slower). The cartridge is MBC5 + RAM + battery with a GBC-enhanced header (`-Wm-yc`); flags are in the Makefile and `docs/CGB_PLAN.md`. The build writes `obj/ApexLab.sym`, which the tests use to read globals by name.
 
-**Tests** (`tests/`, details in `docs/TESTING.md`): run `make test` after every change. A known bug is written as a test marked `xfail(strict=True)` in `tests/test_known_bugs.py`; fixing the bug makes that test pass, which fails the run until the marker is removed. Failing tests save screenshots to `tests/out/`; look at them.
+**Tests** (`tests/`, details in `docs/TESTING.md`): run `make test` after every change. A fixed bug gets a regression test in `tests/test_regressions.py` that fails on the old code (check it with `APEXLAB_OBJ`, see `docs/TESTING.md`). An open bug can be written as a test marked `xfail` in `tests/test_known_bugs.py`; fixing the bug makes that test pass, which fails the run until the test moves to `test_regressions.py`. For a one-off build variant use `make OBJDIR=<scratch folder> EXTRA_CFLAGS=-D...`, never the normal `obj/`. Failing tests save screenshots to `tests/out/`; look at them.
 
 **Asset pipeline**: PNG files in `graphics/` are converted to GBDK-compatible C source files via `png2asset`. Run `make assets` after modifying any PNG, then commit both the PNG and the regenerated `.c`/`.h` in `src/graphics/`. Assets use `-b 255` (autobank). png2asset only warns about unknown options and still succeeds, so read its output for `not recognized`.
+
+**Vision and records:** the goal is a cozy, polished game that the owner can explain end to end (`GAME_DESIGN.md`, Vision). Record every decision in `docs/DECISIONS.md`. When code or an asset takes an idea from a tutorial, repo, doc or person, add a row to `docs/SOURCES.md` in the same change. The final "how it works" document is written from these two in M9. No copied art (Mario, mushrooms) may remain in the final game; SOURCES.md lists what must be replaced. Use Claude Design for pixel art when needed.
+
+**Project skills** (`.claude/skills/`): `fix-bug` (test-first fix, proven on the old build), `add-asset` (art from Claude Design to banked C data), `close-milestone` (verify, update records, hardware checklist). Use them for those jobs. Helper tools: `tools/test_against.py <commit> [pytest args]` runs today's tests against an older commit's build; `tools/shots.py --out <dir>` plus `tools/compare_shots.py <before> <after>` compare screenshots. `.claude/settings.json` allows make, the venv Python, romusage/png2asset and read-only git, and denies git commands that change state.
 
 Research on techniques, reference code, licensed assets and tool flags is in `docs/RESEARCH.md`. Check a reference repo's license there before copying code: several have none (ideas only). The planned Claude Design → `tools/gbconvert.py` → png2asset flow is in `docs/ART_PIPELINE.md`.
 

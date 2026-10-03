@@ -29,13 +29,35 @@ REGISTERS = {
 PLAYER_FIELDS = [
     ("x", "H"), ("y", "H"), ("draw_x", "H"), ("draw_y", "H"),
     ("draw_frame", "B"), ("direction", "B"), ("animation_frame_count", "B"),
-    ("movement_frame_count", "B"), ("last_movement_x", "B"),
-    ("movement_force_x", "b"), ("movement_force_y", "b"), ("velocity_x", "b"), ("slowing_x", "B"),
+    ("movement_frame_count", "B"), ("last_movement_x", "b"),
+    ("movement_force_x", "b"), ("movement_force_y", "b"), ("velocity_x", "b"), ("slowing_x", "b"),
     ("is_jumping", "B"), ("jump_frames", "B"), ("velocity_y", "b"), ("jump_frame_count", "B"),
     ("underfoot_state", "B"), ("invincibility_frames", "B"),
 ]
 PLAYER_FORMAT = "<" + "".join(fmt for _, fmt in PLAYER_FIELDS)
 PLAYER_SIZE = struct.calcsize(PLAYER_FORMAT)
+PLAYER_OFFSETS = {}
+_offset = 0
+for _name, _fmt in PLAYER_FIELDS:
+    PLAYER_OFFSETS[_name] = _offset
+    _offset += struct.calcsize("<" + _fmt)
+
+# Level data, from src/level/level_manager.h. collision_map comes after level_id,
+# state and two 2-byte pointers in Level, which is the first member of LevelManager.
+LEVEL_WIDTH = 32
+LEVEL_HEIGHT = 18
+TILE_SIZE = 8
+COLLISION_MAP_OFFSET = 6
+COLLISION_SOLID = 1
+
+# HUD tiles, from src/level/level_manager.h.
+HUD_DIGIT_TILE_BASE = 133
+HUD_SLASH_TILE = 143
+
+# Player sprite box around its pivot (x = center, y = feet), from src/player/player.h.
+SPRITE_LEFT_W = 8
+SPRITE_RIGHT_W = 7
+SPRITE_HEAD_OFFSET = 32
 
 
 PYBOY_DMG_BOOTROM = Path(pyboy_package.__file__).parent / "core" / "bootrom_dmg.bin"
@@ -130,6 +152,53 @@ class Game:
 
     def reg(self, name: str) -> int:
         return self.pyboy.memory[REGISTERS[name]]
+
+    def window_tile(self, col: int, row: int) -> int:
+        """Tile index in the window map (VRAM bank 0). LCDC bit 6 picks the map."""
+        base = 0x9C00 if self.reg("LCDC") & 0x40 else 0x9800
+        return self.pyboy.memory[base + row * 32 + col]
+
+    def collision(self, tile_x: int, tile_y: int) -> int:
+        """Collision type of a level tile, from the level's collision map in WRAM."""
+        _, addr = self.pyboy.symbol_lookup("_level_manager")
+        return self.pyboy.memory[addr + COLLISION_MAP_OFFSET + tile_y * LEVEL_WIDTH + tile_x]
+
+    # --- changing the game (tests only) ----------------------------------------
+    # Some situations can't be reached by input in level 1 (it has no pits) or would
+    # take minutes of play. These write the game's variables directly. Keep them rare.
+
+    def set_state(self, state: int) -> None:
+        _, addr = self.pyboy.symbol_lookup("_current_game_state")
+        self.pyboy.memory[addr] = state
+
+    def set_lives(self, lives: int) -> None:
+        _, addr = self.pyboy.symbol_lookup("_lives")
+        self.pyboy.memory[addr] = lives
+
+    def set_player_y(self, y: int) -> None:
+        _, addr = self.pyboy.symbol_lookup("_player")
+        addr += PLAYER_OFFSETS["y"]
+        self.pyboy.memory[addr] = y & 0xFF
+        self.pyboy.memory[addr + 1] = (y >> 8) & 0xFF
+
+    # --- common sequences -------------------------------------------------------
+
+    def lose_life(self, timeout: int = 400) -> None:
+        """Wait until invincibility is over, then walk right into the first patrol bot."""
+        lives = self.lives()
+        for _ in range(200):
+            if self.player().invincibility_frames == 0:
+                break
+            self.frames(1)
+        self.pyboy.button_press("right")
+        try:
+            for _ in range(timeout):
+                self.frames(1)
+                if self.lives() != lives:
+                    return
+        finally:
+            self.pyboy.button_release("right")
+        raise AssertionError("walking right never hit an enemy")
 
     # --- pictures ---------------------------------------------------------------
 

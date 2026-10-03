@@ -1,12 +1,27 @@
 #include "level_manager.h"
 #include "../graphics/background.h"
-#include "../graphics/mushroom.h"
 #include "../graphics/hud.h"
 #include "../graphics/programmer.h"
 #include "../sound/sound.h"
 #include "../engine/banking.h"
 
-#define COLLECTIBLE_TILE_INDEX (128 + mushroom_TILE_COUNT)
+// Background tiles for the level's debug view (shared VRAM block 128-255).
+#define SOLID_TILE_INDEX       128
+#define COLLECTIBLE_TILE_INDEX 132
+
+// 8x8 2bpp block for solid ground: black border, white top-left bevel, light gray
+// face, dark gray bottom-right shade. Readable in 4 shades. (Review G2; becomes the
+// first greybox tile in roadmap M2.) Each row: low bit-plane byte, high bit-plane byte.
+static const uint8_t solid_block_tile_data[16] = {
+    0xFF,0xFF,   // 3 3 3 3 3 3 3 3
+    0x83,0x81,   // 3 0 0 0 0 0 1 3
+    0xBD,0x83,   // 3 0 1 1 1 1 2 3
+    0xBD,0x83,
+    0xBD,0x83,
+    0xBD,0x83,
+    0xC1,0xBF,   // 3 1 2 2 2 2 2 3
+    0xFF,0xFF,
+};
 
 // 8x8 2bpp digit tiles for HUD counter.
 // Each row: two identical bytes (same bit pattern for both bit-planes → color 0 or 3 only).
@@ -55,8 +70,10 @@ void set_hud_window_tiles()
 {
     SHOW_WIN;
     
-    // Position HUD window at bottom of screen
-    scroll_win(0, 128);
+    // Position HUD window at bottom of screen. move_win() is absolute; scroll_win() is
+    // relative and would move the window again on every level load. WX = 7 is the
+    // left screen edge.
+    move_win(7, 128);
     
     // Set the tiles for our HUD window in VRAM
     WITH_BANK(hud, {
@@ -84,17 +101,20 @@ void hud_update_lives(uint8_t lives)
 
 void hud_update_count(uint8_t collected, uint8_t total)
 {
-    // Display "N/T" in the top-right three tiles of the HUD window (cols 17-19, row 0).
-    // Each value capped at 9 for single-digit display.
-    uint8_t t_collected = HUD_DIGIT_TILE_BASE + (collected <= 9 ? collected : 9);
-    uint8_t t_slash     = HUD_SLASH_TILE;
-    uint8_t t_total     = HUD_DIGIT_TILE_BASE + (total     <= 9 ? total     : 9);
-    set_win_tiles(17, 0, 1, 1, &t_collected);
-    set_win_tiles(18, 0, 1, 1, &t_slash);
-    set_win_tiles(19, 0, 1, 1, &t_total);
+    // Display "NN/TT" in the top-right five tiles of the HUD window (cols 15-19, row 0),
+    // with leading zeros. Each value is capped at 99.
+    uint8_t tiles[5];
+    if (collected > 99) collected = 99;
+    if (total > 99) total = 99;
+    tiles[0] = HUD_DIGIT_TILE_BASE + collected / 10;
+    tiles[1] = HUD_DIGIT_TILE_BASE + collected % 10;
+    tiles[2] = HUD_SLASH_TILE;
+    tiles[3] = HUD_DIGIT_TILE_BASE + total / 10;
+    tiles[4] = HUD_DIGIT_TILE_BASE + total % 10;
+    set_win_tiles(15, 0, 5, 1, tiles);
 }
 
-// Build the debug view of the level: solid tiles drawn as mushroom blocks, collectibles
+// Build the debug view of the level: solid tiles drawn as plain blocks, collectibles
 // as diamonds, everything else from the background map. Reads background_map, so the
 // caller must have the "background" bank mapped in.
 static void build_level_view(Level* level, uint8_t view[LEVEL_HEIGHT][LEVEL_WIDTH])
@@ -102,7 +122,7 @@ static void build_level_view(Level* level, uint8_t view[LEVEL_HEIGHT][LEVEL_WIDT
     for (int y = 0; y < LEVEL_HEIGHT; y++) {
         for (int x = 0; x < LEVEL_WIDTH; x++) {
             if (level->collision_map[y][x] == COLLISION_SOLID) {
-                view[y][x] = 128;
+                view[y][x] = SOLID_TILE_INDEX;
             } else if (level->collision_map[y][x] == COLLISION_COLLECTIBLE) {
                 view[y][x] = COLLECTIBLE_TILE_INDEX;
             } else {
@@ -149,11 +169,11 @@ void level_load_level(LevelManager* manager, uint8_t level_id)
     
     // Load background tiles into VRAM (Game Boy optimization)
     if (manager->current_level.background_tiles) {
-        WITH_BANK(background, set_bkg_data(0, 256, manager->current_level.background_tiles));
+        WITH_BANK(background, set_bkg_data(0, background_TILE_COUNT, manager->current_level.background_tiles));
     }
     
-    // Load mushroom tiles for collision visualization (starting at tile index 128)
-    WITH_BANK(mushroom, set_bkg_data(128, mushroom_TILE_COUNT, mushroom_tiles));
+    // Load the solid block tile for the collision view
+    set_bkg_data(SOLID_TILE_INDEX, 1, solid_block_tile_data);
 
     // Load collectible tile
     set_bkg_data(COLLECTIBLE_TILE_INDEX, 1, collectible_tile_data);
@@ -231,12 +251,13 @@ void level_1_server_room_init(Level* level)
     level->background_map = background_map;
     
     // Set player start position (bottom left of screen)
-    level->player_start_x = 16;  // 2 tiles from left
-    level->player_start_y = 136; // Bottom of screen (17 * 8 = 136, ground level)
+    level->player_start_x = 8;   // sprite spans x 0-15, clear of platform A (x 16-47)
+    level->player_start_y = 119; // feet on the pixel row above the ground tiles (row 15 starts at 120),
+                                 // where the collision code puts them after every landing
     
     // Set level exit (top right area)
     level->exit_x = 144;  // 18 tiles from left
-    level->exit_y = 32;   // 4 tiles from top
+    level->exit_y = 16;   // 2 tiles from top
     
     // Initialize collision map for server room
     for (int y = 0; y < LEVEL_HEIGHT; y++) {
@@ -245,55 +266,59 @@ void level_1_server_room_init(Level* level)
         }
     }
 
+    // The HUD window covers rows 16-17, so the level uses rows 0-15 and the ground is
+    // row 15. (Review L1: everything was 2 rows lower and the floor was under the HUD.)
+    // Rows 16-17 stay empty; falling into them leads to the fall death below the level.
+
     // Ground: full bottom row (all 32 cols)
     for (int x = 0; x < LEVEL_WIDTH; x++) {
-        level->collision_map[17][x] = COLLISION_SOLID;
+        level->collision_map[15][x] = COLLISION_SOLID;
     }
 
-    // Platform A: low-left  (row 14, cols 2-5)
+    // Platform A: low-left  (row 12, cols 2-5)
     for (int x = 2; x <= 5; x++) {
-        level->collision_map[14][x] = COLLISION_SOLID;
-    }
-
-    // Platform B: mid-center (row 11, cols 8-11)
-    for (int x = 8; x <= 11; x++) {
-        level->collision_map[11][x] = COLLISION_SOLID;
-    }
-
-    // Platform C: high-right (row 8, cols 14-17)
-    for (int x = 14; x <= 17; x++) {
-        level->collision_map[8][x] = COLLISION_SOLID;
-    }
-
-    // Platform D: mid-right (row 12, cols 21-24) — descends from C
-    for (int x = 21; x <= 24; x++) {
         level->collision_map[12][x] = COLLISION_SOLID;
     }
 
-    // Platform E: high far-right (row 9, cols 27-30)
-    for (int x = 27; x <= 30; x++) {
+    // Platform B: mid-center (row 9, cols 8-11)
+    for (int x = 8; x <= 11; x++) {
         level->collision_map[9][x] = COLLISION_SOLID;
     }
 
+    // Platform C: high-right (row 6, cols 14-17)
+    for (int x = 14; x <= 17; x++) {
+        level->collision_map[6][x] = COLLISION_SOLID;
+    }
+
+    // Platform D: mid-right (row 10, cols 21-24) — descends from C
+    for (int x = 21; x <= 24; x++) {
+        level->collision_map[10][x] = COLLISION_SOLID;
+    }
+
+    // Platform E: high far-right (row 7, cols 27-30)
+    for (int x = 27; x <= 30; x++) {
+        level->collision_map[7][x] = COLLISION_SOLID;
+    }
+
     // Collectibles — placed at body height (player->y - TILE_SIZE) above each surface
-    // Ground level (body row = 15)
-    level->collision_map[15][2]  = COLLISION_COLLECTIBLE;
-    level->collision_map[15][7]  = COLLISION_COLLECTIBLE;
-    level->collision_map[15][12] = COLLISION_COLLECTIBLE;
-    level->collision_map[15][19] = COLLISION_COLLECTIBLE;  // guides right
-    // Platform A (body row = 12)
-    level->collision_map[12][3]  = COLLISION_COLLECTIBLE;
-    level->collision_map[12][4]  = COLLISION_COLLECTIBLE;
-    // Platform B (body row = 9)
-    level->collision_map[9][9]   = COLLISION_COLLECTIBLE;
-    level->collision_map[9][10]  = COLLISION_COLLECTIBLE;
-    // Platform C (body row = 6)
-    level->collision_map[6][15]  = COLLISION_COLLECTIBLE;
-    // Platform D (body row = 10)
-    level->collision_map[10][22] = COLLISION_COLLECTIBLE;
-    level->collision_map[10][23] = COLLISION_COLLECTIBLE;
-    // Platform E (body row = 7)
-    level->collision_map[7][28]  = COLLISION_COLLECTIBLE;
+    // Ground level (body row = 13)
+    level->collision_map[13][2]  = COLLISION_COLLECTIBLE;
+    level->collision_map[13][7]  = COLLISION_COLLECTIBLE;
+    level->collision_map[13][12] = COLLISION_COLLECTIBLE;
+    level->collision_map[13][19] = COLLISION_COLLECTIBLE;  // guides right
+    // Platform A (body row = 10)
+    level->collision_map[10][3]  = COLLISION_COLLECTIBLE;
+    level->collision_map[10][4]  = COLLISION_COLLECTIBLE;
+    // Platform B (body row = 7)
+    level->collision_map[7][9]   = COLLISION_COLLECTIBLE;
+    level->collision_map[7][10]  = COLLISION_COLLECTIBLE;
+    // Platform C (body row = 4)
+    level->collision_map[4][15]  = COLLISION_COLLECTIBLE;
+    // Platform D (body row = 8)
+    level->collision_map[8][22]  = COLLISION_COLLECTIBLE;
+    level->collision_map[8][23]  = COLLISION_COLLECTIBLE;
+    // Platform E (body row = 5)
+    level->collision_map[5][28]  = COLLISION_COLLECTIBLE;
 
     // Set collectibles
     level->collectible_count = 12;

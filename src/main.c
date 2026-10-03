@@ -21,7 +21,7 @@ uint8_t joypad_current = 0;
 uint8_t joypad_previous = 0;
 uint16_t scroll_value = 0;
 int16_t total_scroll_x = 0;  // Accumulated scroll offset for collision detection
-uint16_t text_animation_state = ANIMATION_COUNTER_TIME;
+uint16_t text_animation_state = 0;  // frames into the "PRESS START" blink cycle
 uint8_t current_game_state = INTRO_CREDITS_STATE;
 
 // Player instance
@@ -36,6 +36,64 @@ Enemy enemies[MAX_ENEMIES];
 // Lives (persists across respawns; resets to 3 on full game over)
 uint8_t lives = 3;
 
+// Invincibility after losing a life: 90 frames = 1.5 s at 60 fps.
+#define RESPAWN_INVINCIBILITY_FRAMES 90
+
+// Below this feet position the player has fallen out of the level: the playfield
+// is LEVEL_HEIGHT tiles tall and the whole 32 px sprite must be gone.
+#define FALL_DEATH_Y (LEVEL_HEIGHT * TILE_SIZE + SPRITE_HEAD_OFFSET)
+
+// Level 1 enemies: start x (center), feet y, patrol range for the center.
+// Used for the first spawn and every respawn. Replaced by the level's spawn table
+// from Tiled in roadmap M3.
+typedef struct {
+    uint16_t x;
+    uint8_t  y;
+    uint16_t patrol_min;
+    uint16_t patrol_max;
+} EnemySpawn;
+
+static const EnemySpawn level1_enemies[] = {
+    {  88, 119,  64, 112 },   // ground (row 15)
+    {  80,  71,  72,  88 },   // platform B (row 9)
+    { 184,  79, 176, 192 },   // platform D (row 10)
+};
+#define LEVEL1_ENEMY_COUNT (sizeof(level1_enemies) / sizeof(level1_enemies[0]))
+
+static void spawn_enemies(void)
+{
+    uint8_t i;
+    for (i = 0; i < MAX_ENEMIES; i++) {
+        if (i < LEVEL1_ENEMY_COUNT) {
+            const EnemySpawn* s = &level1_enemies[i];
+            enemy_init(&enemies[i], s->x, s->y, s->patrol_min, s->patrol_max);
+        } else {
+            enemies[i].active = 0;
+        }
+    }
+}
+
+// Camera follow: center the player on screen, clamped to the level bounds.
+static void update_camera(void)
+{
+    int16_t cam = (int16_t)player.x - 80;
+    if (cam < 0) cam = 0;
+    if (cam > (int16_t)MAX_SCROLL_X) cam = (int16_t)MAX_SCROLL_X;
+    total_scroll_x = cam;
+    move_bkg((uint8_t)total_scroll_x, 0);
+}
+
+// Put enemies and the player into OAM at their screen positions.
+static void draw_actors(void)
+{
+    uint8_t i;
+    for (i = 0; i < MAX_ENEMIES; i++) {
+        enemy_draw(&enemies[i], ENEMY_OAM_BASE + i * 2, total_scroll_x);
+    }
+    player.draw_x = (uint16_t)((int16_t)player.x - total_scroll_x);
+    player_draw(&player);
+}
+
 // Main game loop
 void main_game_loop()
 {
@@ -46,14 +104,15 @@ void main_game_loop()
     player_handle_movement_physics(&player, &level_manager.current_level, 0);
     player_handle_jumping_physics(&player, &level_manager.current_level, 0);
 
-    // Camera follow: center player on screen, clamped to level bounds
-    {
-        int16_t cam = (int16_t)player.x - 80;
-        if (cam < 0) cam = 0;
-        if (cam > (int16_t)MAX_SCROLL_X) cam = (int16_t)MAX_SCROLL_X;
-        total_scroll_x = cam;
+    // Falling out of the bottom of the level costs a life, even while invincible.
+    // Signed compare: a jump above the top of the screen must not count.
+    if ((int16_t)player.y > (int16_t)FALL_DEATH_Y) {
+        sound_play_hit();
+        current_game_state = GAMEPLAY_END;
+        return;
     }
-    move_bkg((uint8_t)total_scroll_x, 0);
+
+    update_camera();
 
     // Update and render level
     level_update(&level_manager);
@@ -81,12 +140,11 @@ void main_game_loop()
     // Invincibility countdown
     if (player.invincibility_frames > 0) player.invincibility_frames--;
 
-    // Update enemies, draw them, and check player collision (skip if invincible)
+    // Update enemies and check player collision (skip if invincible)
     {
         uint8_t i;
         for (i = 0; i < MAX_ENEMIES; i++) {
             enemy_update(&enemies[i]);
-            enemy_draw(&enemies[i], ENEMY_OAM_BASE + i * 2, total_scroll_x);
             if (!player.invincibility_frames &&
                 enemy_check_player_collision(&enemies[i], player.x, player.y)) {
                 sound_play_hit();
@@ -95,9 +153,7 @@ void main_game_loop()
         }
     }
 
-    // Compute screen-space draw position from world position then draw
-    player.draw_x = (uint16_t)((int16_t)player.x - total_scroll_x);
-    player_draw(&player);
+    draw_actors();
 }
 
 void main(void)
@@ -123,16 +179,22 @@ void main(void)
             break;
         case TITLE_SCREEN_STATE:
             init_splash_screen();
-            // Wait for the player to press start
-            while (joypad() != J_START)
+            // Wait for the player to press start. One loop per frame, so the
+            // "PRESS START" blink has the same speed on every CPU.
+            while (!(joypad() & J_START))
             {
                 update_splash_screen(&text_animation_state);
+                wait_vbl_done();
             }
             fade_out_screen(10);
             current_game_state = GAMEPLAY_START;
             break;
         case GAMEPLAY_START:
-            fade_in_screen(10);
+            // Build the level while the screen is black and sprites are hidden, then
+            // fade in, so the player never sees tiles change. (BGP fades are DMG-only
+            // until the palette module in roadmap M4.)
+            BGP_REG = 0xFF;
+            HIDE_SPRITES;
             // Initialize level system (includes HUD and sprite setup)
             level_manager_init(&level_manager);
             level_load_level(&level_manager, 1);  // Load Level 1: Server Room
@@ -140,11 +202,12 @@ void main(void)
             player_init(&player, level_manager.current_level.player_start_x, level_manager.current_level.player_start_y);
             // Initialize enemies and load their sprite tiles into sprite VRAM
             enemy_init_sprite_data();
-            enemy_init(&enemies[0], 88,  135,  64,  112);
-            enemy_init(&enemies[1], 80,   87,  72,   88);
-            enemy_init(&enemies[2], 184,  95, 176,  192);
-            enemies[3].active = 0;
+            spawn_enemies();
             hud_update_lives(lives);
+            update_camera();
+            draw_actors();
+            fade_in_screen(10);
+            SHOW_SPRITES;
             current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:
@@ -170,10 +233,8 @@ void main(void)
                 player_init(&player,
                     level_manager.current_level.player_start_x,
                     level_manager.current_level.player_start_y);
-                player.invincibility_frames = 90;  // ~3 s at 30 fps
-                enemy_init(&enemies[0], 88,  135,  64,  112);
-                enemy_init(&enemies[1], 80,   87,  72,   88);
-                enemy_init(&enemies[2], 184,  95, 176,  192);
+                player.invincibility_frames = RESPAWN_INVINCIBILITY_FRAMES;
+                spawn_enemies();
                 hud_update_lives(lives);
                 current_game_state = COREGAMELOOP;
             }

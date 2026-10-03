@@ -3,6 +3,14 @@
 ## Game Concept
 **ApexLab: Code Breach** is a Game Boy platformer where you play as a programmer at ApexLab who must escape when the AI security systems go haywire. The lab's protocols are corrupted, and you need to collect code fragments and get out while avoiding malfunctioning security bots.
 
+## Vision
+A **cozy little game**: it looks good, its logic is solid, it runs on a real Game Boy and Game Boy Color, and its owner can explain how every part works. It started as a proof of concept for learning C on old hardware; the revival (2026-10) turns it into a finished game.
+
+What that means in practice:
+- **Forgiving rules.** 3 lives; losing one returns you to the last opened gate with your fragments kept. Game over refills your lives and restarts the current section, not the level.
+- **Readable, original visuals.** A 16×32 multi-sprite programmer, a parallax band at the top of the screen, fades between screens. No copied art: no Mario, no mushrooms.
+- **Explainable code.** Decisions and the sources of ideas are recorded as we go (docs/DECISIONS.md, docs/SOURCES.md); a full "how it works" document is written at the end.
+
 ---
 
 ## Story & Setting

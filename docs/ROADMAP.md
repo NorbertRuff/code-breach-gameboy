@@ -21,45 +21,60 @@ Done when `make && make test` builds the ROM and runs a smoke test in DMG and GB
 
 - [x] **(owner)** Install GBDK-2020 4.5.0 into `gbdk/` (`gbdk-win64.zip` from GitHub releases).
 - [x] **(owner)** Emulicious into `emulicious/` for manual debugging.
-- [ ] Rewrite the Makefile: one rule that finds all `src/**/*.c`, plus the header and
+- [x] Rewrite the Makefile: one rule that finds all `src/**/*.c`, plus the header and
       cartridge flags from [CGB_PLAN.md](CGB_PLAN.md) section 1 and `-Wm-yS` for symbols.
       **Urgent:** ROM bank 0 has 85 bytes free. MBC5 + `-autobank` and banked assets
       free it up. The Makefile must also work from Git Bash, not only PowerShell/cmd.
       Flags and banking rules: [RESEARCH.md](RESEARCH.md) section 2.1.
-- [ ] Fix `make assets`: png2asset ignores `-bank`, `-org` and `-name`. Use `-b 255`
+- [x] Fix `make assets`: png2asset ignores `-bank`, `-org` and `-name`. Use `-b 255`
       and load banked assets through `NONBANKED` loaders.
-- [ ] ROM layout check after linking: `romusage -R`, `_HOME` below `0x4000`, header
+- [x] ROM layout check after linking: `romusage -R`, `_HOME` below `0x4000`, header
       bytes `0x143 = 0x80` and `0x147 = 0x1B`.
-- [ ] `tools/requirements.txt`, `.venv` setup, and gitignore entries.
-- [ ] PyBoy harness: `tests/conftest.py`, `tests/gamelib.py`, and a boot smoke test.
-- [ ] Save-persistence test ROM: write a counter to cartridge RAM, read it after a power
-      cycle. **(owner)** Run it on the EverDrive clone. If saves don't persist, switch
-      to a password system.
-- [ ] GitHub Actions CI: build and test on every PR.
-- [ ] Remove dead code and files listed in [PROJECT_STATE.md](PROJECT_STATE.md).
+- [x] `tools/requirements.txt`, `.venv` setup, and gitignore entries.
+- [x] PyBoy harness: `tests/conftest.py`, `tests/gamelib.py`, and a boot smoke test.
+- [x] Save-persistence test ROM: `make savetest` builds `obj/savetest.gb`; a PyBoy test
+      checks the count survives power cycles.
+- [x] **(owner)** Run `obj/savetest.gb` on the EverDrive clone. Result 2026-10-03: the
+      count does not go up. The cart boots into its own game-select menu at every power-on,
+      and the game is started from there. Most likely the cart; revisit in M7.
+- [x] GitHub Actions CI: build and test on every PR.
+- [x] Remove dead code and files listed in [PROJECT_STATE.md](PROJECT_STATE.md).
 
 ## M1 — Bug fixes
 
 Done when each bug in [PROJECT_STATE.md](PROJECT_STATE.md) has a fix and a regression test.
 
-- [ ] HUD window covers the screen after restart (`scroll_win` → `move_win(7, 128)`).
-- [ ] Two-digit HUD counter.
-- [ ] Load the level while the screen is dark, then fade in.
-- [ ] `set_bkg_data` tile count.
-- [ ] Frame-based title screen blink.
-- [ ] `performant_delay` counter type.
-- [ ] Death when falling below the level.
-- [ ] Slide in the wrong direction after releasing left (`uint8_t` fields).
-- [ ] Level-complete flash slower than 3 flashes per second.
-- [ ] Replace the obsolete `move_metasprite` / `move_metasprite_vflip` calls.
-- [ ] One place for enemy spawns (removes the copy in `main.c`).
+- [x] HUD window covers the screen after restart (`scroll_win` → `move_win(7, 128)`).
+- [x] Two-digit HUD counter.
+- [x] Load the level while the screen is dark, then fade in.
+- [x] `set_bkg_data` tile count.
+- [x] Frame-based title screen blink.
+- [x] `performant_delay` counter type.
+- [x] Death when falling below the level.
+- [x] Slide in the wrong direction after releasing left (`uint8_t` fields).
+- [x] Level-complete flash slower than 3 flashes per second.
+- [x] Replace the obsolete `move_metasprite` / `move_metasprite_vflip` calls.
+- [x] One place for enemy spawns (removes the copy in `main.c`).
+- [x] Player started inside platform A and 1 px into the ground (bug 16).
+- [x] Flashes restore the palettes they found (bug 9).
+- [ ] **(owner)** Decide the invincibility time after losing a life. It is 90 frames
+      (1.5 s); the old comment said 3 s.
+- [x] Review pass, asked for by the owner on 2026-10-03: findings in
+      [REVIEW.md](REVIEW.md), screenshots from `make shots`.
+- [x] Quick wins from [REVIEW.md](REVIEW.md), all five picked by the owner: level 1
+      lifted above the HUD, player palette light → dark, block tile for solid ground,
+      jump only on a new A press, intro text.
+
+Bugs 5, 6 and 7 (falling, jump cut, wall collision) are left for the M2 physics
+rewrite. Tests for 5 and 7 are already in `tests/test_known_bugs.py` as expected
+failures.
 
 ## M2 — Physics and level loading
 
 Done when a greybox level made in Tiled loads, scrolls past 256 px, and plays with the
 new physics, and the jump metrics are written into [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
 
-- [ ] **(owner)** Confirm Tiled as the level editor ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)).
+- [x] **(owner)** Confirm Tiled as the level editor ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)).
 - [ ] Sub-pixel physics: positions in 1/32 px (`uint16_t`), two gravities (jump cut on
       release), apex hang, coyote time, jump buffering, head-corner correction. Starting
       values in [RESEARCH.md](RESEARCH.md) section 2.2.
@@ -89,6 +104,12 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
 - [ ] Security gates with a fragment quota. Checkpoints at opened gates. Exit elevator.
 - [ ] HUD: lives and fragments against the current quota.
 - [ ] Pause menu. Level-select cheat for testing.
+- [ ] Parallax: screen-line interrupt at the end of the 3-row band (slower `SCX` for the
+      band, camera `SCX` below it) and `HIDE_SPRITES` from line 127 over the HUD, in one
+      handler. Band drawn once per level; streaming skips rows 0–2. Source: Larold's
+      parallax tutorial (SOURCES.md).
+- [ ] Lives and gates: losing a life returns to the last opened gate; game over refills
+      lives and restarts the current section (DECISIONS.md 2026-10-03).
 - [ ] Frame budget counter and a lag test.
 - [ ] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
 
@@ -119,6 +140,9 @@ Done when level 1 looks like the final game in both modes.
 - [ ] Security gate and exit elevator art.
 - [ ] HUD frame and font. Replace `printf` text with the game font.
 - [ ] Title screen from `apexLogo`. Remove `splashscreen.c`.
+- [ ] Parallax band art for the Server Room (32×3 tiles, wraps).
+- [ ] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md):
+      programmer sprite, mushroom enemy, background, HUD. Claude Design for the pixel art.
 
 ## M6 — Audio
 
@@ -133,6 +157,9 @@ Done when level 1 looks like the final game in both modes.
 
 ## M7 — Saves and game flow
 
+- [ ] Find out why saves don't persist on the EverDrive clone: build `savetest` variants
+      with MBC1 (`0x03`) and MBC3 (`0x13`) headers, and try them on the cart. If none
+      keep the count, use passwords instead of battery saves.
 - [ ] Save data in cartridge RAM: unlocked levels, best score, 100% marks, a checksum
       for first boot.
 - [ ] Level select, game over with continue, level complete screen with score.
@@ -158,6 +185,11 @@ replay test that finishes it.
 - [ ] No lag frames in any level. Sprite flicker below the per-line limit.
 - [ ] Difficulty and checkpoint tuning.
 - [ ] Project README, screenshots, itch.io page.
+- [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;
+      nothing copied from Mario or other commercial games.
+- [ ] Write the final "how it works" document from DECISIONS.md and SOURCES.md: boot,
+      main loop, tiles and sprites, banking, collision, physics, palettes and fades,
+      parallax, audio, saves.
 
 ---
 

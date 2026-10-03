@@ -104,6 +104,10 @@ Both paths take 4 steps, so fades last the same time on both systems.
 
 Each step lands with a PyBoy test that runs in both modes.
 
+Status 2026-10-03: steps 1 and 2 are done (M0). `platform_init()` also loads gray GBC
+palettes that match the DMG shades and clears the attribute maps, so the game looks the
+same on both until step 4. Fades and flashes still only work on DMG.
+
 1. Makefile flags from section 1. Test: header byte `0x143` is `0x80`, byte `0x147` is `0x1B`.
 2. `platform.c` with `is_cgb`. Test: `_is_cgb` is 0 in DMG mode and 1 in GBC mode.
 3. `palette.c`. Replace every direct `BGP_REG` / `OBP0_REG` write. A test greps `src/`

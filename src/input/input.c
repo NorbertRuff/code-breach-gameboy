@@ -26,8 +26,8 @@ int8_t input_handle_joystick_input(Player* player, uint8_t joypad_current, uint8
     }
 
     // Jump mechanics (from example code)
-    // Have we jumped?
-    if ((player->underfoot_state & FOOT_ON_LAND) && (joypad_current & J_A))
+    // Have we jumped? Only on a new press of A: holding A must not hop again on landing.
+    if ((player->underfoot_state & FOOT_ON_LAND) && (joypad_current & J_A) && !(joypad_previous & J_A))
     {
         // Mark character as jumped
         player->is_jumping = 1;

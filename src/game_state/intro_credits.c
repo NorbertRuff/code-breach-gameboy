@@ -17,12 +17,12 @@ void show_intro_credits()
 	printf("                    ");
 	printf("                    ");
 	printf("                    ");
-	printf("       v1.0.0       ");
+	printf("    v0.2.0 (dev)    ");
 	printf("                    ");
 	printf("                    ");
 	printf("                    ");
 	printf("                    ");
-	printf("        2024        ");
+	printf("        2026        ");
 	printf("                    ");
 }
 

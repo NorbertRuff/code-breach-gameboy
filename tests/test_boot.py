@@ -53,8 +53,6 @@ def test_player_jumps_and_lands(game):
     game.hold("a", 10)
     assert game.player().y < ground_y, "player did not rise"
     game.frames(90)
-    # The start position overlaps platform A, so the jump may land on top of it
-    # (PROJECT_STATE bug 16). Only check that the player is standing again.
     after = game.player()
     assert after.underfoot_state == FOOT_ON_LAND, "player is still in the air"
-    assert after.velocity_y == 0
+    assert after.y == ground_y, "player did not land on the same ground"

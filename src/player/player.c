@@ -285,10 +285,10 @@ void player_draw(Player* player)
     // The metasprite tables live in the programmer asset's ROM bank.
     if (player->direction == 1)
     {
-        WITH_BANK(programmer, move_metasprite(programmer_metasprites[safe_frame], 0, 0, player->draw_x, player->draw_y));
+        WITH_BANK(programmer, move_metasprite_ex(programmer_metasprites[safe_frame], 0, 0, 0, player->draw_x, player->draw_y));
     }
     else
     {
-        WITH_BANK(programmer, move_metasprite_vflip(programmer_metasprites[safe_frame], 0, 0, player->draw_x + 4, player->draw_y));
+        WITH_BANK(programmer, move_metasprite_flipx(programmer_metasprites[safe_frame], 0, 0, 0, player->draw_x + 4, player->draw_y));
     }
 }

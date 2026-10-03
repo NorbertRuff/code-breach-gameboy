@@ -41,7 +41,8 @@ them. Examples: "col 42: gap too wide", "section B drags", "the bot at col 88 is
   collected the section's **quota** of code fragments, for example 3 of 5. Extra
   fragments are a bonus: score, and a 100% mark on the level-select screen.
 - **An opened gate is a checkpoint.** Losing a life restarts at the last opened gate.
-  Collected fragments stay collected. Game over restarts the level.
+  Collected fragments stay collected. 3 lives. Game over refills the lives and restarts
+  the current section: fragments collected since the last gate are reset.
 - **The camera locks behind an opened gate.** The player can't go back to an earlier
   section. Bonus fragments missed there can only be collected by replaying the level, so
   put each section's bonus fragments where an attentive player will find them before
@@ -60,7 +61,7 @@ them. Examples: "col 42: gap too wide", "section B drags", "the bot at col 88 is
 
 | Limit | Rule for layouts |
 |---|---|
-| Playfield is 16 tiles tall (rows 0–15). The HUD covers rows 16–17. No vertical scrolling. | Everything fits in rows 0–15. The main floor is usually row 14 or 15. |
+| Rows 0–2 are the parallax band, rows 3–15 the playfield (13 rows), rows 16–17 the HUD. No vertical scrolling. | Gameplay fits in rows 3–15: nothing solid, no enemies and no fragments in rows 0–2, which scroll at a different speed. The main floor is usually row 15. The highest usable platform top is about row 7, so a 4-tile player still fits under the band. |
 | The player is 4 tiles tall and 2 wide. | Walkable passages need at least 4 tiles of headroom; passages you jump in need more. |
 | The camera keeps the player at x = 80 px, so the player sees 10 tiles ahead. | The landing spot of every jump must be visible from where the jump starts. No blind jumps. |
 | 10 sprites per scanline. The player uses 2 per line; a 16 px enemy uses 2. | At most 3 enemies visible at the same height at the same time. |

@@ -107,6 +107,7 @@ Design.
 | Collectibles | 8×8 or 16×16 | Code fragment, bug report, debug tool, AI core, security protocol | Hand-coded diamond tile |
 | Level objects | 16×32 | Security gate (closed, opening, open; shows the quota), exit elevator (doors closed and open) | Not started |
 | Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Not started |
+| Parallax bands | 32×3 tiles each | One per level theme, wraps around; decoration only | Not started |
 | Tilesets | ≤ 190 tiles each | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Placeholder city background |
 | HUD and font | about 60 tiles | Frame, A–Z, 0–9, punctuation, icons | Hand-coded digits, `hud_a.png` |
 | Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Old `splashscreen.c`, unused `apexLogo.png` |
@@ -115,7 +116,7 @@ Design.
 
 | File | Use |
 |---|---|
-| `graphics/player/programmer.png` | Keep as a reference for proportions. Redraw with light → dark palette order. |
+| `graphics/player/programmer.png` | Keep as a reference for proportions. Palette reordered light → dark on 2026-10-03 (review G1), so it now reads correctly on DMG. |
 | `graphics/background/background.png` | Placeholder city skyline. Replace. |
 | `graphics/enemies/Mushroom.png` | Placeholder. Replace with the security bot. |
 | `graphics/hud/hud_a.png` | The layout idea (heart left, counter right) can stay. |

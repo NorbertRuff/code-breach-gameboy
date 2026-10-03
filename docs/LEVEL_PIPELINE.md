@@ -30,8 +30,12 @@ Python and fits our collision and palette needs exactly.
   no collision.
 - **Palettes are not set by hand.** `gbconvert.py` already knows each tile's palette.
 - **Terrain sets** for ground and wall edges, so painting picks the right edge tiles.
-- **Map size:** 16 tiles tall (the 2 bottom rows of the screen are the HUD), at least
-  20 tiles wide. Horizontal scrolling only, at first.
+- **Map size:** 13 tiles tall: screen rows 3–15. Rows 0–2 are the parallax band and
+  rows 16–17 the HUD, neither part of the Tiled map. At least 20 tiles wide.
+  Horizontal scrolling only.
+- **Parallax band:** a separate 32×3-tile strip per level theme (it wraps around the
+  32-tile background map), drawn once at level load and scrolled slower by a screen-line
+  interrupt. Map streaming never writes rows 0–2.
 - **Layers:**
   - `tiles`: tile layer.
   - `entities`: object layer. Object classes: `player_start`, `enemy` (property `kind`;
@@ -71,7 +75,7 @@ Levels can be at most 255 tiles wide: map widths are `uint8_t`, as in GBDK's
 
 The converter fails the build when:
 
-- the map isn't 16 tiles tall, or is narrower than 20;
+- the map isn't 13 tiles tall, or is narrower than 20;
 - there isn't exactly one `player_start` and one `exit`;
 - a level other than the boss level doesn't have exactly two `gate`s;
 - there are more than 32 fragments;

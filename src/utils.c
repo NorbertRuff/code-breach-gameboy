@@ -4,7 +4,7 @@
 
 void performant_delay(uint16_t time)
 {
-    uint8_t i;
+    uint16_t i;
     for (i = 0; i < time; i++)
     {
         wait_vbl_done();

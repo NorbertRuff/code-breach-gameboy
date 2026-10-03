@@ -1,104 +1,124 @@
 # Testing with PyBoy
 
-Goal: every change is checked on the PC, headless, in both DMG and GBC modes, before it
-goes to the flashcart.
+Every change is checked on the PC, headless, in both DMG and GBC mode, before it goes to
+the flashcart.
 
 [PyBoy](https://github.com/Baekalfen/PyBoy) 2.7.0 is a Game Boy emulator with a Python
-API. It runs without a window, faster than real time. Tests can press buttons, step
-frames, read memory and take screenshots.
+API. It runs without a window, far faster than real time. Tests press buttons, step
+frames, read memory and take screenshots. The whole suite runs in about 2 seconds.
 
 ## The loop
 
-1. `make`: builds `obj/ApexLab.gb` and `obj/ApexLab.sym`.
-2. `make test`: runs `pytest tests/`. Every test runs twice, once in DMG mode and once in
-   GBC mode.
-3. A failing test saves screenshots to `tests/out/`. Claude reads these PNGs directly
-   when debugging.
-4. At each milestone, the owner checks the ROM on the real DMG and GBC.
+1. `make test` builds `obj/ApexLab.gb` and `obj/savetest.gb`, then runs `pytest`.
+   Most tests run twice: once in DMG mode, once in GBC mode.
+2. A failing test saves a screenshot to `tests/out/`. Claude reads these PNGs when
+   debugging. The folder is emptied at the start of every run.
+3. At each milestone, the owner checks the ROM on the real DMG and GBC.
 
 Emulicious stays the tool for manual debugging: breakpoints, VRAM viewer, tile map
 viewer, and source-level debugging with the `.cdb` file.
 
-## Setup
+## Setup (once)
 
 ```bash
-py -3.13 -m venv .venv
+make venv
 ```
 
-```bash
-.venv/Scripts/pip install -r tools/requirements.txt
-```
+This creates `.venv/` and installs `tools/requirements.txt`: PyBoy 2.7.0, pytest,
+Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from PATH
+(as in CI).
 
-`tools/requirements.txt` pins `pyboy==2.7.0`, `pytest`, `pillow` and `numpy`. `.venv/`
-and `tests/out/` are gitignored.
+## Files
 
-## How tests read game state
-
-- The build adds `-Wm-yS`, which writes `obj/ApexLab.sym` next to the ROM. PyBoy loads a
-  `.sym` file next to the ROM automatically.
-- `pyboy.symbol_lookup("_player")` returns `(bank, address)`. C globals get a leading
-  underscore.
-- Struct fields are read by offset. SDCC does not pad structs on the Game Boy CPU, so the
-  offsets follow the field order in `player.h`. The Python mirror lives in
-  `tests/gamelib.py`.
-- To catch struct changes, the ROM exports
-  `const uint8_t player_struct_size = sizeof(Player);`. A test compares it with the Python
-  mirror's size and fails if they differ.
-- Hardware registers are read directly: `WY` is `0xFF4A`, `WX` is `0xFF4B`, `BGP` is
-  `0xFF47`.
-
-## Harness
-
-`tests/conftest.py` provides a `game` fixture, parametrized over `dmg` and `cgb`:
-
-```python
-pyboy = PyBoy("obj/ApexLab.gb", window="null", cgb=(mode == "cgb"), sound_emulated=False)
-pyboy.set_emulation_speed(0)   # no real-time limit
-```
-
-`tests/gamelib.py` wraps it in a `Game` class:
-
-| Method | Does |
+| File | Holds |
 |---|---|
-| `frames(n)` | Step `n` frames without rendering (fast). |
-| `hold(button, n)` | Hold a button for `n` frames, then release it. |
-| `press(button)` | Press for one frame. |
-| `state()` | Read `_current_game_state`. |
-| `wait_for_state(s, timeout)` | Step frames until the state machine reaches `s`, or fail. |
-| `player()` | Read the `Player` struct into a Python object. |
-| `reg(name)` | Read a hardware register by name. |
-| `screenshot(name)` | Save `tests/out/<test>_<mode>_<name>.png`. |
+| `pytest.ini` | Test folder, strict expected failures, warning filter |
+| `tests/conftest.py` | Fixtures: `game` (one booted ROM per test and mode), `mode`, `rom_dir`, `rom_bytes` |
+| `tests/gamelib.py` | `boot()`, the `Game` helper class, the `Player` struct mirror, constants copied from the C headers |
+| `tests/test_rom.py` | Header bytes, checksums, ROM size, bank 0 layout from the linker map |
+| `tests/test_boot.py` | Hardware detection, reaching gameplay, walking, jumping, screen drawn |
+| `tests/test_regressions.py` | One test per fixed bug |
+| `tests/test_known_bugs.py` | Open bugs, as expected failures |
+| `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
 
-Tests drive the release ROM from power-on with button input. There is no test-only build.
-Once the game has a level-select cheat (milestone M3), tests use it to jump to a level.
+## How PyBoy is set up
 
-## Test groups
+- **Forcing DMG mode.** PyBoy picks its boot ROM from the cartridge header. Our header
+  says "GBC-enhanced", so PyBoy runs GBC hardware even with `cgb=False`. `boot()` passes
+  PyBoy's own DMG boot ROM (`pyboy/core/bootrom_dmg.bin`) to force real DMG mode.
+- **Boot time.** PyBoy's boot ROMs take about 65 frames. `boot()` runs until the
+  cartridge's first instruction (`0x100`), so every test starts at the game's power-on.
+  After that, GBDK has set `_cpu`: `0x01` on DMG, `0x11` on GBC.
+- **Isolated save files.** PyBoy loads `<rom>.ram` if it exists and writes it when a
+  battery cartridge stops. The tests run from a copy of the ROM in a temp folder, and
+  every `game` fixture stops with `save=False`.
+- **Symbols.** The build writes `obj/ApexLab.sym`; PyBoy loads it from next to the ROM.
+  `pyboy.symbol_lookup("_player")` returns `(bank, address)`. C globals start with `_`.
 
-| Group | Examples |
-|---|---|
-| Boot and header | Header `0x143 == 0x80`, cartridge type `0x147 == 0x1B`. `_is_cgb` matches the mode. Gameplay is reached within N frames. The GBC screen has more than one color. |
-| Regressions | One test per fixed bug. Example: after two game-over restarts, `WY == 128`. |
-| Physics | Walking right for 60 frames moves X by the expected amount. Jump height is in range. A tap jump is lower than a held jump. The player never overlaps a solid tile. |
-| Gameplay | A collected fragment adds 1 to the count and clears the tile. Touching an enemy costs one life. Game over restarts in a clean state. |
-| Replays | Recorded input sequences in `tests/replays/*.json` must still finish the level. This catches physics or level edits that make a level impossible. |
-| Golden screenshots | Title, level start and HUD, per mode, compared pixel for pixel. `pytest --update-golden` rewrites them after an intended change. |
-| Frame budget | The game counts frames where the main loop overran one VBlank. A 10-second scripted run in DMG mode must have 0 lag frames. |
+## Reading and changing game state
 
-## Visual review
+- `game.player()` reads the `Player` struct through `PLAYER_FIELDS` in `gamelib.py`.
+  SDCC does not pad structs, so the offsets follow `player.h`. The ROM exports
+  `player_struct_size`; `test_player_struct_size_matches` fails if the C struct changes
+  without the Python mirror.
+- `game.collision(x, y)` reads the level's collision map, `game.window_tile(col, row)`
+  the HUD window map, `game.reg("WY")` a hardware register.
+- Some situations can't be reached by input in level 1, or would take minutes of play:
+  falling into a pit, finishing the level. For those, tests write the game's variables
+  directly with `set_state`, `set_lives` and `set_player_y`. Keep this rare, and prefer
+  input. Once the game has a level-select cheat (roadmap M3), tests use it instead.
 
-`make shots` runs a fixed script and writes a contact sheet, `tests/out/contact_dmg.png`
-and `tests/out/contact_cgb.png`, with the key screens side by side. Claude reviews these
-after art or rendering changes.
+## Conventions
+
+- **A fixed bug gets a regression test** in `test_regressions.py`. Check that the test
+  fails without the fix, on the last commit's build:
+
+  ```bash
+  .venv/Scripts/python.exe tools/test_against.py HEAD tests/test_regressions.py -k <test name>
+  ```
+
+  The tool exports the commit with `git archive` into a temporary folder (no checkout),
+  builds it there, and runs the current tests against that build through
+  `APEXLAB_OBJ`. The `fix-bug` skill in `.claude/skills/` walks through the whole routine.
+- **An open bug can get an expected-failure test** in `test_known_bugs.py`, marked
+  `@pytest.mark.xfail(reason=...)`. `pytest.ini` sets `xfail_strict = true`: when the bug
+  is fixed, the test passes and the run fails, so the test moves to
+  `test_regressions.py` without the marker.
+- **DMG-only effects** (fades and flashes through `BGP_REG`, until the palette module in
+  M4) use `@pytest.mark.parametrize("mode", ["dmg"])` instead of running in both modes.
+- **Build variants** for one-off checks: `make OBJDIR=<folder> EXTRA_CFLAGS=-D...`. For
+  example, `EXTRA_CFLAGS=-DSKIP_INTRO_AND_START=0` builds a ROM with the intro and title
+  screen. Always use a separate `OBJDIR` so `obj/` keeps the normal build.
+
+## Save test on the real Game Boy
+
+`obj/savetest.gb` counts boots in cartridge RAM. On the flashcart:
+
+1. Copy `obj/savetest.gb` to the SD card and start it. It shows `NO SAVE: NEW ONE` and
+   `BOOT COUNT: 1`.
+2. Power off, wait a few seconds, power on, and start it again. The count must be 2.
+   Repeat once more.
+3. Try both ways of leaving: going back to the flashcart menu, and switching off
+   directly. Some EverDrive clones only write the save to the SD card on one of them.
+4. Press A to clear the save when done.
+
+If the count never goes up, battery saves don't work on this cartridge, and the game
+falls back to passwords (docs/DECISIONS.md).
 
 ## Continuous integration
 
-A GitHub Actions workflow on `ubuntu-latest`:
+`.github/workflows/build.yml` runs on every push and pull request, on `ubuntu-24.04`:
+download and cache GBDK 4.5.0, `make all savetest` (the build fails if a ROM bank
+overflows), `make test`, then upload the ROMs. On failure it uploads `tests/out/`.
 
-1. Download and cache `gbdk-linux64.tar.gz` 4.5.0.
-2. `make`
-3. `pip install -r tools/requirements.txt`
-4. `pytest`
-5. On failure, upload `tests/out/` as a build artifact.
+## Still planned
+
+| Test | When |
+|---|---|
+| Golden screenshots per screen and mode, `pytest --update-golden` to accept changes | M4 |
+| Replays: recorded inputs in `tests/replays/*.json` that must still finish a level | M3 |
+| Frame budget: a scripted run in DMG mode with 0 lag frames | M3 |
+| Golden copies of the `make shots` contact sheets, to spot visual changes. For now, compare by hand: `tools/shots.py --out tests/out/shots_before` before a change, `make shots` after, then `tools/compare_shots.py tests/out/shots_before tests/out/shots` | M4 |
 
 ## What PyBoy cannot prove
 

@@ -121,8 +121,9 @@ tutorial).
 
 - Redraw only when the camera crosses a tile: `map_pos_x = camera_x >> 3`. Start with
   `old_map_pos_x = 255` to force the first draw (GBDK `large_map`).
-- Column write: `set_bkg_submap(x, 0, 1, 16, map, map_width)`. Our column is 16 tall
-  because the HUD covers the bottom 2 rows. On GBC, also call `set_bkg_submap_attributes`.
+- Column write: `set_bkg_submap(x, 3, 1, 13, map, map_width)`. Our column is 13 tall:
+  rows 0–2 are the parallax band and the HUD covers rows 16–17 (decision 2026-10-03).
+  On GBC, also call `set_bkg_submap_attributes`.
 - Spread the work across frames. Decode the next column on quiet frames and push it on
   the frame the boundary is crossed (BlackCastle's `preload_pending`). GB Studio queues
   columns and copies them in batches.

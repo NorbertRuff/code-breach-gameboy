@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 
@@ -6,7 +7,9 @@ import pytest
 from gamelib import Game, boot
 
 ROOT = Path(__file__).resolve().parent.parent
-OBJ = ROOT / "obj"
+# APEXLAB_OBJ points the tests at another build folder, for example an older commit's
+# build, to check that a regression test really fails without its fix.
+OBJ = Path(os.environ.get("APEXLAB_OBJ", ROOT / "obj"))
 OUT = ROOT / "tests" / "out"
 
 

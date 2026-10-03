@@ -44,13 +44,13 @@ typedef struct {
     uint8_t direction;
     uint8_t animation_frame_count;
     uint8_t movement_frame_count;
-    uint8_t last_movement_x;
+    int8_t last_movement_x;     // movement_force_x of the previous frame: -1, 0 or 1
     
     // Movement
     int8_t movement_force_x;
     int8_t movement_force_y;    // Vertical movement force for jumping
     int8_t velocity_x;
-    uint8_t slowing_x;
+    int8_t slowing_x;           // slide direction after releasing left/right: -1, 0 or 1
     
     // Jumping (improved physics)
     uint8_t is_jumping;
