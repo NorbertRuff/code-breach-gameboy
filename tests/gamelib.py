@@ -24,6 +24,10 @@ REGISTERS = {
     "BGP": 0xFF47, "OBP0": 0xFF48, "OBP1": 0xFF49, "WY": 0xFF4A, "WX": 0xFF4B,
 }
 
+# Screen timing (Pan Docs): VBlank starts at line 144, and a frame has 154 lines.
+VBLANK_LINE = 144
+LINES_PER_FRAME = 154
+
 # Mirror of the Player struct in src/player/player.h, in field order. SDCC does not pad
 # structs on the Game Boy CPU, and multi-byte values are little endian.
 # test_player_struct_size_matches fails when the C struct changes without this list.
@@ -152,6 +156,22 @@ class Game:
         """Press a button for one frame."""
         self.hold(button, 1)
 
+    def play_route(self, route: list) -> None:
+        """Play (frames, buttons) steps: each step holds exactly the buttons named in its
+        space-separated string ("a right", or "" for none) for that many frames. A button
+        held in two steps in a row stays down; a new press needs a step without it between."""
+        held = set()
+        for frames, buttons in route:
+            wanted = set(buttons.split())
+            for button in held - wanted:
+                self.pyboy.button_release(button)
+            for button in wanted - held:
+                self.pyboy.button_press(button)
+            held = wanted
+            self.frames(frames)
+        for button in held:
+            self.pyboy.button_release(button)
+
     def wait_for_state(self, state: int, timeout: int = 600) -> int:
         """Step until the state machine reaches state. Returns the frames it took."""
         for frame in range(timeout):
@@ -228,6 +248,27 @@ class Game:
 
     def camera_x(self) -> int:
         return int.from_bytes(read_symbol(self.pyboy, "_camera_x", 2), "little", signed=True)
+
+    def track_frame_lines(self) -> list:
+        """From now on, add to the returned list, for every gameplay update, how many screen
+        lines passed from the start of VBlank to the end of the update (when the game
+        starts waiting for the next VBlank). A frame has LINES_PER_FRAME lines: an update
+        that ends later caused a lag frame. sys_time counts the VBlanks in between."""
+        lines = []
+        start = {}
+
+        def at_update_start(_):
+            start["vblanks"] = self.u8("_sys_time")
+
+        def at_update_end(_):
+            if "vblanks" in start:
+                vblanks = (self.u8("_sys_time") - start.pop("vblanks")) & 0xFF
+                line = (self.reg("LY") - VBLANK_LINE) % LINES_PER_FRAME
+                lines.append(line + vblanks * LINES_PER_FRAME)
+
+        self.pyboy.hook_register(None, "_main_game_loop", at_update_start, None)
+        self.pyboy.hook_register(None, "_wait_vbl_done", at_update_end, None)
+        return lines
 
     # --- changing the game (tests only) ----------------------------------------
     # Some situations would take minutes of play to reach. These write the game's

@@ -43,6 +43,7 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in the test room `levels/test_jumps.tmj` |
 | `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, passes the greybox level and reports a broken one |
 | `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, no lag frames, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
+| `tests/test_frame_budget.py` | A route through the greybox level from the start to the exit: no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right. The route test is an expected failure until bug 19 is fixed (M3 step 1) |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
 
@@ -88,6 +89,17 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   the camera), `game.bkg_tile(x, y)` the background map at a level column,
   `game.camera_x()` the camera, `game.window_tile(col, row)` the HUD window map,
   `game.reg("WY")` a hardware register.
+- `game.play_route(route)` plays `(frames, buttons)` steps, each holding exactly the
+  buttons named, like `(26, "a right")`. Routes are input, so they stay valid when game
+  state moves in memory, but a physics or enemy change can break them: a route test
+  checks that its route still gets where it should.
+- **Frame budget.** The ROM counts lag frames in `lag_frames` (`src/main.c`): every
+  VBlank that passes during an update is a frame shown without one.
+  `game.track_frame_lines()` returns a list that fills with, for every update, the screen
+  lines from the start of VBlank to the end of the update: `LY` when the game starts
+  waiting for VBlank, plus 154 for every VBlank in between (from `sys_time`). A frame
+  has 154 lines; `test_frame_budget.py` allows 140, a margin because PyBoy's timing is
+  close to the hardware's but not exact.
 - Some situations would take minutes of play: finishing the level, losing all lives.
   For those, tests write the game's variables directly with `set_state`, `set_lives`,
   `set_player_y` and `place_player`. `start_on_open_ground()` puts the player at x = 156,
@@ -146,7 +158,6 @@ overflows), `make test`, then upload the ROMs. On failure it uploads `tests/out/
 |---|---|
 | Golden screenshots per screen and mode, `pytest --update-golden` to accept changes | M4 |
 | Replays: recorded inputs in `tests/replays/*.json` that must still finish a level | M3 |
-| Frame budget: a scripted run in DMG mode with 0 lag frames | M3 |
 | Golden copies of the `make shots` contact sheets, to spot visual changes. For now, compare by hand: `tools/shots.py --out tests/out/shots_before` before a change, `make shots` after, then `tools/compare_shots.py tests/out/shots_before tests/out/shots` | M4 |
 
 ## What PyBoy cannot prove

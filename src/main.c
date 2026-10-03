@@ -30,6 +30,10 @@ Enemy enemies[MAX_ENEMIES];
 // Lives left; refilled on game over.
 uint8_t lives = 3;
 
+// Frames the screen showed without a new update, because an update ran past VBlank.
+// Read by the tests; in Emulicious, watch _lag_frames.
+uint8_t lag_frames = 0;
+
 #define RESPAWN_INVINCIBILITY_FRAMES 90   // 1.5 s at 60 fps
 
 // Feet below this y: the player fell out of the level.
@@ -174,10 +178,13 @@ void main(void)
             current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:
+        {
+            // Every VBlank that passes during the update is a lag frame.
+            uint8_t start_time = (uint8_t)sys_time;
             main_game_loop();
-            // current_game_state = GAMEPLAY_END;
-            // fade_out_screen(10);
+            lag_frames += (uint8_t)sys_time - start_time;
             break;
+        }
         case LEVEL_COMPLETE:
             level_complete();
             fade_out_screen(10);

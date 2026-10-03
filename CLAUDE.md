@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 3,592 bytes free.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 3,576 bytes free.
 
 ## Build Commands
 
@@ -116,7 +116,7 @@ Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn 
 
 `camera_update()` (`src/engine/camera.c`) keeps the focus (player x + a look-ahead that eases to 24 px in the running direction) within 8 px of screen x 80, clamped to the level; `camera_reset()` snaps it for a level start or respawn, followed by `level_stream_reset()`. `move_bkg()` applies `camera_x`; the player and enemies are drawn at `world_x - camera_x`. Levels are up to 255 tiles wide.
 
-**Frame budget:** the game loop must finish before VBlank on DMG. `tests/test_streaming.py` checks for lag frames; as of M2 a normal frame ends near screen line 88 of 154, a frame that draws a column near line 125.
+**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 1 an update ends near line 100, one that draws a column near 132, a fragment pickup near 140; a pickup in a column update reaches 177 (bug 19).
 
 ## Development Feature Flags (`src/utils.h`)
 
