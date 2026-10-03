@@ -23,7 +23,6 @@ static const uint8_t greybox_test_map[832] = {
 };
 
 static const LevelEntity greybox_test_entities[21] = {
-    { ENTITY_FRAGMENT, 16, 104, 0 },
     { ENTITY_FRAGMENT, 24, 80, 0 },
     { ENTITY_FRAGMENT, 32, 80, 0 },
     { ENTITY_FRAGMENT, 56, 104, 0 },
@@ -36,6 +35,7 @@ static const LevelEntity greybox_test_entities[21] = {
     { ENTITY_ENEMY, 168, 79, 32 },
     { ENTITY_FRAGMENT, 176, 64, 0 },
     { ENTITY_FRAGMENT, 184, 64, 0 },
+    { ENTITY_FRAGMENT, 208, 104, 0 },
     { ENTITY_FRAGMENT, 224, 40, 0 },
     { ENTITY_GATE, 264, 112, 3 },
     { ENTITY_FRAGMENT, 328, 72, 0 },

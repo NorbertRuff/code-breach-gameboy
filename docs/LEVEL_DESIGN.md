@@ -11,7 +11,7 @@ Agreed on 2026-10-02: **Claude drafts, the owner reacts.**
 |---|---|---|
 | 1. Brief | Claude proposes, owner edits in chat | Section-by-section plan, stored in this file |
 | 2. Greybox | Claude | Text sketch in chat, then a Tiled map (`levels/level_N.tmj`) using the plain block tileset |
-| 3. Preview and checks | Claude | `build/levels/level_N.png`: the whole level with column numbers, enemies, fragments and jump arcs. Plus a reachability report: can every fragment, gate and the exit be reached with the real jump? |
+| 3. Preview and checks | Claude | `make preview` → `tests/out/levels/<name>.png`: the whole level with column numbers, enemies, fragments and jump arcs. Plus a reachability report: can every fragment, gate and the exit be reached with the real jump? ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md) section 5) |
 | 4. Owner pass | Owner | Edits in Tiled, or notes by column number. Plays it in Emulicious. |
 | 5. Tune | Claude | Applies the notes. A PyBoy replay test proves the level can be finished. |
 | 6. Art pass | Claude | Swaps the block tileset for the real one (roadmap M5). |

@@ -11,6 +11,7 @@
 #   make usage      show ROM and RAM use per bank
 #   make assets     regenerate src/graphics/*.c from the PNGs in graphics/
 #   make levels     regenerate src/levels/*.c from the Tiled maps in levels/
+#   make preview    draw every level to tests/out/levels/ and check it can be finished
 #   make clean      delete obj/
 #
 # RELEASE=1 turns on slower, size-optimizing compilation (about 4x compile time).
@@ -80,7 +81,7 @@ vpath %.c $(sort $(dir $(CSOURCES)))
 
 SAVETEST := $(OBJDIR)/savetest.gb
 
-.PHONY: all rebuild run test shots venv savetest usage assets levels clean
+.PHONY: all rebuild run test shots venv savetest usage assets levels preview clean
 
 all: $(ROM)
 
@@ -141,6 +142,11 @@ assets:
 # A level that breaks a rule (docs/LEVEL_PIPELINE.md) stops with a message.
 levels:
 	$(PYTHON) tools/tiled2c.py $(wildcard levels/*.tmj) -o src/levels
+
+# Full-level PNGs with column numbers, entities and jump arcs, plus the reachability
+# check (tools/levelpreview.py). Fails when something in a level can't be reached.
+preview:
+	$(PYTHON) tools/levelpreview.py $(wildcard levels/*.tmj)
 
 clean:
 	@$(call RMDIR,$(OBJDIR))

@@ -133,22 +133,25 @@ static void move_x(Player* p, Level* level)
     p->x = x;
 }
 
-// Head against a ceiling corner? Slides up to CORNER_CORRECTION px sideways to get past it.
-// Returns 1 if it found a free spot.
+// Head against a ceiling corner? If only the tile at one end of the head row is solid,
+// and the body reaches into it by at most CORNER_CORRECTION px, slides out of it, as long
+// as the body fits there. Returns 1 if it slid.
 static uint8_t slide_past_corner(Player* p, Level* level, int16_t head)
 {
-    int16_t center = TO_PIXELS(p->x);
-    int16_t feet = head + SPRITE_HEAD_OFFSET;
-    for (int8_t shift = 1; shift <= CORNER_CORRECTION; shift++) {
-        for (int8_t side = -shift; side <= shift; side += 2 * shift) {
-            int16_t x = center + side;
-            if (!area_has(level, x - SPRITE_LEFT_W, head, x + SPRITE_RIGHT_W, feet, BLOCKS_BODY)) {
-                p->x += side * SUBPIXELS;
-                return 1;
-            }
-        }
-    }
-    return 0;
+    int16_t left = TO_PIXELS(p->x) - SPRITE_LEFT_W;
+    int16_t right = TO_PIXELS(p->x) + SPRITE_RIGHT_W;
+    uint8_t row = tile_of(head), first_col = left >> 3, last_col = right >> 3;
+    uint8_t first_solid = LEVEL_COLLISION_AT(level, first_col, row) == COLLISION_SOLID;
+    uint8_t last_solid = LEVEL_COLLISION_AT(level, last_col, row) == COLLISION_SOLID;
+
+    int16_t shift;
+    if (first_solid && !last_solid) shift = ((first_col + 1) << 3) - left;      // out to the right
+    else if (last_solid && !first_solid) shift = (last_col << 3) - 1 - right;   // out to the left
+    else return 0;
+    if (shift > CORNER_CORRECTION || shift < -CORNER_CORRECTION) return 0;
+    if (area_has(level, left + shift, head, right + shift, head + SPRITE_HEAD_OFFSET, BLOCKS_BODY)) return 0;
+    p->x += shift * SUBPIXELS;
+    return 1;
 }
 
 // Moves up or down. Lands on floors and one-way tops, stops the head at ceilings.

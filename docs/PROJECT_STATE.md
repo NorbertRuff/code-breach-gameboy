@@ -18,6 +18,8 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
 - **2026-10-03, M2 step 4:** the game plays Tiled levels: collision ring, column streaming
   both ways, deadzone and look-ahead camera. The old 18×32 WRAM collision map and the
   level built in code are gone (WRAM use 1,341 → 991 bytes).
+- **2026-10-03, M2 step 5:** `tools/levelpreview.py` and the reachability check. Bug 18
+  (head bump lag frame) found by the physics comparison test and fixed.
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 
@@ -89,6 +91,7 @@ Ordered by how visible they are to the player.
 | 15 | The player is drawn with obsolete API calls. | `src/player/player.c:282,286` | `move_metasprite` and `move_metasprite_vflip` are marked "Obsolete" in GBDK 4.5's `metasprites.h`. | `move_metasprite_ex` and `move_metasprite_flipx`. |
 | 16 | The player starts inside platform A, and 1 px inside the ground. | `src/level/level_manager.c` `level_1_server_room_init` | Start x = 16 puts the 16 px sprite over platform A (x 16–47) at body height. Start y = 136 is the ground tile's top row; every landing puts the feet at 135. | Start at x = 8, y = 135. Found by the PyBoy jump test on 2026-10-02. |
 | 17 | The player sprite is drawn 8 px left of the collision box (4 px when facing left) and 1 px too high. Fixed in M2. | `src/player/player.c` `player_draw` | `move_metasprite_ex` takes hardware sprite coordinates, which start 8 px left of and 16 px above the screen. The code passed screen coordinates, plus a `+ 4` for the flipped sprite. | Pivot = box top-left + `programmer_PIVOT_X/Y` + `DEVICE_SPRITE_PX_OFFSET_X/Y`, the same for both facings. Found while writing the M2 physics tests on 2026-10-03. |
+| 18 | Bumping the head under a ceiling the corner slide can't clear is a lag frame. Fixed in M2. | `src/player/player.c` `slide_past_corner` | It tried 8 shifted positions, each a full 16×32 area check: about 55 scanlines. | Compute the slide from the head row's end tiles, then one area check. Found by `tests/test_levelpreview.py` on 2026-10-03. |
 
 ## Tech debt
 

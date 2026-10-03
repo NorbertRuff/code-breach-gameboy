@@ -119,7 +119,32 @@ column is copied too, with `set_bkg_submap_attributes()`. One column per frame i
 the DMG's VRAM write budget. GBDK ships a large-map scrolling example that shows the
 pattern. The "Drawing Large Maps" notes in GAME_DESIGN.md describe the same technique.
 
-## 5. Level list
+## 5. Preview and reachability check: `tools/levelpreview.py`
+
+`make preview` draws every level to `tests/out/levels/<name>.png` at 2×: the tiles with
+column numbers every 5, the parallax band, fragments (green outline: reachable, red: not),
+gate quotas, the exit, enemy patrol ranges, the player start, the surfaces the player can
+stand on (green or red line), and for each reached surface the jump that first got there
+(blue, green, purple for sections A, B, C). It fails when something can't be reached.
+
+The check uses `tools/physics.py`, a frame-exact copy of `player.c`.
+`tests/test_levelpreview.py` runs the same inputs in the ROM and in the copy and compares
+every frame, so a physics change that isn't copied fails the tests.
+
+How it searches:
+- A **surface** is a run of x positions where the body can stand on one tile row (not in
+  a wall, not on spikes).
+- From the start it tries jumps from every reached surface: tapped, medium and full; left,
+  right or straight up; from standing or at full speed; steering at once or 12 frames
+  late; and walking off each edge. Start points are both ends and every 16 px. Where a
+  jump lands is reached too.
+- **Gates count as open**, and the player can't go back left past one (the camera lock,
+  M3). **Enemies are ignored.** Spikes and pits end a jump, and fragments touched on such
+  a jump don't count. A running start is assumed possible anywhere.
+- **Problems:** the exit can't be reached, a fragment can't be reached, or a gate asks for
+  more fragments than can be reached in its section. Test rooms skip the exit.
+
+## 6. Level list
 
 From GAME_DESIGN.md. Widths are targets to tune in playtesting.
 

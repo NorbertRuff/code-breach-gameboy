@@ -92,8 +92,8 @@ new physics, and the jump metrics are written into [LEVEL_DESIGN.md](LEVEL_DESIG
       stream in. Delete the old collision map.
 - [x] Map streaming for levels wider than 256 px (`set_bkg_tiles` from a column buffer,
       see DECISIONS.md). The game plays `levels/greybox_test.tmj`.
-- [ ] `tools/levelpreview.py`: full-level PNG with column numbers and jump arcs, plus the
-      reachability check.
+- [x] `tools/levelpreview.py`: full-level PNG with column numbers and jump arcs, plus the
+      reachability check (`make preview`), on a frame-exact Python copy of the physics.
 
 ## M3 — Level 1 greybox and gameplay objects
 

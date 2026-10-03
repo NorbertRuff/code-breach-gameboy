@@ -254,12 +254,12 @@ class Game:
         """Move the player to a feet row in pixels, at the end of the next frame's update."""
         self._player_writes["y"] = y_px * SUBPIXELS
 
-    PLACE_FRAMES = 5    # one frame to take the move, then the camera catches up
+    PLACE_FRAMES = 10   # one frame to take the move, then the camera catches up
 
     def place_player(self, x_px: int, y_px: int) -> None:
         """Put the player at a world position in pixels (x = center, y = lowest row), at
         the end of the next frame's update, then run PLACE_FRAMES frames: a far move makes
-        the camera jump and draw many columns in one (lag) frame."""
+        the camera jump, and redrawing a whole screen of columns takes about 6 frames."""
         self._player_writes["x"] = x_px * SUBPIXELS
         self._player_writes["y"] = y_px * SUBPIXELS
         self.frames(self.PLACE_FRAMES)

@@ -248,3 +248,24 @@ def test_player_sprite_covers_its_collision_box(game):
     game.hold("left", 5)
     game.frames(2)
     assert player_sprite_area(game) == (0, 88, 15, 119), "facing left"
+
+
+# Bug 18 --------------------------------------------------------------------------
+
+def test_head_bump_has_no_lag_frame(game):
+    # Run right from x = 156 and jump under platform D's left end, too far in for the
+    # corner slide: the head bumps. That frame used to run past VBlank.
+    game.start_on_open_ground()
+    game.pyboy.button_press("right")
+    game.frames(10)
+    calls = []
+    game.pyboy.hook_register(None, "_main_game_loop", lambda c: c.append(1), calls)
+    per_frame = []
+    game.pyboy.button_press("a")
+    for _ in range(6):
+        game.frames(1)
+        per_frame.append(len(calls))
+        calls.clear()
+    game.pyboy.button_release("a")
+    game.pyboy.button_release("right")
+    assert per_frame == [1] * 6, f"game loops per frame around the head bump: {per_frame}"

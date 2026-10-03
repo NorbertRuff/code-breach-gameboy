@@ -64,6 +64,7 @@ class Level:
     entities: list[Entity]
     section_start: list[int]
     tileset: Tileset
+    test_room: bool = False            # map property test = true: no exit or gates needed
     warnings: list[str] = field(default_factory=list)
 
     @property
@@ -171,7 +172,7 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
 
     entities.sort(key=lambda e: (e.x, e.y))
     level = Level(name, width, tiles, starts[0], entities,
-                  section_starts(entities, gates), tileset)
+                  section_starts(entities, gates), tileset, test_room)
     if level.fragment_count > MAX_FRAGMENTS:
         fail(f"{level.fragment_count} fragments, at most {MAX_FRAGMENTS}")
     check_quotas(level, gates, fail)

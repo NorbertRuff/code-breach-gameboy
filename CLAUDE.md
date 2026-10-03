@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 3,739 bytes free.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 3,592 bytes free.
 
 ## Build Commands
 
@@ -40,6 +40,7 @@ make savetest   # build obj/savetest.gb, the cartridge RAM persistence test
 make usage      # ROM and RAM use per bank, with areas
 make assets     # regenerate src/graphics/*.c from graphics/*.png (and draw the greybox tileset)
 make levels     # regenerate src/levels/*.c from the Tiled maps in levels/*.tmj
+make preview    # draw every level to tests/out/levels/ and check everything can be reached
 make clean      # delete obj/
 ```
 
@@ -95,7 +96,7 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in 
 | `graphics/` | Source PNG files for the asset pipeline; `graphics/tilesets/` also holds the Tiled `.tsx` files |
 | `levels/` | Tiled maps (`.tmj`) |
 | `tests/` | PyBoy tests (`gamelib.py` helpers, `conftest.py` fixtures) |
-| `tools/` | `tiled2c.py` (levels), `greybox_tileset.py`, screenshot tools, `requirements.txt` for the test tools, `savetest/` save-persistence ROM |
+| `tools/` | `tiled2c.py` (levels), `levelpreview.py` + `physics.py` (level preview and reachability check), `greybox_tileset.py`, screenshot tools, `requirements.txt` for the test tools, `savetest/` save-persistence ROM |
 
 ### Player Physics (`src/player/player.h`, `src/player/player.c`)
 
@@ -104,6 +105,7 @@ Physics uses integer arithmetic (no floats — Game Boy has no FPU). Values and 
 - Velocities are `int8_t` in 1/32 px per frame. Running accelerates toward `input_x * RUN_SPEED_MAX`, weaker in the air.
 - Jump: `JUMP_SPEED` up, light gravity while rising with A held, strong gravity when falling or after A is released (jump cut), half gravity near the top (apex hang). `coyote_frames` and `jump_buffer_frames` are one-byte countdowns.
 - Collision is checked per axis against the tiles the box enters: walls over the full body height, floors and one-way tops only when the feet enter a new tile row going down, ceilings with up to `CORNER_CORRECTION` px of sideways slide. Moves stay under 8 px per frame, so no tile is skipped.
+- **`tools/physics.py` is a frame-exact copy of this file** for the level preview. Change both together; `tests/test_levelpreview.py` compares them frame by frame.
 - `player_draw` places the metasprite so it covers the box: pivot = box top-left + `programmer_PIVOT_X/Y` + `DEVICE_SPRITE_PX_OFFSET_X/Y`.
 
 ### Level Collision and Streaming (`src/level/`)

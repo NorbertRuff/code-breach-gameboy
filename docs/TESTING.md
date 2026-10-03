@@ -41,6 +41,7 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_physics.py` | Jump heights, coyote time, jump buffer, ceiling corners, one-way platforms, hazards, never overlapping solid tiles |
 | `tests/test_tiled2c.py` | The level converter: committed output up to date, the test level's contents, the level data in the ROM, and every rule check |
 | `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in the test room `levels/test_jumps.tmj` |
+| `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, passes the greybox level and reports a broken one |
 | `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, no lag frames, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
@@ -77,8 +78,8 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   ones again after `load()`.
 - **Writing the player.** `place_player` and `set_player_y` wait for the same point
   (the start of `player_draw`), so a move never lands in the middle of an update.
-  `place_player` then runs 5 frames: a far move makes the camera jump and draw many
-  columns in one frame, which is a lag frame, and a 1-frame button press in a lag frame
+  `place_player` then runs 10 frames: a far move makes the camera jump, and redrawing a
+  whole screen of columns takes about 6 frames. A 1-frame button press in a lag frame
   is never read.
 - **Levels.** The game plays `levels/greybox_test.tmj`. `game.load_level(LEVEL_TEST_JUMPS)`
   restarts in the test room with the jump metric fixtures. Test geometry lives in Tiled
