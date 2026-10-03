@@ -42,6 +42,12 @@ for _name, _fmt in PLAYER_FIELDS:
     PLAYER_OFFSETS[_name] = _offset
     _offset += struct.calcsize("<" + _fmt)
 
+# Enemy struct in src/enemy/enemy.h: x (2 bytes), y, dir, patrol_min (2), patrol_max (2),
+# active. test_enemy_struct_size_matches fails when the C struct changes.
+ENEMY_SIZE = 9
+ENEMY_ACTIVE_OFFSET = 8
+MAX_ENEMIES = 4
+
 # Level data, from src/level/level_manager.h. collision_map comes after level_id,
 # state and two 2-byte pointers in Level, which is the first member of LevelManager.
 LEVEL_WIDTH = 32
@@ -159,6 +165,7 @@ class Game:
         return snapshot
 
     def load(self, snapshot: io.BytesIO) -> None:
+        """Go back to a snapshot. Buttons are not part of it: press held ones again."""
         snapshot.seek(0)
         self.pyboy.load_state(snapshot)
         self._drawn_player = None
@@ -237,6 +244,16 @@ class Game:
         """Put the player at a world position in pixels (x = center, y = lowest row)."""
         self._set_player_u16("x", x_px * SUBPIXELS)
         self._set_player_u16("y", y_px * SUBPIXELS)
+
+    def empty_room(self) -> None:
+        """Remove every enemy and every collision tile except the floor (row 15), for
+        measuring the physics on its own. The screen keeps the old tiles."""
+        for tile_y in range(LEVEL_HEIGHT):
+            for tile_x in range(LEVEL_WIDTH):
+                self.set_collision(tile_x, tile_y, COLLISION_SOLID if tile_y == 15 else COLLISION_NONE)
+        _, addr = self.pyboy.symbol_lookup("_enemies")
+        for i in range(MAX_ENEMIES):
+            self.pyboy.memory[addr + i * ENEMY_SIZE + ENEMY_ACTIVE_OFFSET] = 0
 
     def set_collision(self, tile_x: int, tile_y: int, kind: int) -> None:
         """Change one tile's collision type (the screen keeps the old tile)."""

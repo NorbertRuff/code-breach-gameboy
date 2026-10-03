@@ -1,6 +1,6 @@
 """Boot and basic gameplay, in DMG and GBC mode."""
 
-from gamelib import COREGAMELOOP, PLAYER_SIZE
+from gamelib import COREGAMELOOP, ENEMY_SIZE, PLAYER_SIZE
 
 def test_hardware_detected(game):
     # GBDK sets _cpu from the CPU's A register at power-on: 0x11 on GBC, 0x01 on DMG.
@@ -13,6 +13,11 @@ def test_hardware_detected(game):
 def test_player_struct_size_matches(game):
     # If this fails, update PLAYER_FIELDS in tests/gamelib.py to match player.h.
     assert game.u8("_player_struct_size") == PLAYER_SIZE
+
+
+def test_enemy_struct_size_matches(game):
+    # If this fails, update ENEMY_SIZE and ENEMY_ACTIVE_OFFSET in tests/gamelib.py.
+    assert game.u8("_enemy_struct_size") == ENEMY_SIZE
 
 
 def test_reaches_gameplay(game):

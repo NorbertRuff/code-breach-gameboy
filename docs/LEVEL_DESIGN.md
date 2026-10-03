@@ -73,15 +73,35 @@ and collision is read from ROM.
 
 ## 4. Jump metrics
 
-To be measured after the physics rewrite (roadmap M2). All layouts are built on these numbers.
+Measured in the ROM on 2026-10-03, the same on DMG and GBC. `tests/test_jump_metrics.py`
+checks every number below and fails when a physics change moves one. The values behind
+them are in `src/player/player.h`.
+
+Heights count tiles above the floor the player stands on. Gaps count missing floor
+tiles between two ledges at the same height; a landing counts with 1 px of the body
+over the far ledge.
 
 | Metric | Value |
 |---|---|
-| Max jump height (A held) | TBD tiles |
-| Min jump height (A tapped) | TBD tiles |
-| Max gap, standing jump | TBD tiles |
-| Max gap, running jump | TBD tiles |
+| Max jump height (A held) | 4 tiles: lands on a ledge 4 tiles up, not 5. Rises 36 px, 43 frames in the air |
+| Min jump height (A tapped) | 1 tile: rises 13 px, 17 frames in the air |
+| Max gap, standing jump | 7 tiles: front of the body at the ledge's edge, A and right pressed together |
+| Max gap, running jump | 9 tiles, taking off from the ledge. Coyote time allows 10 with a jump up to 6 frames late |
 | Safe landing width | At least 3 tiles |
+| Run speed | 1.5 px per frame, about 11 tiles per second. Full speed after 6 frames, stops in 8 |
+| Coyote time / jump buffer | A jump works up to 6 frames after leaving a ledge / an A press up to 5 frames before landing still jumps |
+| Ceiling corners | A corner that overlaps the body by up to 4 px is slid past instead of bumped |
+
+What follows from these numbers:
+
+- **A solid shelf the player can reach blocks walking under it.** The body is 4 tiles tall
+  and the highest climb is 4 tiles. A solid shelf 1–4 tiles above the floor is a wall at
+  body height; one 5 or more tiles up can't be reached from that floor. Go up with
+  stairs (steps of 1–4 tiles), or with a one-way platform: it doesn't block walking and
+  can be jumped through from below.
+- A climb of 2 or more tiles needs A held; a tap only clears 1-tile steps.
+- **Level 1 limits** (difficulty rule below): steps up to 2 tiles, gaps up to 5 tiles
+  (the standing maximum minus 2), so every jump also works from a standstill.
 
 Difficulty rule: level 1 uses gaps and heights at least 2 tiles below the maximum. Only
 level 5 asks for maximum-distance jumps.
@@ -103,8 +123,16 @@ Names to use in briefs and feedback.
 
 ## 6. Level 1 brief: Server Room
 
-**Status: section plan accepted on 2026-10-02.** Exact gap sizes and heights wait for
-the jump metrics from M2. The greybox comes next, in M3.
+**Status: section plan accepted on 2026-10-02.** The greybox comes next, in M3.
+
+Checked against the jump metrics (section 4) on 2026-10-03. On the main path, steps are
+at most 2 tiles and gaps at most 5; the longest jump in section C is a 5-tile gap. Two
+items need a change, to settle with the owner in the greybox:
+- A4: the alcove needs a held jump of 3–4 tiles, above the level 1 limit of 2.
+  Proposal: keep it, since it is a bonus fragment off the main path.
+- C3: "shelves above to escape onto" can't work as written. A solid shelf the player
+  can reach blocks the floor under it, and level 1 has no one-way platforms.
+  Proposal: low crates (2-tile steps) along the run that the player hops onto.
 
 Teaches: running, jumping, fragments, enemies, gates. No one-way platforms and no hazard
 tiles. Two narrow cable trenches introduce pits.
