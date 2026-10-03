@@ -15,6 +15,9 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
 - **2026-10-03, M2 step 1:** bugs 5, 6 and 7 fixed by the physics rewrite (sub-pixel
   positions, velocity and gravity, box collision against tiles), with tests in
   `tests/test_regressions.py`. Bug 17 found and fixed on the way.
+- **2026-10-03, M2 step 4:** the game plays Tiled levels: collision ring, column streaming
+  both ways, deadzone and look-ahead camera. The old 18×32 WRAM collision map and the
+  level built in code are gone (WRAM use 1,341 → 991 bytes).
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 

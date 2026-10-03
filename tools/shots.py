@@ -22,10 +22,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
 from gamelib import (COREGAMELOOP, GAMEPLAY_END, LEVEL_COMPLETE,  # noqa: E402
-                     LEVEL_HEIGHT, LEVEL_WIDTH, Game, boot)
+                     Game, boot)
 
 OUT = ROOT / "tests" / "out" / "shots"
 SHADES = [(232, 232, 232), (160, 160, 160), (88, 88, 88), (16, 16, 16)]
+MAP_W, MAP_H = 32, 18     # background map tiles shown: the 32 that wrap, 18 screen rows
 
 
 class Recorder:
@@ -34,6 +35,8 @@ class Recorder:
         self.folder = folder
         self.shots: list[tuple[str, Path]] = []
         folder.mkdir(parents=True, exist_ok=True)
+        for old in folder.glob("*.png"):        # shots from an earlier run
+            old.unlink()
 
     def shot(self, name: str) -> None:
         self.game.pyboy.tick(1, True)
@@ -57,19 +60,20 @@ def decode_bg_tile(memory, index: int, bgp: int) -> Image.Image:
 
 
 def level_map(game: Game) -> Image.Image:
-    """The background map (0x9800) as an image, LEVEL_WIDTH x LEVEL_HEIGHT tiles."""
+    """The background map (0x9800) as an image, MAP_W x MAP_H tiles. Levels wider than
+    32 tiles stream through it, so it shows the columns drawn last."""
     memory = game.pyboy.memory
     bgp = game.reg("BGP") if game.mode == "dmg" else 0xE4
     cache: dict[int, Image.Image] = {}
-    img = Image.new("RGB", (LEVEL_WIDTH * 8, LEVEL_HEIGHT * 8))
-    for ty in range(LEVEL_HEIGHT):
-        for tx in range(LEVEL_WIDTH):
+    img = Image.new("RGB", (MAP_W * 8, MAP_H * 8))
+    for ty in range(MAP_H):
+        for tx in range(MAP_W):
             index = memory[0x9800 + ty * 32 + tx]
             if index not in cache:
                 cache[index] = decode_bg_tile(memory, index, bgp)
             img.paste(cache[index], (tx * 8, ty * 8))
     draw = ImageDraw.Draw(img)
-    for tx in range(0, LEVEL_WIDTH, 5):           # column numbers every 5 tiles
+    for tx in range(0, MAP_W, 5):           # column numbers every 5 tiles
         draw.text((tx * 8 + 1, 1), str(tx), fill=(255, 0, 0))
     return img.resize((img.width * 2, img.height * 2), Image.NEAREST)
 
@@ -87,16 +91,18 @@ def contact_sheet(shots: list[tuple[str, Path]], columns: int = 4) -> Image.Imag
     return sheet
 
 
-def walk_until_hit(game: Game, rec: Recorder) -> None:
-    lives = game.lives()
+def run_right_until(game: Game, x_px: int, jump_at: int = 0) -> None:
+    """Run right until the player reaches x_px, jumping once at jump_at (0: no jump)."""
     game.pyboy.button_press("right")
-    try:
-        for _ in range(300):
-            game.frames(1)
-            if game.lives() != lives:
-                break
-    finally:
-        game.pyboy.button_release("right")
+    for _ in range(300):
+        player = game.player()
+        if player.px >= x_px:
+            break
+        if jump_at and jump_at <= player.px < jump_at + 4:
+            game.pyboy.button_press("a")
+        game.frames(1)
+    game.pyboy.button_release("right")
+    game.pyboy.button_release("a")
 
 
 def run(mode: str, rom: Path) -> None:
@@ -131,21 +137,36 @@ def run(mode: str, rom: Path) -> None:
     game.frames(3)
     rec.shot("walking_left_into_wall")
 
-    walk_until_hit(game, rec)
-    rec.shot("hit_by_enemy")
+    # Across the level: past the first 256 px, over the pit, the one-way shelf, spikes.
+    game.place_player(230, 119)
+    run_right_until(game, 262)
+    rec.shot("scrolled_past_256_px")
+    run_right_until(game, 290, jump_at=262)
+    rec.shot("jump_over_pit")
+    run_right_until(game, 336)
+    game.frames(20)
+    rec.shot("under_one_way_shelf")
+    game.hold("a", 40)
+    game.frames(20)
+    rec.shot("on_one_way_shelf")
+    game.place_player(350, 119)
+    rec.shot("spikes_ahead")
+    game.place_player(490, 103)
+    game.frames(20)
+    rec.shot("far_end")
+
+    # Fall into the pit: lose a life, respawn at the start.
+    game.place_player(250, 119)
+    lives = game.lives()
+    game.pyboy.button_press("right")
+    while game.lives() == lives:
+        game.frames(1)
+    game.pyboy.button_release("right")
+    rec.shot("lost_a_life")
     game.frames(4)
     rec.shot("respawn_invincible_a")
     game.frames(2)
     rec.shot("respawn_invincible_b")
-
-    # The far end of the level, once the invincibility blink is over: put the player
-    # past the ground bot, then walk.
-    game.frames(90)
-    game.place_player(200, 119)
-    game.hold("right", 40)
-    rec.shot("far_right")
-    game.frames(30)
-    rec.shot("far_right_standing")
 
     game.set_state(LEVEL_COMPLETE)
     game.frames(5)

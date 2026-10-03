@@ -42,18 +42,12 @@ for _name, _fmt in PLAYER_FIELDS:
     PLAYER_OFFSETS[_name] = _offset
     _offset += struct.calcsize("<" + _fmt)
 
-# Enemy struct in src/enemy/enemy.h: x (2 bytes), y, dir, patrol_min (2), patrol_max (2),
-# active. test_enemy_struct_size_matches fails when the C struct changes.
-ENEMY_SIZE = 9
-ENEMY_ACTIVE_OFFSET = 8
-MAX_ENEMIES = 4
-
-# Level data, from src/level/level_manager.h. collision_map comes after level_id,
-# state and two 2-byte pointers in Level, which is the first member of LevelManager.
-LEVEL_WIDTH = 32
-LEVEL_HEIGHT = 18
+# Levels and the collision ring, from src/level/level_manager.h and level_data.h.
+LEVEL_GREYBOX_TEST = 0
+LEVEL_TEST_JUMPS = 1
+RING_COLUMNS = 32
+RING_ROWS = 16
 TILE_SIZE = 8
-COLLISION_MAP_OFFSET = 6
 COLLISION_NONE = 0
 COLLISION_SOLID = 1
 COLLISION_ONE_WAY = 2
@@ -122,10 +116,18 @@ class Game:
         # So player() reads a copy taken when the game starts drawing the player, after
         # that frame's update is complete. The copy is dropped at every new frame, so a
         # frame without a draw (like a respawn) reads memory directly (docs/TESTING.md).
+        # Writes to the player wait for the same point, so they never land mid-update.
         self._drawn_player = None
-        pyboy.hook_register(None, "_player_draw", self._copy_player, None)
+        self._player_writes = {}
+        pyboy.hook_register(None, "_player_draw", self._at_player_draw, None)
 
-    def _copy_player(self, _context) -> None:
+    def _at_player_draw(self, _context) -> None:
+        """The frame's update is done: apply waiting writes, then copy the struct."""
+        _, base = self.pyboy.symbol_lookup("_player")
+        for field, value in self._player_writes.items():
+            self.pyboy.memory[base + PLAYER_OFFSETS[field]] = value & 0xFF
+            self.pyboy.memory[base + PLAYER_OFFSETS[field] + 1] = (value >> 8) & 0xFF
+        self._player_writes.clear()
         self._drawn_player = read_symbol(self.pyboy, "_player", PLAYER_SIZE)
 
     # --- time and input ---------------------------------------------------------
@@ -203,7 +205,7 @@ class Game:
         return [(tx, ty)
                 for ty in range(max(top, 0) // TILE_SIZE, bottom // TILE_SIZE + 1)
                 for tx in range(max(left, 0) // TILE_SIZE, right // TILE_SIZE + 1)
-                if ty < LEVEL_HEIGHT and tx < LEVEL_WIDTH and self.collision(tx, ty) == COLLISION_SOLID]
+                if ty < RING_ROWS and self.collision(tx, ty) == COLLISION_SOLID]
 
     def reg(self, name: str) -> int:
         return self.pyboy.memory[REGISTERS[name]]
@@ -214,13 +216,31 @@ class Game:
         return self.pyboy.memory[base + row * 32 + col]
 
     def collision(self, tile_x: int, tile_y: int) -> int:
-        """Collision type of a level tile, from the level's collision map in WRAM."""
-        _, addr = self.pyboy.symbol_lookup("_level_manager")
-        return self.pyboy.memory[addr + COLLISION_MAP_OFFSET + tile_y * LEVEL_WIDTH + tile_x]
+        """Collision type of a tile (tile_y in screen rows), from the collision ring.
+        Only the columns drawn around the camera are in the ring."""
+        _, addr = self.pyboy.symbol_lookup("_collision_ring")
+        return self.pyboy.memory[addr + ((tile_x % RING_COLUMNS) << 4) + tile_y]
+
+    def bkg_tile(self, tile_x: int, tile_y: int) -> int:
+        """Tile index in the background map at a level column (it wraps every 32)."""
+        base = 0x9C00 if self.reg("LCDC") & 0x08 else 0x9800
+        return self.pyboy.memory[base + tile_y * 32 + tile_x % 32]
+
+    def camera_x(self) -> int:
+        return int.from_bytes(read_symbol(self.pyboy, "_camera_x", 2), "little", signed=True)
 
     # --- changing the game (tests only) ----------------------------------------
-    # Some situations can't be reached by input in level 1 (it has no pits) or would
-    # take minutes of play. These write the game's variables directly. Keep them rare.
+    # Some situations would take minutes of play to reach. These write the game's
+    # variables directly. Keep them rare.
+
+    def load_level(self, index: int) -> None:
+        """Wait for gameplay, then restart in another level (LEVEL_*)."""
+        self.wait_for_state(COREGAMELOOP, timeout=300)
+        _, addr = self.pyboy.symbol_lookup("_level_index")
+        self.pyboy.memory[addr] = index
+        self.set_state(GAMEPLAY_START)
+        self.frames(1)
+        self.wait_for_state(COREGAMELOOP)
 
     def set_state(self, state: int) -> None:
         _, addr = self.pyboy.symbol_lookup("_current_game_state")
@@ -230,45 +250,28 @@ class Game:
         _, addr = self.pyboy.symbol_lookup("_lives")
         self.pyboy.memory[addr] = lives
 
-    def _set_player_u16(self, field: str, value: int) -> None:
-        self._drawn_player = None
-        _, addr = self.pyboy.symbol_lookup("_player")
-        addr += PLAYER_OFFSETS[field]
-        self.pyboy.memory[addr] = value & 0xFF
-        self.pyboy.memory[addr + 1] = (value >> 8) & 0xFF
-
     def set_player_y(self, y_px: int) -> None:
-        self._set_player_u16("y", y_px * SUBPIXELS)
+        """Move the player to a feet row in pixels, at the end of the next frame's update."""
+        self._player_writes["y"] = y_px * SUBPIXELS
+
+    PLACE_FRAMES = 5    # one frame to take the move, then the camera catches up
 
     def place_player(self, x_px: int, y_px: int) -> None:
-        """Put the player at a world position in pixels (x = center, y = lowest row)."""
-        self._set_player_u16("x", x_px * SUBPIXELS)
-        self._set_player_u16("y", y_px * SUBPIXELS)
-
-    def empty_room(self) -> None:
-        """Remove every enemy and every collision tile except the floor (row 15), for
-        measuring the physics on its own. The screen keeps the old tiles."""
-        for tile_y in range(LEVEL_HEIGHT):
-            for tile_x in range(LEVEL_WIDTH):
-                self.set_collision(tile_x, tile_y, COLLISION_SOLID if tile_y == 15 else COLLISION_NONE)
-        _, addr = self.pyboy.symbol_lookup("_enemies")
-        for i in range(MAX_ENEMIES):
-            self.pyboy.memory[addr + i * ENEMY_SIZE + ENEMY_ACTIVE_OFFSET] = 0
-
-    def set_collision(self, tile_x: int, tile_y: int, kind: int) -> None:
-        """Change one tile's collision type (the screen keeps the old tile)."""
-        _, addr = self.pyboy.symbol_lookup("_level_manager")
-        self.pyboy.memory[addr + COLLISION_MAP_OFFSET + tile_y * LEVEL_WIDTH + tile_x] = kind
+        """Put the player at a world position in pixels (x = center, y = lowest row), at
+        the end of the next frame's update, then run PLACE_FRAMES frames: a far move makes
+        the camera jump and draw many columns in one (lag) frame."""
+        self._player_writes["x"] = x_px * SUBPIXELS
+        self._player_writes["y"] = y_px * SUBPIXELS
+        self.frames(self.PLACE_FRAMES)
 
     # --- common sequences -------------------------------------------------------
 
     def start_on_open_ground(self) -> None:
-        """Wait for gameplay, then put the player on the floor at x = 156, with open air above,
-        and patrol bots. At the level start, platform A blocks the way at body height."""
+        """Wait for gameplay, then put the player on the floor at x = 156, with open air
+        above and no patrol bot near. At the level start, platform A blocks the way."""
         self.wait_for_state(COREGAMELOOP, timeout=300)
         self.frames(5)
         self.place_player(156, 119)
-        self.frames(2)
 
     def jump_rise(self, frames_held: int) -> int:
         """Jump with A held for frames_held; returns the highest rise in units of Player.y."""
@@ -282,13 +285,9 @@ class Game:
         return ground_y - top
 
     def lose_life(self, timeout: int = 400) -> None:
-        """Wait until invincibility is over, then jump over platform A and run right into
-        the first patrol bot."""
+        """Jump onto platform A and run right until the pit at column 35 costs a life
+        (falling costs one even while invincible)."""
         lives = self.lives()
-        for _ in range(200):
-            if self.player().invincibility_frames == 0:
-                break
-            self.frames(1)
         self.pyboy.button_press("right")
         self.pyboy.button_press("a")
         try:
@@ -301,7 +300,7 @@ class Game:
         finally:
             self.pyboy.button_release("right")
             self.pyboy.button_release("a")
-        raise AssertionError("running right never hit an enemy")
+        raise AssertionError("running right never cost a life")
 
     # --- pictures ---------------------------------------------------------------
 

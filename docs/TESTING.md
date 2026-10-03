@@ -40,7 +40,8 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_regressions.py` | One test per fixed bug |
 | `tests/test_physics.py` | Jump heights, coyote time, jump buffer, ceiling corners, one-way platforms, hazards, never overlapping solid tiles |
 | `tests/test_tiled2c.py` | The level converter: committed output up to date, the test level's contents, the level data in the ROM, and every rule check |
-| `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in an empty room |
+| `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in the test room `levels/test_jumps.tmj` |
+| `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, no lag frames, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
 
@@ -74,18 +75,23 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   `game.load(snapshot)` goes back to it, so a test can try several inputs from the same
   frame (coyote time, jump buffer). Buttons are not part of the snapshot: press the held
   ones again after `load()`.
-- **Empty room.** `game.empty_room()` removes every enemy and every collision tile except
-  the floor (row 15). The jump metric tests build walls and pits in it with
-  `set_collision`. `ENEMY_SIZE` in `gamelib.py` mirrors the `Enemy` struct, checked by
-  `test_enemy_struct_size_matches`.
-- `game.collision(x, y)` reads the level's collision map, `game.window_tile(col, row)`
-  the HUD window map, `game.reg("WY")` a hardware register.
-- Some situations can't be reached by input in level 1, or would take minutes of play:
-  falling into a pit, finishing the level. For those, tests write the game's variables
-  directly with `set_state`, `set_lives`, `set_player_y`, `place_player` and
-  `set_collision` (level 1 has no one-way or hazard tiles). `start_on_open_ground()`
-  puts the player at x = 156, where nothing is in the way: at the level start, platform A
-  blocks the path at body height. Keep this rare, and prefer input. Once the game has a level-select cheat (roadmap M3), tests use it instead.
+- **Writing the player.** `place_player` and `set_player_y` wait for the same point
+  (the start of `player_draw`), so a move never lands in the middle of an update.
+  `place_player` then runs 5 frames: a far move makes the camera jump and draw many
+  columns in one frame, which is a lag frame, and a 1-frame button press in a lag frame
+  is never read.
+- **Levels.** The game plays `levels/greybox_test.tmj`. `game.load_level(LEVEL_TEST_JUMPS)`
+  restarts in the test room with the jump metric fixtures. Test geometry lives in Tiled
+  levels: writing collision from a test doesn't last once columns stream.
+- `game.collision(x, y)` reads the collision ring (screen rows; only the columns around
+  the camera), `game.bkg_tile(x, y)` the background map at a level column,
+  `game.camera_x()` the camera, `game.window_tile(col, row)` the HUD window map,
+  `game.reg("WY")` a hardware register.
+- Some situations would take minutes of play: finishing the level, losing all lives.
+  For those, tests write the game's variables directly with `set_state`, `set_lives`,
+  `set_player_y` and `place_player`. `start_on_open_ground()` puts the player at x = 156,
+  where nothing is in the way: at the level start, platform A blocks the path at body
+  height. `lose_life()` runs into the pit at column 35. Keep this rare, and prefer input.
 
 ## Conventions
 

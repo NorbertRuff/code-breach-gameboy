@@ -5,6 +5,12 @@
 #include <gbdk/platform.h>
 #include "../level/level_data.h"
 
+// Marker tiles, by class
+#define greybox_tileset_TILE_GATE 4
+#define greybox_tileset_TILE_EXIT 5
+#define greybox_tileset_TILE_FRAGMENT 6
+#define greybox_tileset_TILE_PLAYER_START 7
+
 BANKREF_EXTERN(greybox_tileset)
 extern const uint8_t greybox_tileset_collision[8];
 

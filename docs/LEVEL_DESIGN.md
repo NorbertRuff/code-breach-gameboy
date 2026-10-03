@@ -69,7 +69,7 @@ them. Examples: "col 42: gap too wide", "section B drags", "the bot at col 88 is
 | Tileset budget: about 190 unique tiles per level. | Visual variety per level, not per section. |
 
 Level width has no hardware limit: map streaming copies columns in as the camera moves,
-and collision is read from ROM.
+and collision is kept in a 32-column RAM ring that follows the camera.
 
 ## 4. Jump metrics
 

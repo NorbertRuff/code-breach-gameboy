@@ -54,6 +54,11 @@ Python and fits our collision and palette needs exactly.
     the class, on the 8 px grid. The player's body starts with its left edge on the
     `player_start` marker's left edge and its feet on the marker's bottom.
   - **Boss level:** map property `boss` = true; it needs no gates.
+  - **Test room:** map property `test` = true; it needs no gates and no exit. Used for
+    fixtures the PyBoy tests load (`levels/test_jumps.tmj`).
+  - **Marker tiles** (the tile classes) are tile objects only: painting one on the tile
+    layer is an error. The tileset header gets a `#define` for each, like
+    `greybox_tileset_TILE_FRAGMENT`.
 - **Saved as `.tmj`** (JSON) with CSV layer encoding, so diffs are readable in PRs.
 
 ## 3. Converter: `tools/tiled2c.py`
@@ -73,17 +78,25 @@ Runs from `make levels` and writes `src/levels/<map name>.c` and `.h`, plus
 All of it is banked ROM data (`BANKREF`, `#pragma bank 255`): the level in one bank, its
 tileset table in another, both picked by autobank.
 
-**Collision lives in a 32×16 RAM ring, filled from the tileset** (decided 2026-10-02).
-Each tileset gets a ROM table `<tileset>_tileset_collision[tile]`, one byte per tile. When a column streams
-into VRAM, its 16 collision values are looked up once and written into a 512-byte WRAM
-ring indexed by `((x & 31) << 4) + y`, the same wrap as the VRAM map. A collision check
-is a RAM read: no bank switch, no multiplication. Opening a gate or collecting a fragment
-is a write to the ring plus one tile in VRAM. Today one 32-tile level costs 1.1 KB of
-WRAM. The ring costs 512 bytes at any level width. Collected fragments are also a bitset
-in WRAM, 1 bit each, so a fragment stays gone when its column streams in again.
+**Collision lives in a 32×16 RAM ring, filled from the tileset** (decided 2026-10-02,
+in use since M2; `src/level/level_stream.c`). Each tileset gets a ROM table
+`<tileset>_tileset_collision[tile]`, one byte per tile, copied to WRAM when the level
+loads. When a column streams into VRAM, its collision values are looked up once and
+written into a 512-byte WRAM ring indexed by `((x & 31) << 4) + y` (`y` in screen rows),
+the same wrap as the VRAM map. A collision check is a RAM read: no bank switch, no
+multiplication. Opening a gate or collecting a fragment is a write to the ring plus one
+tile in VRAM. The ring costs 512 bytes at any level width (the old 32-tile level map cost
+1.1 KB). Collected fragments are a bitset in WRAM, 1 bit each, so a fragment stays gone
+when its column streams in again; their columns and rows are listed in WRAM at load.
 
-The camera locks behind opened gates, so streaming only runs to the right, and the ring
-never has to be refilled backward.
+**Streaming** (`level_stream_update`): when the camera's tile column changes, the column
+entering the view is drawn, on whichever side it enters. Within a section the player
+can walk back left, so columns are redrawn on the left too; the gate lock (M3) only stops
+the camera from going back past an opened gate. A column is read from the banked map
+into a 13-byte buffer, fragments are put in, and it is written with `set_bkg_tiles`
+(not `set_bkg_submap`, which takes the same coordinates for the map and the screen,
+while our map starts at screen row 3). A jump of more than a screen (respawn, level
+start) redraws all 21 visible columns.
 
 Levels can be at most 255 tiles wide: map widths are `uint8_t`, as in GBDK's
 `large_map` example.

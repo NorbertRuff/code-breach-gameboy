@@ -5,7 +5,7 @@ import hashlib
 import pytest
 
 from gamelib import (COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END, HUD_DIGIT_TILE_BASE,
-                     HUD_SLASH_TILE, LEVEL_COMPLETE, LEVEL_WIDTH, read_symbol)
+                     HUD_SLASH_TILE, LEVEL_COMPLETE, read_symbol)
 
 dmg_only = pytest.mark.parametrize("mode", ["dmg"])  # BGP_REG effects are DMG-only until M4
 
@@ -42,7 +42,7 @@ def test_hud_counter_shows_two_digits(game):
     game.frames(2)
     digits = [game.window_tile(col, 0) for col in range(15, 20)]
     d = HUD_DIGIT_TILE_BASE
-    assert digits == [d + 0, d + 0, HUD_SLASH_TILE, d + 1, d + 2], "expected '00/12'"
+    assert digits == [d + 0, d + 0, HUD_SLASH_TILE, d + 1, d + 5], "expected '00/15'"
 
 
 # Bug 3 ---------------------------------------------------------------------------
@@ -82,6 +82,7 @@ def test_falling_never_moves_up(game):
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.frames(5)
     game.set_player_y(40)                 # in the air, above open floor
+    game.frames(1)
     ys = [game.player().y]
     for _ in range(90):
         game.frames(1)
@@ -149,12 +150,12 @@ def test_no_slide_to_the_right_after_releasing_left(game):
 # Review L1: the level sits above the HUD ----------------------------------------
 
 def test_level_and_player_are_above_the_hud(game):
-    # The HUD window starts at y = 128 (row 16). The ground must be row 15, and the
-    # player's feet above the HUD.
+    # The HUD window starts at y = 128 (row 16). The floor is row 15 on the whole first
+    # screen, rows 0-2 (the parallax band) are open, and the player's feet are above the HUD.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.frames(5)
-    assert all(game.collision(x, 15) == COLLISION_SOLID for x in range(LEVEL_WIDTH))
-    assert not any(game.collision(x, y) for x in range(LEVEL_WIDTH) for y in (16, 17))
+    assert all(game.collision(x, 15) == COLLISION_SOLID for x in range(20))
+    assert not any(game.collision(x, y) for x in range(20) for y in range(3))
     assert game.player().py < 128 == game.reg("WY")
 
 

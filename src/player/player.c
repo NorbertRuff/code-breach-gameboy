@@ -11,9 +11,8 @@ const uint8_t player_struct_size = sizeof(Player);
 #define BLOCKS_FEET ((1 << COLLISION_SOLID) | (1 << COLLISION_ONE_WAY))
 #define BLOCKS_BODY (1 << COLLISION_SOLID)
 
-// How far the body center may go: the box stays inside the level.
+// How far left the body center may go: the box stays inside the level.
 #define PLAYER_MIN_X ((uint16_t)SPRITE_LEFT_W * SUBPIXELS)
-#define PLAYER_MAX_X ((uint16_t)(LEVEL_WIDTH * TILE_SIZE - 1 - SPRITE_RIGHT_W) * SUBPIXELS)
 
 #define RUN_LAST_FRAME 4   // run cycle: frames 1-4; frame 0 is standing
 
@@ -26,28 +25,32 @@ void player_init(Player* player, uint16_t start_x_px, uint16_t start_y_px)
     player->direction = 1;
 }
 
-// Does any tile in the pixel row y, between the pixel columns left and right, have one
-// of the collision types? Above the level counts as open.
-static uint8_t row_has(Level* level, int16_t y, int16_t left, int16_t right, uint8_t types)
+// Pixel to tile. Above or left of the level gives tile 0: rows 0-2 (the parallax band)
+// are always open, and the body never goes left of column 0.
+static uint8_t tile_of(int16_t px)
 {
-    if (y < 0) return 0;
-    if (left < 0) left = 0;
-    uint8_t tile_y = y >> 3;
-    uint8_t last_x = right >> 3;
-    for (uint8_t tile_x = left >> 3; tile_x <= last_x; tile_x++) {
-        if (types & (1 << level_collision_at(level, tile_x, tile_y))) return 1;
+    return (px < 0) ? 0 : px >> 3;
+}
+
+// Does any tile in the pixel rectangle have one of the collision types?
+// Works in 8-bit tile coordinates once the corners are converted.
+static uint8_t area_has(Level* level, int16_t left, int16_t top, int16_t right, int16_t bottom, uint8_t types)
+{
+    if (bottom < 0) return 0;
+    uint8_t first_x = tile_of(left), last_x = tile_of(right), last_y = tile_of(bottom);
+    for (uint8_t tile_y = tile_of(top); tile_y <= last_y; tile_y++) {
+        for (uint8_t tile_x = first_x; tile_x <= last_x; tile_x++) {
+            if (types & (1 << LEVEL_COLLISION_AT(level, tile_x, tile_y))) return 1;
+        }
     }
     return 0;
 }
 
-// Does any tile in the pixel rectangle have one of the collision types?
-static uint8_t area_has(Level* level, int16_t left, int16_t top, int16_t right, int16_t bottom, uint8_t types)
+// Does any tile in the pixel row y, between the pixel columns left and right, have one
+// of the collision types?
+static uint8_t row_has(Level* level, int16_t y, int16_t left, int16_t right, uint8_t types)
 {
-    if (top < 0) top = 0;
-    for (int16_t y = top & ~7; y <= bottom; y += TILE_SIZE) {
-        if (row_has(level, y, left, right, types)) return 1;
-    }
-    return 0;
+    return area_has(level, left, y, right, y, types);
 }
 
 // Moves a speed toward a target by at most step.
@@ -110,9 +113,10 @@ static void move_x(Player* p, Level* level)
 {
     if (!p->velocity_x) return;
     uint8_t moving_right = p->velocity_x > 0;
+    uint16_t max_x = (level->width_px - 1 - SPRITE_RIGHT_W) * SUBPIXELS;
     uint16_t x = p->x + p->velocity_x;
-    if (x < PLAYER_MIN_X || x > PLAYER_MAX_X) {
-        x = (x < PLAYER_MIN_X) ? PLAYER_MIN_X : PLAYER_MAX_X;
+    if (x < PLAYER_MIN_X || x > max_x) {
+        x = (x < PLAYER_MIN_X) ? PLAYER_MIN_X : max_x;
         p->velocity_x = 0;
     }
 
@@ -198,8 +202,8 @@ static void check_touched_tiles(Player* p, Level* level)
     p->touched_hazard = 0;
     for (uint8_t tile_y = first_y; tile_y <= last_y; tile_y++) {
         for (uint8_t tile_x = first_x; tile_x <= last_x; tile_x++) {
-            uint8_t type = level_collision_at(level, tile_x, tile_y);
-            if (type == COLLISION_COLLECTIBLE) level_handle_collision(level, type, tile_x, tile_y);
+            uint8_t type = LEVEL_COLLISION_AT(level, tile_x, tile_y);
+            if (type == COLLISION_COLLECTIBLE) level_collect_fragment(tile_x, tile_y);
             if (type == COLLISION_HAZARD) p->touched_hazard = 1;
         }
     }

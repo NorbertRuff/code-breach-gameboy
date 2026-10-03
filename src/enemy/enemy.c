@@ -1,9 +1,6 @@
 #include "enemy.h"
 #include "../player/player.h"
 
-// Read by the tests to notice Enemy struct changes.
-const uint8_t enemy_struct_size = sizeof(Enemy);
-
 // Mushroom tiles reordered for 8x16 sprite mode.
 // Original mushroom_tiles layout (png2asset row-major): [TL][TR][BL][BR]
 // 8x16 sprite mode needs pairs stacked vertically: left col=[TL,BL], right col=[TR,BR]

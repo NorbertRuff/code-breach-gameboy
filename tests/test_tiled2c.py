@@ -34,7 +34,7 @@ def test_greybox_test_level():
     assert level.player_start == (8, 119)
     assert level.fragment_count == 15
     assert [e.x for e in level.entities] == sorted(e.x for e in level.entities)
-    assert level.section_start == [0, 16, 20]
+    assert level.section_start == [0, 15, 18]
     assert not level.warnings
 
 
@@ -42,7 +42,7 @@ def test_level_data_is_in_the_rom(game):
     # LevelData from src/level/level_data.h: width, player_start_x (2 bytes),
     # player_start_y, fragment_count, entity_count.
     raw = read_symbol(game.pyboy, "_greybox_test", 6)
-    assert struct.unpack("<BHBBB", raw) == (56, 8, 119, 15, 22)
+    assert struct.unpack("<BHBBB", raw) == (64, 8, 119, 15, 21)
 
 
 # --- rules -------------------------------------------------------------------------
@@ -92,6 +92,7 @@ RULE_BREAKS = {
     "12 rows tall": (lambda t: t.update(height=12), "must be 13"),
     "19 tiles wide": (lambda t: t.update(width=19), "20 to 255"),
     "flipped tile": (flip_first_tile, "flipped"),
+    "marker painted as a tile": (lambda t: t["layers"][0]["data"].__setitem__(0, FRAGMENT), "fragment marker"),
     "unknown class": (lambda t: objects(t).append(
         {"id": 99, "type": "boss_door", "x": 0, "y": 0, "width": 8, "height": 8}), "class must be"),
     "no player_start": (lambda t: remove_gid(t, START), "exactly one player_start"),

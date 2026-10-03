@@ -5,85 +5,62 @@
 #include <stdint.h>
 #include "level_data.h"
 
-// Level system constants
-#define MAX_LEVELS 5
-#define LEVEL_WIDTH 32
-#define MAX_SCROLL_X ((LEVEL_WIDTH * TILE_SIZE) - 160)  // pixels the camera can scroll (96)
-#define LEVEL_HEIGHT 18
 #define TILE_SIZE 8
 
-// Level states
-#define LEVEL_STATE_LOADING 0
-#define LEVEL_STATE_ACTIVE 1
-#define LEVEL_STATE_COMPLETED 2
-#define LEVEL_STATE_FAILED 3
+// Levels level_load() knows, by index.
+#define LEVEL_GREYBOX_TEST 0
+#define LEVEL_TEST_JUMPS   1    // fixtures for tests/test_jump_metrics.py
 
+// Collision ring: the collision of the columns in the background map. 32 columns that
+// wrap like the map, 16 screen rows each (the HUD rows are left out).
+#define RING_COLUMNS 32
+#define RING_ROWS 16
+#define RING_INDEX(tile_x, tile_y) ((((tile_x) & (RING_COLUMNS - 1)) << 4) | (tile_y))
 
-// Level data structure (memory-efficient for Game Boy)
+// The loaded level: a copy of its LevelData header, plus what changes while playing.
+// map and entities point into ROM bank `bank`.
 typedef struct {
-    uint8_t level_id;
-    uint8_t state;
-    
-    // Background data (stored in VRAM)
-    uint8_t* background_tiles;
-    uint8_t* background_map;
-    
-    // Collision data (compact storage)
-    uint8_t collision_map[LEVEL_HEIGHT][LEVEL_WIDTH];
-    
-    // Object spawns (efficient object-based storage)
-    struct {
-        uint8_t type;
-        uint8_t x;
-        uint8_t y;
-    } spawns[16];  // Max 16 objects per level
-    
-    // Player start position
+    uint8_t bank;
+    uint8_t width;              // tiles
+    uint16_t width_px;
     uint16_t player_start_x;
-    uint16_t player_start_y;
-    
-    // Level exit
-    uint16_t exit_x;
-    uint16_t exit_y;
-    
-    // Collectibles
-    uint8_t collectible_count;
+    uint8_t player_start_y;
+    uint8_t fragment_count;
     uint8_t collected_count;
-    
-    // Level requirements
-    uint8_t required_keys;
-    uint8_t collected_keys;
+    uint8_t entity_count;
+    const uint8_t* map;
+    const LevelEntity* entities;
 } Level;
 
-// Level manager structure
-typedef struct {
-    Level current_level;
-    uint8_t current_level_id;
-    uint8_t total_levels;
-    uint8_t level_state;
-} LevelManager;
+extern Level current_level;
+extern uint8_t level_index;     // the level GAMEPLAY_START loads
+extern uint8_t collision_ring[RING_COLUMNS * RING_ROWS];
 
-// Function declarations
-void level_manager_init(LevelManager* manager);
-void level_load_level(LevelManager* manager, uint8_t level_id);
-void level_unload_level(LevelManager* manager);
-void level_update(LevelManager* manager);
-void level_render(LevelManager* manager);
+void level_load(uint8_t index);
+void level_read_entity(uint8_t index, LevelEntity* entity);
 
-// HUD digit tiles — loaded at VRAM indices 133-143 (after collectible at 132)
+// Collision type of a level tile (tile_y in screen rows). Outside the level, or in a
+// HUD row, is open. Only the drawn columns are in the ring, which always covers the screen.
+// A macro, not a function: the player reads 20-30 tiles per frame. Pass plain variables.
+#define LEVEL_COLLISION_AT(level, tile_x, tile_y)                          \
+    (((tile_x) >= (level)->width || (tile_y) >= RING_ROWS) ? COLLISION_NONE \
+     : collision_ring[RING_INDEX(tile_x, tile_y)])
+
+// level_stream.c
+void level_stream_start(void);
+void level_stream_reset(int16_t camera_x);
+void level_stream_update(int16_t camera_x);
+void level_collect_fragment(uint8_t tile_x, uint8_t tile_y);
+
+// HUD tiles: the window frame from the hud asset, then digits, '/' and a heart.
+#define HUD_TILE_BASE       64
 #define HUD_DIGIT_TILE_BASE 133   // tile 133 = '0', 134 = '1', ..., 142 = '9'
-#define HUD_SLASH_TILE      143   // tile 143 = '/'
-#define HUD_HEART_TILE      144   // tile 144 = '♥'
+#define HUD_SLASH_TILE      143
+#define HUD_HEART_TILE      144
 
-// HUD and sprite setup functions
-void set_hud_window_tiles();
-void set_programmer_metasprite();
+void set_hud_window_tiles(void);
+void set_programmer_metasprite(void);
 void hud_update_count(uint8_t collected, uint8_t total);
 void hud_update_lives(uint8_t lives);
-
-// Level-specific functions
-void level_1_server_room_init(Level* level);
-uint8_t level_collision_at(Level* level, uint8_t tile_x, uint8_t tile_y);
-void level_handle_collision(Level* level, uint8_t collision_type, uint8_t tile_x, uint8_t tile_y);
 
 #endif // LEVEL_MANAGER_H

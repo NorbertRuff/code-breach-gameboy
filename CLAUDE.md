@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 4,214 bytes free.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 3,739 bytes free.
 
 ## Build Commands
 
@@ -77,17 +77,17 @@ code explains itself and stays short:
 The main loop is a state machine with these states (defined in `src/utils.h`):
 - `INTRO_CREDITS_STATE` → `TITLE_SCREEN_STATE` → `GAMEPLAY_START` → `COREGAMELOOP` → `GAMEPLAY_END` / `LEVEL_COMPLETE`
 
-The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state lives in `main.c`: `joypad_current`, `joypad_previous`, `total_scroll_x` (camera X), `current_game_state`, `lives`, and singleton instances `Player player`, `LevelManager level_manager`, `Enemy enemies[MAX_ENEMIES]`.
+The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in `main.c` `joypad_current`, `joypad_previous`, `current_game_state`, `lives`, `Player player`, `Enemy enemies[MAX_ENEMIES]`; in `level_manager.c` `Level current_level` and `level_index` (the level `GAMEPLAY_START` loads); in `camera.c` `camera_x`.
 
 ### Module Breakdown
 
 | Directory | Purpose |
 |---|---|
 | `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen`, `game_over` (also `level_complete`) |
-| `src/engine/` | `platform.c` (`is_cgb`, GBC setup at boot), `banking.h` (`WITH_BANK` for reading banked assets) |
+| `src/engine/` | `platform.c` (`is_cgb`, GBC setup at boot), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK` for banked data), `camera.c` (deadzone, look-ahead) |
 | `src/player/` | `Player` struct + physics: `player_update` (run, jump, gravity, tile collision, pickups, animation), `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad and A into the player's input fields |
-| `src/level/` | `LevelManager` + `Level` structs, tile collision map (18 rows × 32 columns), level 1 built in code (`level_1_server_room_init`), HUD drawing |
+| `src/level/` | `level_data.h` (the ROM level format), `level_manager.c` (`level_load`, the `Level` state, HUD drawing), `level_stream.c` (collision ring, column streaming, fragments) |
 | `src/enemy/` | Patrol enemies: update, draw (2 OAM entries each, from OAM 4), AABB hit test |
 | `src/sound/` | Sound effects written straight to the APU registers |
 | `src/graphics/` | Generated asset files from `make assets` (plus the older hand-made `splashscreen.c`), all banked |
@@ -106,13 +106,15 @@ Physics uses integer arithmetic (no floats — Game Boy has no FPU). Values and 
 - Collision is checked per axis against the tiles the box enters: walls over the full body height, floors and one-way tops only when the feet enter a new tile row going down, ceilings with up to `CORNER_CORRECTION` px of sideways slide. Moves stay under 8 px per frame, so no tile is skipped.
 - `player_draw` places the metasprite so it covers the box: pivot = box top-left + `programmer_PIVOT_X/Y` + `DEVICE_SPRITE_PX_OFFSET_X/Y`.
 
-### Level Collision (`src/level/level_manager.h`)
+### Level Collision and Streaming (`src/level/`)
 
-`Level.collision_map[LEVEL_HEIGHT][LEVEL_WIDTH]` is an 18×32 byte array in WRAM. Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE` (SOLID blocks, ONE_WAY blocks from above, HAZARD costs a life, COLLECTIBLE is picked up). `level_collision_at(level, tile_x, tile_y)` returns a tile's type; out of bounds returns `COLLISION_NONE`.
+Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn at screen rows 3–15. `collision_ring[32 * 16]` in WRAM holds the collision of the 32 background-map columns, indexed `RING_INDEX(tile_x, tile_y)` with `tile_y` in screen rows; `level_stream_update(camera_x)` draws each column that enters the view (both directions) and fills its ring column. Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE` (SOLID blocks, ONE_WAY blocks from above, HAZARD costs a life, COLLECTIBLE is a fragment). `LEVEL_COLLISION_AT(level, tile_x, tile_y)` (a macro, pass plain variables) returns a tile's type; outside the level or in a HUD row it is `COLLISION_NONE`. Collected fragments are a bitset, so they stay gone when their column is drawn again.
 
 ### Camera
 
-`main_game_loop()` sets `total_scroll_x = clamp(TO_PIXELS(player.x) - 80, 0, MAX_SCROLL_X)` and applies it with `move_bkg()`. The player and enemies are drawn at `world_x - total_scroll_x`. Levels are at most 32 tiles (256 px) wide until map streaming lands (M2).
+`camera_update()` (`src/engine/camera.c`) keeps the focus (player x + a look-ahead that eases to 24 px in the running direction) within 8 px of screen x 80, clamped to the level; `camera_reset()` snaps it for a level start or respawn, followed by `level_stream_reset()`. `move_bkg()` applies `camera_x`; the player and enemies are drawn at `world_x - camera_x`. Levels are up to 255 tiles wide.
+
+**Frame budget:** the game loop must finish before VBlank on DMG. `tests/test_streaming.py` checks for lag frames; as of M2 a normal frame ends near screen line 88 of 154, a frame that draws a column near line 125.
 
 ## Development Feature Flags (`src/utils.h`)
 

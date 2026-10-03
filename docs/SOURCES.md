@@ -26,8 +26,8 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Hide sprites over the bottom HUD with the same interrupt (`HIDE_SPRITES` at line 127) | Larold's Flappy Bird tutorial; BlackCastle `src/main.c` (idea only, no license) | Interrupt handler | Planned (M3) |
 | Level files: Tiled JSON maps (`.tmj`, CSV tile data, object layers, tile objects with `gid`, flip flags in the top 3 bits of a gid) and TSX tilesets (tile `type` = class, custom properties) | Tiled documentation, "JSON Map Format" and "TMX Map Format" | `tools/tiled2c.py`, `levels/`, `graphics/tilesets/greybox.tsx` | In use |
 | Tileset tiles in image order, one per PNG tile: `png2asset -map -keep_duplicate_tiles -tiles_only` | `png2asset` help (GBDK 4.5.0) | `Makefile` `assets`, `src/graphics/greybox.c` | In use |
-| Map streaming: copy the column entering the view with `set_bkg_submap` | GBDK example `cross-platform/large_map`; Larold's "Drawing Large Maps" | Level engine | Planned (M2) |
-| Collision kept in a 32×16 RAM ring, filled from a per-tileset ROM table while streaming | BlackCastle `include/global.h` (idea only), marioland-gbdk, CrossZGB `scroll_collisions[256]` (MIT) | Level engine | Planned (M2) |
+| Map streaming: draw the column entering the view when the camera's tile column changes, on either side | GBDK example `cross-platform/large_map`; Larold's "Drawing Large Maps" | `src/level/level_stream.c` | In use (with `set_bkg_tiles`, see DECISIONS.md) |
+| Collision kept in a 32×16 RAM ring, filled from a per-tileset ROM table while streaming | BlackCastle `include/global.h` (idea only), marioland-gbdk, CrossZGB `scroll_collisions[256]` (MIT) | `src/level/level_stream.c` | In use |
 | Positions in 1/32 px; coyote time, jump buffer, hold-to-extend jump as small countdowns | GB Studio engine `gbvm/src/states/platform.c` (MIT) | `player.c` | In use |
 | Jump values: two gravities (jump cut), apex hang, coyote 6 frames, buffer 5 frames, corner correction | Kyle Pittman "Building a Better Jump" (GDC 2016); Celeste `Player.cs` (Maddy Thorson); SMBpedia movement data | `player.h`, `player.c` | In use |
 | Strong gravity on every fall, light gravity only while rising with A held | Super Mario Bros. (SMBpedia movement data) | `player.c` `choose_gravity` | In use |
@@ -41,7 +41,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Sound effects over music: channel mute mask and priority | untoxa/VGM2GBSFX (MIT); used the same way in GB Studio and CrossZGB | Audio | Planned (M6) |
 | hUGEDriver music from the VBlank handler, `NONBANKED` wrapper for banked songs | Larold's hUGEDriver tutorial; hUGEDriver `gbdk_example` | Audio | Planned (M6) |
 | Save header: magic value, version, size, checksum | CrossZGB `SRAM.c` (MIT); Larold's saving tutorial | Saves | Planned (M7); test ROM in use |
-| Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT); Itay Keren, "Scroll Back" | Camera | Planned (M2) |
+| Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT); Itay Keren, "Scroll Back" | `src/engine/camera.c` | In use (gate lock planned, M3) |
 
 ## Testing
 
@@ -53,7 +53,8 @@ document or a person, add a row here in the same change. Status is *in use* or
 | ROM layout checks: `_HOME` below `0x4000`, header bytes, checksums | quintra `scripts/check_rom_layout.py`, `check_cartridge.py` (idea only) | `tests/test_rom.py` | In use |
 | Known bugs as strict expected failures; regression tests checked against the old build | Own convention | `tests/test_known_bugs.py`, `tests/test_regressions.py` | In use |
 | Replaying from one frame with `save_state` / `load_state` | PyBoy 2.7.0 docs | `tests/gamelib.py` `save`, `load`; `tests/test_physics.py` | In use |
-| Reading game state at a fixed point in the frame: copy the struct from a `hook_register` callback on `player_draw` | Own finding (PyBoy frames end mid-update) | `tests/gamelib.py` `player()` | In use |
+| Reading game state at a fixed point in the frame: copy the struct from a `hook_register` callback on `player_draw`; test writes to the player wait for the same point | Own finding (PyBoy frames end mid-update) | `tests/gamelib.py` `player()`, `place_player()` | In use |
+| Finding lag frames: count game-loop calls per frame with a PyBoy hook; time code by reading `LY` at function entries (114 CPU cycles per line) | Own method | `tests/test_streaming.py` `test_no_lag_frames_while_streaming` | In use |
 | GitHub Actions: cached GBDK download, build, test | GitHub-hunt research (sample workflow); mdeclerk/Bananas (MIT) | `.github/workflows/build.yml` | In use |
 
 ## Design
@@ -83,7 +84,7 @@ games ships (decision 2026-10-03).
 | `graphics/hud/hud_a.png` | Early placeholder, Mario-like bricks and coin | **Replace** in M5 |
 | `graphics/hud/Font.png` | Unknown | Check origin, or use a CC0 font (RESEARCH.md section 4) |
 | `graphics/start_screen/apexLogo.png`, `press_start.png`, `src/graphics/splashscreen.c` | Owner (ApexLab logo) | Keep the logo; redo the title screen in M5 |
-| Solid block tile, fragment diamond, HUD digits and heart (hand-written in `level_manager.c`) | Project code | Placeholders until M5 |
+| Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`), HUD digits and heart (hand-written in `level_manager.c`) | Project code | Placeholders until M5 |
 | Sound effects in `src/sound/sound.c` | Project code (register values) | In use |
 | Music | Tronimal, Game Boy Music Packs #1 and #2, CC BY 4.0 | Planned (M6); credit required |
 | Sound effect packs | Tronimal GBFX / GBFX2, CC-BY | Planned (M6); credit required |
