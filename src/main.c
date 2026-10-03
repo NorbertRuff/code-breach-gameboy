@@ -4,6 +4,7 @@
 
 #include "./utils.h"
 #include "./engine/camera.h"
+#include "./engine/screen.h"
 #include "./level/level_manager.h"
 #include "./level/section.h"
 #include "./player/player.h"
@@ -65,7 +66,7 @@ static void restart_section(void)
     actors_reset(current_level.section);
     camera_reset(TO_PIXELS(player.x), current_level.width_px);
     level_stream_reset(camera_x);
-    move_bkg((uint8_t)camera_x, 0);
+    screen_scroll(camera_x);
     actors_spawn(camera_x);
     shown_collected = 0xFF;    // nothing shown yet
     update_hud_count();
@@ -77,7 +78,7 @@ static void update_view(void)
 {
     camera_update(TO_PIXELS(player.x), current_level.width_px);
     level_stream_update(camera_x);
-    move_bkg((uint8_t)camera_x, 0);
+    screen_scroll(camera_x);
     actors_spawn(camera_x);
 }
 
@@ -102,13 +103,13 @@ static void draw_sprites(void)
 static void restart_behind_fade(uint8_t invincible)
 {
     fade_out_screen(RESTART_FADE_FRAMES);
-    HIDE_SPRITES;
+    screen_show_sprites(0);
     restart_section();
     if (invincible) player.invincibility_frames = RESPAWN_INVINCIBILITY_FRAMES;
     hud_update_lives(lives);
     draw_sprites();
     fade_in_screen(RESTART_FADE_FRAMES);
-    SHOW_SPRITES;
+    screen_show_sprites(1);
 }
 
 // Main game loop
@@ -179,14 +180,14 @@ void main(void)
         case GAMEPLAY_START:
             // Build the level behind a black screen, then fade in.
             BGP_REG = 0xFF;
-            HIDE_SPRITES;
+            screen_show_sprites(0);
             level_load(level_index);
             actors_load_tiles();
             hud_update_lives(lives);
             restart_section();
             draw_sprites();
             fade_in_screen(10);
-            SHOW_SPRITES;
+            screen_show_sprites(1);
             current_game_state = COREGAMELOOP;
             break;
         case COREGAMELOOP:

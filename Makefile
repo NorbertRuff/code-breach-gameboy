@@ -138,6 +138,8 @@ usage: $(ROM)
 assets:
 	$(PYTHON) tools/greybox_tileset.py
 	$(PNG2ASSET) graphics/tilesets/greybox.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/greybox.c
+	$(PYTHON) tools/greybox_band.py
+	$(PNG2ASSET) graphics/bands/greybox_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/greybox_band.c
 	$(PNG2ASSET) graphics/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255 -o src/graphics/programmer.c
 	$(PNG2ASSET) graphics/hud/hud_a.png -map -noflip -b 255 -o src/graphics/hud.c
 	$(PNG2ASSET) graphics/background/background.png -map -noflip -b 255 -o src/graphics/background.c

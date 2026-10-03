@@ -122,6 +122,14 @@ def boot(rom: Path, mode: str, ram_file=None) -> PyBoy:
     return pyboy
 
 
+def palette_lumas(game, symbol: str) -> list:
+    """Brightness of the 4 colors of a png2asset palette (RGB555) in the ROM, like
+    _programmer_palettes. A palette ordered light to dark gives falling values."""
+    raw = read_symbol(game.pyboy, symbol, 8)
+    colors = [int.from_bytes(raw[i:i + 2], "little") for i in range(0, 8, 2)]
+    return [0.299 * (c & 0x1F) + 0.587 * ((c >> 5) & 0x1F) + 0.114 * ((c >> 10) & 0x1F) for c in colors]
+
+
 def read_symbol(pyboy: PyBoy, symbol: str, size: int = 1) -> bytes:
     """Read size bytes at a symbol from the .sym file. C globals start with "_"."""
     bank, addr = pyboy.symbol_lookup(symbol)

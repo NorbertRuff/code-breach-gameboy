@@ -39,8 +39,9 @@ Python and fits our collision and palette needs exactly.
   rows 16–17 the HUD, neither part of the Tiled map. At least 20 tiles wide.
   Horizontal scrolling only.
 - **Parallax band:** a separate 32×3-tile strip per level theme (it wraps around the
-  32-tile background map), drawn once at level load and scrolled slower by a screen-line
-  interrupt. Map streaming never writes rows 0–2.
+  32-tile background map), drawn once at level load and scrolled at half the camera's
+  speed by a screen-line interrupt (`src/engine/screen.c`). Map streaming never writes
+  rows 0–2. Bands are PNGs in `graphics/bands/` (the greybox one is drawn by a script).
 - **Layers:**
   - `tiles`: tile layer.
   - `entities`: object layer. Object classes: `player_start`, `enemy` (property `kind`;

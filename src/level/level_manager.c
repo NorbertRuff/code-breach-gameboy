@@ -1,6 +1,7 @@
 #include <string.h>
 #include "level_manager.h"
 #include "../graphics/greybox.h"
+#include "../graphics/greybox_band.h"
 #include "../graphics/hud.h"
 #include "../graphics/programmer.h"
 #include "../levels/greybox_test.h"
@@ -12,6 +13,8 @@ uint8_t level_index = LEVEL_GREYBOX_TEST;
 
 // Read by the tests to notice Level struct changes.
 const uint8_t level_struct_size = sizeof(Level);
+
+#define BAND_TILE_BASE greybox_TILE_COUNT   // band tiles right after the level's tiles
 
 // 8x8 2bpp digit tiles for HUD counter.
 // Each row: two identical bytes (same bit pattern for both bit-planes → color 0 or 3 only).
@@ -111,6 +114,16 @@ static void copy_header(const LevelData* data)
     current_level.entities = data->entities;
 }
 
+// Draws the parallax band into rows 0-2 of the background map, once per level: its 32
+// columns wrap with the map, and streaming never writes these rows.
+static void draw_band(void)
+{
+    WITH_BANK(greybox_band, {
+        set_bkg_data(BAND_TILE_BASE, greybox_band_TILE_COUNT, greybox_band_tiles);
+        set_bkg_based_tiles(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, greybox_band_map, BAND_TILE_BASE);
+    });
+}
+
 // Sets up a level behind a dark screen: header, tiles, HUD. The columns are drawn by
 // level_stream_reset() once the camera is placed.
 void level_load(uint8_t index)
@@ -126,7 +139,7 @@ void level_load(uint8_t index)
 
     WITH_BANK(greybox, set_bkg_data(0, greybox_TILE_COUNT, greybox_tiles));
     set_bkg_data(HUD_DIGIT_TILE_BASE, 12, hud_digit_tiles);
-    fill_bkg_rect(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, 0);   // the parallax band, empty until M3
+    draw_band();
     set_hud_window_tiles();
     set_programmer_metasprite();
 }

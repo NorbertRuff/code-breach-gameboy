@@ -22,8 +22,9 @@ document or a person, add a row here in the same change. Status is *in use* or
 | DMG fades by stepping `BGP_REG` (`0xE4 → 0xF9 → 0xFE → 0xFF`) | The project's early versions; same technique in flozz example 09 | `utils.c` | In use (DMG) |
 | Flashes at most 3 per second | WCAG 2.3.1 "Three Flashes or Below Threshold" (found by the game-feel research) | `game_over.c` `palette_flash` | In use |
 | Load a level while the screen is black, then fade in | Own fix (review of the early versions, bug 3) | `main.c` `GAMEPLAY_START` | In use |
-| Parallax: a screen-line (LYC) interrupt changes `SCX` per band | Larold's Retro Gameyard, "Parallax Backgrounds with GBDK-2020"; GBDK examples `gb/lcd_isr_wobble`, `cross-platform/irq` | Top 3-row band (decision 2026-10-03) | Planned (M3) |
-| Hide sprites over the bottom HUD with the same interrupt (`HIDE_SPRITES` at line 127) | Larold's Flappy Bird tutorial; BlackCastle `src/main.c` (idea only, no license) | Interrupt handler | Planned (M3) |
+| Parallax: a screen-line (LYC) interrupt changes `SCX` per band | Larold's Retro Gameyard, "Parallax Backgrounds with GBDK-2020"; GBDK examples `gb/lcd_isr_wobble`, `cross-platform/irq` | `src/engine/screen.c` `on_split_line` | In use |
+| Hide sprites over the bottom HUD with the same interrupt (`HIDE_SPRITES` at line 127) | Larold's Flappy Bird tutorial; BlackCastle `src/main.c` (idea only, no license) | `src/engine/screen.c` `on_split_line` | In use |
+| Wait for HBlank (`STAT` mode bits) before a mid-frame register write, so it starts on the next line | Pan Docs, STAT and rendering timing; GBDK `wait_int_handler` notes | `src/engine/screen.c` | In use |
 | Level files: Tiled JSON maps (`.tmj`, CSV tile data, object layers, tile objects with `gid`, flip flags in the top 3 bits of a gid) and TSX tilesets (tile `type` = class, custom properties) | Tiled documentation, "JSON Map Format" and "TMX Map Format" | `tools/tiled2c.py`, `levels/`, `graphics/tilesets/greybox.tsx` | In use |
 | Tileset tiles in image order, one per PNG tile: `png2asset -map -keep_duplicate_tiles -tiles_only` | `png2asset` help (GBDK 4.5.0) | `Makefile` `assets`, `src/graphics/greybox.c` | In use |
 | Map streaming: draw the column entering the view when the camera's tile column changes, on either side | GBDK example `cross-platform/large_map`; Larold's "Drawing Large Maps" | `src/level/level_stream.c` | In use (with `set_bkg_tiles`, see DECISIONS.md) |
@@ -90,6 +91,7 @@ games ships (decision 2026-10-03).
 | `graphics/hud/Font.png` | Unknown | Check origin, or use a CC0 font (RESEARCH.md section 4) |
 | `graphics/start_screen/apexLogo.png`, `press_start.png`, `src/graphics/splashscreen.c` | Owner (ApexLab logo) | Keep the logo; redo the title screen in M5 |
 | Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`), HUD digits and heart (hand-written in `level_manager.c`) | Project code | Placeholders until M5 |
+| Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder until M5 |
 | Sound effects in `src/sound/sound.c` | Project code (register values) | In use |
 | Music | Tronimal, Game Boy Music Packs #1 and #2, CC BY 4.0 | Planned (M6); credit required |
 | Sound effect packs | Tronimal GBFX / GBFX2, CC-BY | Planned (M6); credit required |

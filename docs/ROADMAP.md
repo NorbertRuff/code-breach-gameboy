@@ -109,15 +109,15 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
 - [x] Sprites: rebuild the sprite list every frame with `move_metasprite_ex` /
       `move_metasprite_flipx`, then `hide_sprites_range`.
 - [ ] Fixed pools with free lists for particles and projectiles, once the first one is
-      needed. Keep sprites out of the HUD rows (with the parallax interrupt).
+      needed. (Sprites are kept out of the HUD rows by the parallax interrupt.)
 - [x] Security gates with a fragment quota. Checkpoints at opened gates. Exit elevator.
       The camera locks behind an opened gate (`camera.c` gets a left limit).
 - [x] HUD: lives and fragments against the current quota.
 - [ ] Pause menu. Level-select cheat for testing.
-- [ ] Parallax: screen-line interrupt at the end of the 3-row band (slower `SCX` for the
+- [x] Parallax: screen-line interrupt at the end of the 3-row band (slower `SCX` for the
       band, camera `SCX` below it) and `HIDE_SPRITES` from line 127 over the HUD, in one
       handler. Band drawn once per level; streaming skips rows 0–2. Source: Larold's
-      parallax tutorial (SOURCES.md).
+      parallax tutorial (SOURCES.md). `src/engine/screen.c`, greybox band placeholder.
 - [x] Lives and gates: losing a life returns to the last opened gate; game over refills
       lives and restarts the current section (DECISIONS.md 2026-10-03).
 - [x] Frame budget counter and a lag test: `lag_frames` in the ROM,

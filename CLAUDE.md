@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 2,836 bytes free. SDCC's code is bulky (step 3 alone took about 1.3 KB), so code that isn't per-frame will need `#pragma bank 255` before long.
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds all code and must keep `_HOME` below `0x4000`; as of 2026-10-03 it has 2,658 bytes free. SDCC's code is bulky (step 3 alone took about 1.3 KB), so code that isn't per-frame will need `#pragma bank 255` before long.
 
 ## Build Commands
 
@@ -39,7 +39,7 @@ make budget     # build, then print the screen lines each part of a gameplay upd
 make venv       # create .venv with the test tools (once)
 make savetest   # build obj/savetest.gb, the cartridge RAM persistence test
 make usage      # ROM and RAM use per bank, with areas
-make assets     # regenerate src/graphics/*.c from graphics/*.png (and draw the greybox tileset)
+make assets     # regenerate src/graphics/*.c from graphics/*.png (and draw the greybox tileset and band)
 make levels     # regenerate src/levels/*.c from the Tiled maps in levels/*.tmj
 make preview    # draw every level to tests/out/levels/ and check everything can be reached
 make clean      # delete obj/
@@ -87,7 +87,7 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in 
 | Directory | Purpose |
 |---|---|
 | `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen`, `game_over` (also `level_complete`) |
-| `src/engine/` | `platform.c` (`is_cgb`, GBC setup at boot), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK` for banked data), `camera.c` (deadzone, look-ahead) |
+| `src/engine/` | `platform.c` (`is_cgb`, GBC setup at boot), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK` for banked data), `camera.c` (deadzone, look-ahead, left limit), `screen.c` (line interrupts: band and level scroll, sprites off over the HUD) |
 | `src/player/` | `Player` struct + physics: `player_update` (run, jump, gravity, tile collision, pickups, animation), `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad and A into the player's input fields |
 | `src/level/` | `level_data.h` (the ROM level format), `level_manager.c` (`level_load`, the `Level` state, HUD drawing), `level_stream.c` (collision ring, column streaming, fragments, gates and the exit drawn into columns), `section.c` (quotas, opening gates, checkpoints) |
@@ -125,7 +125,9 @@ Moving level objects (the patrol bots) are actors; the player is not. `actors_sp
 
 `camera_update()` (`src/engine/camera.c`) keeps the focus (player x + a look-ahead that eases to 24 px in the running direction) within 8 px of screen x 80, clamped to the level and to `camera_left_limit`; `camera_reset()` snaps it for a level start or respawn, followed by `level_stream_reset()`. `camera_lock_left(x)` sets a new left limit (an opened gate) that takes force once the camera gets there; the player can't go left of it either. Teleport the player (tests) only forward past an opened gate: columns behind the limit aren't drawn. `move_bkg()` applies `camera_x`; the player and enemies are drawn at `world_x - camera_x`. Levels are up to 255 tiles wide.
 
-**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 3 an update ends near line 68, a fragment pickup near 85, one that draws a column near 101; the worst on the route (a pickup in a column update) at 122. `make budget` shows where the lines go.
+**Screen splits** (`src/engine/screen.c`, started at boot): the VBlank handler sets `SCX` for the parallax band (half the camera) and turns sprites on; a line interrupt at line 23 sets the level's `SCX` (the camera), and one at line 127 turns sprites off over the HUD, each after waiting for HBlank. Never write `SCX` or `HIDE_SPRITES`/`SHOW_SPRITES` directly: use `screen_scroll(camera_x)` (applied at the next VBlank) and `screen_show_sprites(show)`. The band is drawn once into rows 0–2 at level load.
+
+**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 4 an update ends near line 71, a fragment pickup near 87, one that draws a column near 104; the worst on the route (a pickup in a column update) at 124. `make budget` shows where the lines go.
 
 ## Development Feature Flags (`src/utils.h`)
 

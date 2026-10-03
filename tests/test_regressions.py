@@ -5,7 +5,8 @@ import hashlib
 import pytest
 
 from gamelib import (BOT_TILES, COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END,
-                     HUD_DIGIT_TILE_BASE, HUD_SLASH_TILE, LEVEL_COMPLETE, read_symbol)
+                     HUD_DIGIT_TILE_BASE, HUD_SLASH_TILE, LEVEL_COMPLETE, palette_lumas,
+                     read_symbol)
 from test_frame_budget import GREYBOX_ROUTE
 
 dmg_only = pytest.mark.parametrize("mode", ["dmg"])  # BGP_REG effects are DMG-only until M4
@@ -163,18 +164,11 @@ def test_level_and_player_are_above_the_hud(game):
 
 # Review G1: sprite palettes are ordered light to dark ----------------------------
 
-def rgb555_luma(color: int) -> float:
-    r, g, b = color & 0x1F, (color >> 5) & 0x1F, (color >> 10) & 0x1F
-    return 0.299 * r + 0.587 * g + 0.114 * b
-
-
 def test_player_palette_is_light_to_dark(game):
     # DMG shows color index n as shade n, so index 1 must be the lightest visible color
     # and index 3 the darkest (index 0 is transparent). docs/ART_PIPELINE.md.
-    raw = read_symbol(game.pyboy, "_programmer_palettes", 8)
-    colors = [int.from_bytes(raw[i:i + 2], "little") for i in range(0, 8, 2)]
-    lumas = [rgb555_luma(c) for c in colors[1:]]
-    assert lumas == sorted(lumas, reverse=True), f"palette not light to dark: {[hex(c) for c in colors]}"
+    lumas = palette_lumas(game, "_programmer_palettes")[1:]
+    assert lumas == sorted(lumas, reverse=True), f"palette not light to dark: {lumas}"
 
 
 # Review P1: a jump starts only on a new press of A --------------------------------

@@ -95,6 +95,7 @@ Design.
 | Sprites | `-spr8x16 -keep_palette_order -sw W -sh H -px X -py Y -b 255` |
 | Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` |
 | Level tilesets | `-map -noflip -keep_palette_order -tiles_only -b 255`. Maps come from the level converter ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)). |
+| Parallax bands (256×24 px) | `-map -noflip -keep_palette_order -b 255`: tiles and a 32×3 map, drawn into rows 0–2 with a tile offset |
 
 ## 6. Asset list for the full game
 
@@ -107,7 +108,7 @@ Design.
 | Collectibles | 8×8 or 16×16 | Code fragment, bug report, debug tool, AI core, security protocol | Hand-coded diamond tile |
 | Level objects | 16×32 | Security gate (closed, opening, open; shows the quota), exit elevator (doors closed and open) | Not started |
 | Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Not started |
-| Parallax bands | 32×3 tiles each | One per level theme, wraps around; decoration only | Not started |
+| Parallax bands | 32×3 tiles each | One per level theme, wraps around; decoration only | Greybox placeholder (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`, 8 tiles) |
 | Tilesets | ≤ 190 tiles each | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Placeholder city background |
 | HUD and font | about 60 tiles | Frame, A–Z, 0–9, punctuation, icons | Hand-coded digits, `hud_a.png` |
 | Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Old `splashscreen.c`, unused `apexLogo.png` |

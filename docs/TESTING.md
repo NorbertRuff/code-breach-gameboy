@@ -44,6 +44,7 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, passes the greybox level and reports a broken one |
 | `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
 | `tests/test_actors.py` | Actors: bots in reach spawn at the start, a bot spawns as the camera nears, patrols, removal a screen behind until a restart, hits and invincibility, the sprite list every frame |
+| `tests/test_screen.py` | The screen splits: band and level scroll per screen line, the band drawn once and kept by streaming, no sprite over the HUD, the band palette light to dark |
 | `tests/test_sections.py` | Gates as solid columns, closed below the quota, opening on touch, the opened gate as checkpoint, the camera and player lock, lives and game over per section, the exit |
 | `tests/test_frame_budget.py` | A route that finishes the greybox level (both gates, the exit): no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
@@ -90,6 +91,11 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 - `game.actors()` reads the actors in play through `ACTOR_FIELDS` (checked like the
   Player mirror, with `actor_struct_size`); `bot` says whether one is a patrol bot.
   `game.visible_sprites()` lists the OAM entries that are switched on.
+- **Rendered frames.** `game.tick(render=True)` renders a frame; then
+  `pyboy.screen.tilemap_position_list` gives SCX, SCY, WX and WY for each screen line,
+  and `pyboy.screen.ndarray` the pixels. A frame shows the scroll and sprites of the
+  update before it (they are latched at VBlank). PyBoy's first rendered frame after
+  unrendered ones starts the window one line early: compare from the second one.
 - `game.collision(x, y)` reads the collision ring (screen rows; only the columns around
   the camera), `game.bkg_tile(x, y)` the background map at a level column,
   `game.camera_x()` the camera, `game.window_tile(col, row)` the HUD window map,

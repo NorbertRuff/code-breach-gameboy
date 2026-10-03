@@ -41,6 +41,10 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
   respawn hitch is hidden). Game over restarts the section. The frame budget route now
   finishes the greybox level; its worst update ends at line 122. 158 tests pass. Bank 0
   has 2,836 bytes free.
+- **2026-10-03, M3 step 4:** screen splits by line interrupt: the parallax band scrolls
+  at half speed, the level below it, and sprites are off over the HUD. A greybox band
+  placeholder. The scroll no longer changes partway down the screen. Worst update on the
+  route: line 124. 166 tests pass. Bank 0 has 2,658 bytes free.
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 
