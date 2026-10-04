@@ -103,13 +103,12 @@ def test_closed_gate_buzzes_once_per_touch(game):
     # Walking into a gate without its quota plays the "denied" sound once, not every frame.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.place_player(240, 119)
-    buzzes = []
-    game.pyboy.hook_register(None, "_sound_play_denied", lambda calls: calls.append(1), buzzes)
+    effects = game.track_effects()
     game.hold("right", 40)
-    assert len(buzzes) == 1
+    assert effects.count("denied") == 1
     game.hold("left", 10)
     game.hold("right", 20)
-    assert len(buzzes) == 2
+    assert effects.count("denied") == 2
 
 
 def test_game_over_shows_a_message_then_restarts_the_section(game):

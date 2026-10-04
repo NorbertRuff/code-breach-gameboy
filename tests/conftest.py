@@ -56,7 +56,7 @@ def rom_dir(tmp_path_factory) -> Path:
     if not (OBJ / "ApexLab.gb").exists():
         pytest.exit("obj/ApexLab.gb is missing: run 'make test' (or 'make' first)")
     folder = tmp_path_factory.mktemp("roms")
-    for name in ("ApexLab", "savetest", "savetest_mbc1", "savetest_mbc3"):
+    for name in ("ApexLab", "savetest", "savetest_mbc1", "savetest_mbc3", "soundtest"):
         for ext in (".gb", ".sym", ".map"):
             src = OBJ / f"{name}{ext}"
             if src.exists():

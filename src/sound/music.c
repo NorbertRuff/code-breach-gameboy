@@ -9,11 +9,10 @@
 static uint8_t song_bank;   // the playing song's ROM bank; 0 while none plays
 
 // Once per frame, from the line interrupt below the parallax band (screen.c): one step of the song
-// (hUGEDriver reads it from the song's bank), after the sound effects that are done
-// hand their channels back.
+// (hUGEDriver reads it from the song's bank), after the sound effect's next step.
 void music_step(void)
 {
-    sound_release_channels();
+    sound_step();
     if (song_bank) WITH_ROM_BANK(song_bank, hUGE_dosound());
 }
 

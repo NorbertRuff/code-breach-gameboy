@@ -78,7 +78,7 @@ void sections_update(const Player* player)
     }
     // Too few fragments? A buzz when the touch starts, so the player knows why.
     if (current_level.section_collected[section] < gate->quota) {
-        if (!touching_closed_gate) sound_play_denied();
+        if (!touching_closed_gate) sound_play(EFFECT_DENIED);
         touching_closed_gate = 1;
         return;
     }
@@ -87,5 +87,5 @@ void sections_update(const Player* player)
     opening_gate = section;
     frames_to_next_row = 1;
     camera_lock_left(gate_right(gate));
-    sound_play_gate();
+    sound_play(EFFECT_GATE);
 }

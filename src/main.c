@@ -115,7 +115,7 @@ static uint8_t new_press(uint8_t button)
 static void update_pause(void)
 {
     if (new_press(J_START)) {
-        sound_play_pause();
+        sound_play(EFFECT_PAUSE);
         current_game_state = COREGAMELOOP;
     }
 #if LEVEL_SELECT_CHEAT
@@ -150,7 +150,7 @@ void main_game_loop(void)
 
     // START pauses: everything stops where it is, with "PAUSE" over it.
     if (new_press(J_START)) {
-        sound_play_pause();
+        sound_play(EFFECT_PAUSE);
         draw_sprites(1);
         current_game_state = PAUSED;
         return;
@@ -161,7 +161,7 @@ void main_game_loop(void)
 
     // Fell out of the level? Costs a life, even while invincible.
     if (TO_PIXELS(player.y) > FALL_DEATH_Y) {
-        sound_play_hit();
+        sound_play(EFFECT_HIT);
         current_game_state = GAMEPLAY_END;
         return;
     }
@@ -179,7 +179,7 @@ void main_game_loop(void)
 
     // Hit by an actor or a hazard tile? Not while invincible.
     if (!player.invincibility_frames && (player.touched_hazard || player_touches_actor())) {
-        sound_play_hit();
+        sound_play(EFFECT_HIT);
         current_game_state = GAMEPLAY_END;
     }
 

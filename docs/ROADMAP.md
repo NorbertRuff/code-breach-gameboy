@@ -7,11 +7,13 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 ## Status (2026-10-04)
 
 - **Playable:** level 1 (Server Room, art pending) and the level 2 greybox (Code Testing
-  Lab), with music. Next: the owner's level 2 pass, then M5 art or levels 3-5.
-- **Tests:** `make test` 188 tests in about 12 s; `make test-full` 280 in about 15 s.
-- **Memory:** bank 0 has 2,235 bytes free; WRAM uses 1,447 of 4,096 bytes.
-- **Frame budget** (worst update, line of the 140 allowed; average): level 1 126 (77),
-  level 2 105 (65), greybox route 118 (78). The music step costs about 9 lines, up to 18.
+  Lab), both kept after the owner's hardware pass, with music and the GBFX sound effects.
+  Next: the owner's effect and song picks, then M5 art or levels 3-5.
+- **Tests:** `make test` 194 tests in about 14 s; `make test-full` 286 in about 13 s.
+- **Memory:** bank 0 has 2,125 bytes free; WRAM uses 1,448 of 4,096 bytes.
+- **Frame budget** (worst update, line of the 140 allowed; average): level 1 126 (76),
+  level 2 105 (64), greybox route 119 (77). The music step costs about 9 lines, up to 18;
+  a streamed column's write 5 (was 12).
 
 ## Bugs
 
@@ -22,9 +24,11 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 ## Waiting for the owner
 
-- Play level 2 on DMG and GBC; listen to the music and effects on hardware.
-- Try `savetest_mbc1.gb` and `savetest_mbc3.gb` on the EverDrive (M7).
-- Pick songs for title, game over and level complete (M6).
+- Listen to the effects (`make soundtest`: WAVs, or `obj/soundtest.gb` on hardware) and
+  change the picks in `sounds/effects.txt` (M6).
+- Pick songs for title, game over and level complete (M6): from Tronimal's packs (not
+  downloaded yet), or another source.
+- Saves (M7): keep battery saves although the clone loses them, or passwords?
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
 - Claude Design style guide (M5); edit the story text in [STORY.md](STORY.md) (M7).
@@ -92,19 +96,19 @@ Done when level 1 looks like the final game in both modes.
       and #2 (CC BY 4.0), decided 2026-10-02.
 - [x] hUGEDriver in the build, songs in banked ROM (`make music`), one step per frame from
       the line interrupt below the band.
-- [ ] Sound effects: Tronimal GBFX/GBFX2 converted with untoxa's VGM2GBSFX, played with
-      a channel mute mask and priority over the music.
-- [ ] Music per level, title, game over and ending. Levels 1 and 2 have songs (Proposed);
-      **(owner)** pick the rest by ear from the Tronimal packs.
+- [x] Sound effects: Tronimal GBFX/GBFX2 (`sounds/`, `make sounds`), our own player with
+      a channel mute mask and priority over the music; sound test ROM and WAVs
+      (`make soundtest`). Done 2026-10-04; **(owner)** confirm the picks by ear.
+- [ ] Music per level, title, game over and ending. Levels 1 and 2 have songs (owner
+      agreed 2026-10-04); **(owner)** pick the rest by ear.
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
 
 ## M7 — Saves and game flow
 
-- [ ] Find out why saves don't persist on the EverDrive clone (the M0 test ROM's count
-      doesn't go up). MBC1 and MBC3 variants are built (`make savetest`); **(owner)** try
-      them (TESTING.md, "Save test on the real Game Boy"). If none keeps the count, use
-      passwords instead of battery saves.
+- [ ] Saves on the EverDrive clone: the count of `savetest.gb` and the MBC1 and MBC3
+      variants never went up (owner, 2026-10-04). **(owner)** decide: battery saves anyway
+      (Proposed, DECISIONS.md "Saves") or passwords.
 - [ ] Save data in cartridge RAM: unlocked levels, best score, 100% marks, a checksum
       for first boot.
 - [ ] Level select, game over with continue, level complete screen with score. The level

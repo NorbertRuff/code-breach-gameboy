@@ -268,7 +268,7 @@ GAME_DESIGN.md and [LEVEL_PIPELINE.md](LEVEL_PIPELINE.md) section 5.
 ### Level 2 brief: Code Testing Lab (draft)
 
 **Status: draft by Claude, 2026-10-04. Greybox built the same day** (`levels/level_2.tmj`,
-below), after the owner's answers. Next: the owner plays it.
+below), after the owner's answers. Owner's hardware pass, 2026-10-04: keep it as built.
 
 Teaches: **one-way platforms**: jump up through them from below, land on top, walk under
 them. They also fix level 1's problem with split routes: a high route of one-way shelves

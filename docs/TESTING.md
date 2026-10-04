@@ -111,7 +111,16 @@ flashcart (`make OBJDIR=flashcart savetest`, gitignored), so CLion's `make clean
 4. Press A to clear the save.
 
 If the count never goes up, try `savetest_mbc1.gb` and `savetest_mbc3.gb` (the mapper is
-named on screen). If none keeps it, the game uses passwords instead (DECISIONS.md).
+named on screen). On the owner's EverDrive clone none kept it (2026-10-04); what the game
+does about it is in DECISIONS.md, "Saves".
+
+## Sound test
+
+`make soundtest` builds `obj/soundtest.gb` with every effect of the GBFX and GBFX2 packs,
+played by the game's effect player, and writes a WAV of each to `tests/out/sounds/`.
+On the Game Boy: LEFT/RIGHT step through the effects, UP/DOWN jump 10, A plays one.
+The game's picks are in `sounds/effects.txt` (then `make sounds`).
+`tests/test_soundtest.py` checks that every effect holds its channels for its length.
 
 ## Continuous integration
 
@@ -122,4 +131,5 @@ GBDK 4.5.0 (cached), `make all savetest`, `make test-full`, then uploads the ROM
 ## What PyBoy cannot prove
 
 How colors and motion look on the real screens, whether saves persist on the flashcart,
-exact VRAM timing edge cases (use Emulicious, then hardware), and how the music sounds.
+exact VRAM timing edge cases (use Emulicious, then hardware), and how the music and the
+effects sound (PyBoy's sound is close, not exact).

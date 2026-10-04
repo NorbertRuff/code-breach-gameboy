@@ -44,14 +44,16 @@ make goldens    # rewrite the golden screenshots after an intended visual change
 make budget     # screen lines per part of a gameplay update (tools/frame_budget.py)
 make levels     # Tiled maps in levels/ -> src/levels/
 make music      # hUGETracker songs in music/ -> src/music/
+make sounds     # effect picks in sounds/effects.txt -> src/sound/effects.c
+make soundtest  # obj/soundtest.gb with every GBFX/GBFX2 effect, and a WAV of each in tests/out/sounds/
 make assets     # PNGs in graphics/ -> src/graphics/ (read png2asset's output for "not recognized")
 make preview    # draw every level to tests/out/levels/ and check everything can be reached
 make savetest   # the cartridge RAM test ROMs (make OBJDIR=flashcart savetest keeps them)
 make usage, make rebuild, make clean, make venv
 ```
 
-Generated files (`src/levels/`, `src/music/`, `src/graphics/`) are committed with their
-sources; tests fail when they are out of date. For a one-off build variant use
+Generated files (`src/levels/`, `src/music/`, `src/graphics/`, `src/sound/effects.*`) are
+committed with their sources; tests fail when they are out of date. For a one-off build variant use
 `make OBJDIR=<scratch folder> EXTRA_CFLAGS=-D...`, never the normal `obj/`.
 
 ## Tests

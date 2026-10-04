@@ -121,7 +121,7 @@ static void try_jump(Player* p)
         p->jump_buffer_frames = 0;
         p->coyote_frames = 0;
         p->on_ground = 0;
-        sound_play_jump();
+        sound_play(EFFECT_JUMP);
         return;
     }
     if (p->jump_buffer_frames) p->jump_buffer_frames--;

@@ -16,6 +16,9 @@
 #   make assets     regenerate src/graphics/*.c from the PNGs in graphics/
 #   make levels     regenerate src/levels/*.c from the Tiled maps in levels/
 #   make music      regenerate src/music/*.c from the hUGETracker songs in music/
+#   make sounds     regenerate src/sound/effects.c from the effect list sounds/effects.txt
+#   make soundtest  build obj/soundtest.gb, every GBFX/GBFX2 effect and every song of the
+#                   music packs, and render each to a WAV in tests/out/sounds/
 #   make preview    draw every level to tests/out/levels/ and check it can be finished
 #   make clean      delete obj/
 #
@@ -94,9 +97,12 @@ OBJS := $(addprefix $(OBJDIR)/,$(OBJNAMES))
 vpath %.c $(sort $(dir $(CSOURCES)))
 
 SAVETEST := $(OBJDIR)/savetest.gb
+SOUNDTEST := $(OBJDIR)/soundtest.gb
+SOUND_PACKS := sounds/GBFX.sav sounds/GBFX2.sav
+MUSIC_PACKS := music/packs/game_boy_music_pack_1.zip music/packs/game_boy_music_pack_2.zip
 SAVETEST_VARIANTS := $(OBJDIR)/savetest_mbc1.gb $(OBJDIR)/savetest_mbc3.gb
 
-.PHONY: all rebuild run test test-full shots goldens budget venv savetest usage assets levels music preview clean
+.PHONY: all rebuild run test test-full shots goldens budget venv savetest soundtest soundtest-link usage assets levels music sounds preview clean
 
 all: $(ROM)
 
@@ -119,10 +125,10 @@ rebuild:
 run: $(ROM)
 	java -jar $(EMULICIOUS) $(ROM)
 
-test: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS)
+test: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS) $(SOUNDTEST)
 	$(PYTHON) -m pytest tests -n auto
 
-test-full: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS)
+test-full: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS) $(SOUNDTEST)
 	$(PYTHON) -m pytest tests -n auto --full
 
 # Scripted playthroughs of the greybox level and level 1: screenshots, contact sheets
@@ -154,6 +160,21 @@ $(SAVETEST): tools/savetest/savetest.c | $(OBJDIR)
 $(OBJDIR)/savetest_mbc%.gb: tools/savetest/savetest.c | $(OBJDIR)
 	$(LCC) $(LCCFLAGS) -Wm-yS $(subst -Wl-yt$(CART_TYPE),-Wl-yt$(CART_TYPE_MBC$*),$(CART_FLAGS)) -DMBC=$* -o $@ $<
 
+# Every effect of the sound packs and every song of the music packs, played by the
+# game's players, to pick them by ear (on hardware, or as WAVs from tools/render_sounds.py).
+soundtest: $(SOUNDTEST)
+	$(PYTHON) tools/render_sounds.py
+
+# The songs' C files only exist after uge2c, so a second make links them (its wildcard
+# sees them).
+$(SOUNDTEST): tools/soundtest/soundtest.c tools/soundtest/song_table.h src/sound/sound.c src/sound/sound.h tools/fxhammer2c.py tools/uge2c.py $(SOUND_PACKS) $(MUSIC_PACKS) | $(OBJDIR)
+	$(PYTHON) tools/fxhammer2c.py --all $(SOUND_PACKS) -o $(OBJDIR)/soundtest
+	$(PYTHON) tools/uge2c.py $(MUSIC_PACKS) -o $(OBJDIR)/soundtest --table $(OBJDIR)/soundtest/song_table.c
+	$(MAKE) --no-print-directory soundtest-link
+
+soundtest-link:
+	$(LCC) $(LCCFLAGS) -I$(HUGEDRIVER) -Isrc/sound -Itools/soundtest $(LDFLAGS) -o $(SOUNDTEST) tools/soundtest/soundtest.c src/sound/sound.c $(wildcard $(OBJDIR)/soundtest/*.c)
+
 usage: $(ROM)
 	$(ROMUSAGE) $(MAP) -a -g
 
@@ -179,6 +200,10 @@ levels:
 # tools/uge2c.py output is committed too. Run this after changing a song in music/.
 music:
 	$(PYTHON) tools/uge2c.py $(wildcard music/*.uge) -o src/music
+
+# tools/fxhammer2c.py output is committed too. Run this after changing sounds/effects.txt.
+sounds:
+	$(PYTHON) tools/fxhammer2c.py sounds/effects.txt -o src/sound
 
 # Full-level PNGs with column numbers, entities and jump arcs, plus the reachability
 # check (tools/levelpreview.py). Fails when something in a level can't be reached.

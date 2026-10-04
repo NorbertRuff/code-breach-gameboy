@@ -61,7 +61,7 @@ or git keeps the old one). Details of how the code does it belong in
 ## Levels
 
 - **Length:** 3 sections, 120-160 tiles, 4-6 minutes on a first play. Level 1 is 174 and
-  level 2 170 tiles (owner kept level 1's).
+  level 2 170 tiles (owner kept both).
 - **Editor:** Tiled 1.12 + `tools/tiled2c.py`; text sketches via `tools/sketch2tmj.py`.
 - **Map:** 13 rows (screen rows 3-15) under a 3-row parallax band (decoration only) and
   above the 2-row HUD; up to 255 tiles wide.
@@ -74,7 +74,8 @@ or git keeps the old one). Details of how the code does it belong in
   only be jumped with 8 free rows above its floor (one-way shelves don't count).
 - **Level 1** (Server Room) greybox: kept as built after the owner's hardware pass
   (2026-10-04). **Level 2** (Code Testing Lab) greybox: built 2026-10-04, the low route
-  needs the bridge's fragment for gate B (owner: keep). **Proposed** until the owner plays it.
+  needs the bridge's fragment for gate B; kept as built after the owner's hardware pass
+  (2026-10-04).
 - **The game starts in level 1;** level indices list the game's levels, then the test
   rooms (the greybox level the tests use, and `test_jumps` for the jump metrics).
 
@@ -102,7 +103,9 @@ or git keeps the old one). Details of how the code does it belong in
   (copied to WRAM at level load) as columns stream in, both directions.
 - **Streaming:** columns are read into a 13-byte buffer; the collision goes in at once,
   the tiles at the start of the next update (`set_bkg_tiles` takes 11-14 lines per column,
-  and stacked with a pickup and the music it broke the budget; 2026-10-04).
+  and stacked with a pickup and the music it broke the budget; 2026-10-04). There, in
+  VBlank, they are written to VRAM directly: 5 lines instead of 12, `set_bkg_tiles` only
+  outside VBlank (2026-10-04).
 - **Frame budget:** every update must end within 140 of 154 lines after VBlank starts
   (tested), and the ROM counts lag frames. No `/` or `%` in per-frame code (about 6 lines
   per call). Savings so far: touched-column flags, a fragment bit per level column, hiding
@@ -145,12 +148,18 @@ or git keeps the old one). Details of how the code does it belong in
   hUGETracker's export, instead of downloading `uge2source.exe`).
 - **The music step runs in the line-23 interrupt, not VBlank** (2026-10-04, owner): about 9
   lines per frame, up to 18; in VBlank it delayed every update.
-- **Songs:** level 1 "Tech", level 2 "Neurotic Robonaut"; only Tronimal's own songs, not
-  the packs' remixes of other people's. **Proposed** until the owner listens on hardware.
-- **Sound effects take their channel from the music** until they fade
-  (`hUGE_mute_channel`). Tronimal's GBFX packs via VGM2GBSFX are still planned.
+- **Songs:** level 1 "Tech", level 2 "Neurotic Robonaut" (owner, after the hardware pass,
+  2026-10-04); only Tronimal's own songs, not the packs' remixes of other people's.
+- **Sound effects: Tronimal's GBFX and GBFX2** (FX Hammer files, CC BY 4.0), picked in
+  `sounds/effects.txt` and converted by `tools/fxhammer2c.py`; our own short C player
+  (`src/sound/sound.c`) instead of VGM2GBSFX's assembly one: one effect at a time with a
+  priority, its channels (CH2, CH4) muted in hUGEDriver until it ends, stepped from the
+  music's interrupt. The hand-made register effects are gone (2026-10-04). **Proposed:**
+  the player, and the picks until the owner listens (`make soundtest`).
 
 ## Saves
 
 - **MBC5 + RAM + battery (`0x1B`), fallback passwords.** **Open:** the save test didn't
-  persist on the EverDrive clone (2026-10-03); MBC1 and MBC3 variants wait for the owner.
+  persist on the EverDrive clone with MBC5, MBC1 or MBC3 (2026-10-03, 2026-10-04). Owner
+  thinks it's the clone: **Proposed** to keep battery saves (they work in emulators and
+  on real cartridges) and drop the password fallback.

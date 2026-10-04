@@ -8,6 +8,9 @@
 #define MAX_FRAGMENTS 32
 #define NO_EXIT 0xFF            // exit_column of a test room
 #define NO_COLUMN 0xFF          // pending_column when no column waits
+#define MAP_ROW_BYTES 32        // background map: 32 tiles per row
+#define VBLANK_FIRST_LINE 144
+#define LAST_DIRECT_WRITE_LINE 150   // a direct column write still ends before VBlank does (line 153)
 
 uint8_t collision_ring[RING_COLUMNS * RING_ROWS];
 uint8_t ring_column_touched[RING_COLUMNS];
@@ -117,12 +120,21 @@ static void add_objects(uint8_t column)
 }
 
 // Writes the column the last update drew into the background map. Called first in an
-// update, so the write (about 11 lines) doesn't add to the update that found the column,
-// and lands before the frame that scrolls it into view is drawn.
+// update, so the write doesn't add to the update that found the column, and lands
+// before the frame that scrolls it into view is drawn. In VBlank it writes VRAM
+// directly (about 2 lines); otherwise set_bkg_tiles waits for each tile (about 11).
 void level_stream_flush(void)
 {
     if (pending_column == NO_COLUMN) return;
-    set_bkg_tiles(pending_column, LEVEL_MAP_TOP_ROW, 1, LEVEL_MAP_ROWS, column_tiles);
+    if (LY_REG >= VBLANK_FIRST_LINE && LY_REG <= LAST_DIRECT_WRITE_LINE) {
+        uint8_t* map_tile = _SCRN0 + LEVEL_MAP_TOP_ROW * MAP_ROW_BYTES + pending_column;
+        for (uint8_t row = 0; row < LEVEL_MAP_ROWS; row++) {
+            *map_tile = column_tiles[row];
+            map_tile += MAP_ROW_BYTES;
+        }
+    } else {
+        set_bkg_tiles(pending_column, LEVEL_MAP_TOP_ROW, 1, LEVEL_MAP_ROWS, column_tiles);
+    }
     pending_column = NO_COLUMN;
 }
 
@@ -202,7 +214,7 @@ void level_collect_fragment(uint8_t tile_x, uint8_t tile_y)
         }
     }
     restore_map_cell(tile_x, tile_y);
-    sound_play_collect();
+    sound_play(EFFECT_COLLECT);
 }
 
 // Puts a section's collected fragments back (game over). They show again when their

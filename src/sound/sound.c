@@ -1,96 +1,79 @@
 #include <gb/gb.h>
 #include "hUGEDriver.h"
 #include "sound.h"
+#include "../engine/banking.h"
 
-static uint8_t muted_frames[4];   // per channel: frames it stays taken from the music
+// A step's bytes (tools/fxhammer2c.py).
+enum { STEP_FRAMES, STEP_CHANNELS, STEP_NR21, STEP_NR22, STEP_NR23, STEP_NR24, STEP_NR42, STEP_NR43, STEP_SIZE };
 
-// A channel's frequency register: value = 2048 - 131072 / Hz.
-// 0x200 = 85 Hz, 0x600 = 256 Hz, 0x700 = 512 Hz, 0x780 = 1024 Hz, 0x7A0 = 1365 Hz.
+#define NOISE_TRIGGER 0x80   // NR44: restart CH4, no length limit
 
-// Takes a channel from the music for an effect's length: the music stops writing it.
-static void take_channel(uint8_t channel, uint8_t frames)
+static const uint8_t* next_step;   // in the effects' bank; NULL while no effect plays
+static uint8_t wait_frames;        // frames before the next step
+static uint8_t taken_channels;     // the playing effect's channels (SOUND_CH2, SOUND_CH4)
+static uint8_t playing_priority;
+
+// Silences the effect's channels and gives them back to the music, which sounds there
+// again from its next note.
+static void end_effect(void)
+{
+    if (taken_channels & SOUND_CH2) NR22_REG = 0;
+    if (taken_channels & SOUND_CH4) NR42_REG = 0;
+    hUGE_mute_mask &= ~taken_channels;
+    taken_channels = 0;
+    next_step = NULL;
+}
+
+// Takes the effect's channels from the music; its first step plays at the next music step.
+static void start_effect(const sound_effect_t* effect)
+{
+    if (next_step && effect->priority < playing_priority) return;
+    end_effect();
+    next_step = effect->steps;
+    wait_frames = 0;
+    taken_channels = effect->channels;
+    playing_priority = effect->priority;
+    hUGE_mute_mask |= taken_channels;
+}
+
+// Plays an effect (EFFECT_* in effects.h), unless one with a higher priority is playing.
+void sound_play(uint8_t effect)
 {
     CRITICAL {
-        muted_frames[channel] = frames;
-        hUGE_mute_channel(channel, HT_CH_MUTE);
+        WITH_BANK(sound_effects, start_effect(&sound_effects[effect]));
     }
 }
 
-// Called once per frame: gives the music back each channel whose effect is over. The
-// music sounds there again from its next note.
-void sound_release_channels(void)
+// Writes the next step's sound registers, or ends the effect after its last step.
+static void play_step(void)
 {
-    for (uint8_t channel = 0; channel < 4; channel++) {
-        if (muted_frames[channel] && !--muted_frames[channel]) hUGE_mute_channel(channel, HT_CH_PLAY);
+    const uint8_t* step = next_step;
+    if (!step[STEP_FRAMES]) {
+        end_effect();
+        return;
     }
+    if (step[STEP_CHANNELS] & SOUND_CH2) {
+        NR21_REG = step[STEP_NR21];
+        NR22_REG = step[STEP_NR22];
+        NR23_REG = step[STEP_NR23];
+        NR24_REG = step[STEP_NR24];
+    }
+    if (step[STEP_CHANNELS] & SOUND_CH4) {
+        NR42_REG = step[STEP_NR42];
+        NR43_REG = step[STEP_NR43];
+        NR44_REG = NOISE_TRIGGER;
+    }
+    wait_frames = step[STEP_FRAMES] - 1;
+    next_step = step + STEP_SIZE;
 }
 
-// Jump: a rising "boing" on CH1, from 512 Hz up to about 5 kHz in about 40 ms.
-void sound_play_jump(void)
+// Once per frame, from music_step: the playing effect's next step when its time has come.
+void sound_step(void)
 {
-    take_channel(HT_CH1, 4);
-    NR10_REG = 0x15;  // sweep period=1 (7.8 ms/step), direction=up, shifts=5
-    NR11_REG = 0x80;  // 50% duty, no length limit
-    NR12_REG = 0xF2;  // initial vol=15, decay, period=2
-    NR13_REG = 0x00;  // freq low  (combined: 0x700)
-    NR14_REG = 0x87;  // trigger, freq high=7
-}
-
-// Fragment pickup: a short bright blip on CH2 at 1365 Hz.
-void sound_play_collect(void)
-{
-    take_channel(HT_CH2, 14);
-    NR21_REG = 0x40;  // 25% duty, no length limit
-    NR22_REG = 0xF1;  // initial vol=15, fast decay, period=1
-    NR23_REG = 0xA0;  // freq low  (combined: 0x7A0)
-    NR24_REG = 0x87;  // trigger, freq high=7
-}
-
-// Gate opening: a slow rising sweep on CH1 from 256 Hz.
-void sound_play_gate(void)
-{
-    take_channel(HT_CH1, 22);
-    NR10_REG = 0x36;  // sweep period=3 (23 ms/step), direction=up, shifts=6
-    NR11_REG = 0x80;  // 50% duty
-    NR12_REG = 0xF3;  // vol=15, decay, period=3
-    NR13_REG = 0x00;  // freq low  (combined: 0x600)
-    NR14_REG = 0x86;  // trigger, freq high=6
-}
-
-// Hit: a low thud on CH1 at 85 Hz with a noise crunch on CH4.
-void sound_play_hit(void)
-{
-    take_channel(HT_CH1, 11);
-    take_channel(HT_CH4, 28);
-    NR10_REG = 0x00;  // no sweep
-    NR11_REG = 0x80;  // 50% duty
-    NR12_REG = 0xC1;  // vol=12, decay, fast period=1
-    NR13_REG = 0x00;  // freq low  (combined: 0x200)
-    NR14_REG = 0x82;  // trigger, freq high=2
-
-    NR41_REG = 0x00;  // no length limit
-    NR42_REG = 0xF2;  // vol=15, decay, period=2
-    NR43_REG = 0x47;  // shift=4, 15-bit LFSR, divider=7 -> medium crunch
-    NR44_REG = 0x80;  // trigger
-}
-
-// Pause and resume: a short blip on CH2 at 1024 Hz, lower than the pickup.
-void sound_play_pause(void)
-{
-    take_channel(HT_CH2, 9);
-    NR21_REG = 0x80;  // 50% duty, no length limit
-    NR22_REG = 0xA1;  // vol=10, fast decay, period=1
-    NR23_REG = 0x80;  // freq low  (combined: 0x780)
-    NR24_REG = 0x87;  // trigger, freq high=7
-}
-
-// Denied (a closed gate without its quota): a low falling buzz on CH1 from 171 Hz.
-void sound_play_denied(void)
-{
-    take_channel(HT_CH1, 19);
-    NR10_REG = 0x1B;  // sweep period=1 (7.8 ms/step), direction=down, shifts=3
-    NR11_REG = 0x80;  // 50% duty
-    NR12_REG = 0xA2;  // vol=10, decay, period=2
-    NR13_REG = 0x00;  // freq low  (combined: 0x500)
-    NR14_REG = 0x85;  // trigger, freq high=5
+    if (!next_step) return;
+    if (wait_frames) {
+        wait_frames--;
+        return;
+    }
+    WITH_BANK(sound_effects, play_step());
 }

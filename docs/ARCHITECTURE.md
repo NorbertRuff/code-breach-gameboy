@@ -37,12 +37,12 @@ tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next le
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad, Down and A into the player |
 | `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
 | `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot) |
-| `src/sound/` | `sound.c` (effects on the APU registers), `music.c` (the level's song through hUGEDriver) |
+| `src/sound/` | `sound.c` (the effect player), `effects.c` (generated: `make sounds`), `music.c` (the level's song through hUGEDriver) |
 | `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus hand-made `splashscreen.c`, `hud_digits.c`, `font.c`) |
-| `graphics/`, `levels/`, `music/` | Sources: PNGs and Tiled `.tsx`, Tiled maps `.tmj`, hUGETracker songs `.uge` |
+| `graphics/`, `levels/`, `music/`, `sounds/` | Sources: PNGs and Tiled `.tsx`, Tiled maps `.tmj`, hUGETracker songs `.uge`, FX Hammer effect packs `.sav` and the effect list `effects.txt` |
 | `lib/hUGEDriver/` | The music driver's header and GBDK library (6.1.3, public domain) |
 | `tests/` | PyBoy tests: `gamelib.py` helpers, `conftest.py` fixtures and tiers ([TESTING.md](TESTING.md)) |
-| `tools/` | `tiled2c.py`, `sketch2tmj.py`, `uge2c.py`, `gbconvert.py`, `levelpreview.py` + `physics.py`, `frame_budget.py`, screenshot tools, `savetest/` |
+| `tools/` | `tiled2c.py`, `sketch2tmj.py`, `uge2c.py`, `fxhammer2c.py`, `gbconvert.py`, `levelpreview.py` + `physics.py`, `frame_budget.py`, `render_sounds.py`, screenshot tools, `savetest/`, `soundtest/` |
 
 ## Player physics (`src/player/`)
 
@@ -72,7 +72,7 @@ screen rows 3–15. `collision_ring[32 * 16]` in WRAM holds the collision of the
 background-map columns (`RING_INDEX(tile_x, tile_y)`, `tile_y` in screen rows).
 `level_stream_update(camera_x)` draws each column that enters the view, both directions:
 its ring column at once, its tiles at the start of the next update (`level_stream_flush`,
-first in `main_game_loop`). Tile types: `COLLISION_NONE`, `SOLID`, `ONE_WAY`, `HAZARD`,
+first in `main_game_loop`: straight into VRAM while VBlank lasts, else `set_bkg_tiles`). Tile types: `COLLISION_NONE`, `SOLID`, `ONE_WAY`, `HAZARD`,
 `COLLECTIBLE` (a fragment), `EXIT`. `LEVEL_COLLISION_AT(level, x, y)` (a macro, pass plain
 variables) returns a tile's type; outside the level or in a HUD row it is `NONE`.
 Collected fragments are a bitset, so they stay gone when their column is drawn again.
@@ -116,9 +116,17 @@ into rows 0–2 at level load.
 `music/*.uge` → `make music` (`tools/uge2c.py`) → banked `hUGESong_t` in `src/music/`.
 `music_play_level` starts a level's song (`hUGE_init` with its bank switched in);
 `music_step` runs once per frame from the line-23 interrupt, with the song's bank switched
-in and restored. A sound effect calls `take_channel`, so the driver leaves that channel
-alone until the effect has faded (`sound_release_channels`). Credit every song in
-`CREDITS.md`.
+in and restored. Credit every song and effect pack in `CREDITS.md`.
+
+Sound effects: `sounds/effects.txt` (name, pack, effect number, priority) → `make sounds`
+(`tools/fxhammer2c.py`) → banked `sound_effects[]` in `src/sound/effects.c` and
+`EFFECT_*` numbers in `effects.h`. An effect is a list of 8-byte steps (frames, channels,
+then the CH2 and CH4 register values). `sound_play(EFFECT_...)` starts one unless a
+higher-priority one plays, and sets its channels in `hUGE_mute_mask` so the music leaves
+them alone; `sound_step`, called by `music_step` before the song's step, writes the next
+step when its frames are up, and after the last one silences the channels and unmutes
+them. `make soundtest` builds `obj/soundtest.gb` (every effect of both packs with the same
+player) and renders each to `tests/out/sounds/*.wav` (`tools/render_sounds.py`).
 
 ## Frame budget
 

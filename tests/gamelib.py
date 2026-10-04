@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import re
 import struct
 from pathlib import Path
 from types import SimpleNamespace
@@ -18,6 +19,10 @@ COREGAMELOOP = 3
 GAMEPLAY_END = 4
 LEVEL_COMPLETE = 5
 PAUSED = 6
+
+# Sound effect numbers, from src/sound/effects.h (made from sounds/effects.txt).
+EFFECTS = {name.lower(): int(number) for name, number in re.findall(
+    r"#define EFFECT_(\w+) (\d+)", (Path(__file__).parent.parent / "src/sound/effects.h").read_text())}
 
 # Hardware registers by name (Pan Docs).
 REGISTERS = {
@@ -400,6 +405,15 @@ class Game:
         written the column the last update drew (level_stream_flush), so the background
         map and the collision ring match camera_x."""
         self.pyboy.hook_register(None, "_input_read_player", callback, None)
+
+    def track_effects(self) -> list:
+        """From now on, add each sound effect the game asks for to the returned list (by name)."""
+        names = {number: name for name, number in EFFECTS.items()}
+        played = []
+        # sound_play gets its uint8_t argument in A (GBDK's calling convention).
+        self.pyboy.hook_register(None, "_sound_play",
+                                 lambda _: played.append(names[self.pyboy.register_file.A]), None)
+        return played
 
     def track_sprites_per_line(self) -> list:
         """From now on, add to the returned list, for every gameplay update, the most

@@ -1,12 +1,17 @@
 """Music (roadmap M6): hUGEDriver plays the level's song one step per frame, from the line
-interrupt below the parallax band, and sound effects take their channel from the music
-until they have faded (src/sound/music.c, src/sound/sound.c)."""
+interrupt below the parallax band, and sound effects take their channels from the music
+until they end (src/sound/music.c, src/sound/sound.c)."""
+
+import sys
+from pathlib import Path
 
 from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, PAUSED
 
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
+import fxhammer2c  # noqa: E402
+
 BAND_SPLIT_LINE = 23        # src/engine/screen.h: BAND_LAST_LINE
-HT_CH1 = 1                  # hUGE_mute_mask bit of channel 1
-JUMP_EFFECT_FRAMES = 4      # sound_play_jump in sound.c
 
 
 def count_music_steps(game) -> list:
@@ -45,11 +50,14 @@ def test_each_game_level_starts_its_own_song(game):
     assert started[-2:] == songs
 
 
-def test_a_sound_effect_takes_its_channel_until_it_fades(game):
+def test_a_sound_effect_takes_its_channels_until_it_ends(game):
+    jump = next(e for e in fxhammer2c.read_pick_list(ROOT / "sounds/effects.txt") if e.name == "jump")
+    jump_frames = sum(step[0] for step in jump.steps)
     game.start_on_open_ground()
-    assert not game.u8("_hUGE_mute_mask") & HT_CH1
-    game.press("a")                                     # the jump sound is on CH1
+    game.frames(30)                                     # the pickup sound of the fragment there ends
+    assert not game.u8("_hUGE_mute_mask") & jump.channels
+    game.press("a")
     game.frames(1)
-    assert game.u8("_hUGE_mute_mask") & HT_CH1, "the jump didn't take CH1 from the music"
-    game.frames(JUMP_EFFECT_FRAMES + 1)
-    assert not game.u8("_hUGE_mute_mask") & HT_CH1, "CH1 never went back to the music"
+    assert game.u8("_hUGE_mute_mask") & jump.channels == jump.channels, "the jump didn't take its channels"
+    game.frames(jump_frames + 1)
+    assert not game.u8("_hUGE_mute_mask") & jump.channels, "the channels never went back to the music"
