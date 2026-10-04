@@ -31,6 +31,8 @@
 #define JUMP_BUFFER_FRAMES 5   // an A press this long before landing still jumps
 #define CORNER_CORRECTION  4   // px the head may slide sideways past a ceiling corner
 
+#define PLAYER_PALE_PALETTE 1      // GBC sprite palette while invincible
+
 #define ANIMATION_FRAME_LENGTH 4   // frames per run animation frame
 #define JUMP_POSE_FRAME 3
 

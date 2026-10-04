@@ -9,6 +9,7 @@
 #define NO_EXIT 0xFF            // exit_column of a test room
 
 uint8_t collision_ring[RING_COLUMNS * RING_ROWS];
+uint8_t ring_column_touched[RING_COLUMNS];
 
 static uint8_t tile_collision[256];                 // the tileset's table, copied to WRAM
 static uint8_t fragment_count;
@@ -16,6 +17,7 @@ static uint8_t fragment_column[MAX_FRAGMENTS];      // tile column, screen row a
 static uint8_t fragment_row[MAX_FRAGMENTS];         // of each fragment, in entity order
 static uint8_t fragment_section[MAX_FRAGMENTS];
 static uint8_t fragments_collected[MAX_FRAGMENTS / 8];   // one bit per fragment
+static uint8_t fragment_columns[256 / 8];           // one bit per level column with a fragment
 static uint8_t first_drawn_column;                  // leftmost column of the drawn window
 static uint8_t column_tiles[LEVEL_MAP_ROWS];
 
@@ -29,6 +31,7 @@ static void list_objects(void)
     for (uint8_t i = 0; i < current_level.entity_count; i++, entity++) {
         uint8_t column = entity->x >> 3, row = entity->y >> 3;
         if (entity->type == ENTITY_FRAGMENT) {
+            fragment_columns[column >> 3] |= 1 << (column & 7);
             fragment_column[fragment_count] = column;
             fragment_row[fragment_count] = row;
             fragment_section[fragment_count] = current_level.gate_count;
@@ -52,7 +55,9 @@ static void list_objects(void)
 void level_stream_start(void)
 {
     memset(collision_ring, COLLISION_NONE, sizeof(collision_ring));
+    memset(ring_column_touched, 0, sizeof(ring_column_touched));
     memset(fragments_collected, 0, sizeof(fragments_collected));
+    memset(fragment_columns, 0, sizeof(fragment_columns));
     memset(current_level.section_fragments, 0, LEVEL_SECTIONS);
     memset(current_level.section_collected, 0, LEVEL_SECTIONS);
     fragment_count = 0;
@@ -88,9 +93,12 @@ static void read_column(uint8_t column)
 // of a gate that are still closed, and the exit.
 static void add_objects(uint8_t column)
 {
-    for (uint8_t i = 0; i < fragment_count; i++) {
-        if (fragment_column[i] == column && !is_collected(i)) {
-            column_tiles[fragment_row[i] - LEVEL_MAP_TOP_ROW] = greybox_tileset_TILE_FRAGMENT;
+    // Most columns have no fragment: skip the search.
+    if (fragment_columns[column >> 3] & (1 << (column & 7))) {
+        for (uint8_t i = 0; i < fragment_count; i++) {
+            if (fragment_column[i] == column && !is_collected(i)) {
+                column_tiles[fragment_row[i] - LEVEL_MAP_TOP_ROW] = greybox_tileset_TILE_FRAGMENT;
+            }
         }
     }
     Gate* gate = current_level.gates;
@@ -113,9 +121,14 @@ static void draw_column(uint8_t column)
     add_objects(column);
 
     uint8_t* ring = &collision_ring[RING_INDEX(column, LEVEL_MAP_TOP_ROW)];
+    uint8_t touched = 0;
     for (uint8_t row = 0; row < LEVEL_MAP_ROWS; row++) {
-        ring[row] = tile_collision[column_tiles[row]];
+        uint8_t type = tile_collision[column_tiles[row]];
+        ring[row] = type;
+        if (type >= FIRST_TOUCHED_TYPE) touched = 1;
     }
+    // A pickup leaves the flag set: a column scanned for nothing costs a little, no more.
+    ring_column_touched[column & (RING_COLUMNS - 1)] = touched;
     set_bkg_tiles(column & (RING_COLUMNS - 1), LEVEL_MAP_TOP_ROW, 1, LEVEL_MAP_ROWS, column_tiles);
 }
 

@@ -33,7 +33,7 @@ to fix now and still worth it, even though a later milestone replaces that code.
 | G2 | Platforms look like rows of fins, not solid ground. | Solid tiles are drawn with tile 128, the top-left quarter of the mushroom picture (a debug view). | A plain 8×8 block tile for solid ground: the start of the greybox tileset. | **Quick win**, then M2 greybox |
 | G3 | Fragments are black diamonds inside white boxes. | The fragment tile uses colors 0 and 3 only. Color 0 is white, and the sky behind it is dark gray. | Proper fragment art. Until then, it stays as it is. | M5 |
 | G4 | The sky is dark gray, so the scene reads as night. | The placeholder background's colors map to dark shades through the DMG palette. | New Server Room tileset. | M5 |
-| G5 | On GBC, the enemy mushrooms look washed out. | Enemies use sprite palette 0, which holds the player's colors on GBC. | Separate sprite palettes per actor type. | M4 |
+| G5 | On GBC, the enemy mushrooms look washed out. | Enemies use sprite palette 0, which holds the player's colors on GBC. | Separate sprite palettes per actor type. | M5. Since G1 reordered the player's palette, bots look the same on GBC as on DMG; the security bot gets its own palette with its art |
 | G6 | The HUD has a coin icon (column 13) that means nothing. The heart and lives digit are drawn over the HUD art's own heart. | Placeholder HUD art from before the counter existed. | New HUD design with lives and fragments against the quota. | M3 (layout), M5 (art) |
 | G7 | Enemies are mushrooms. | Placeholder. | Security bot sprite. | M5 |
 
@@ -44,16 +44,16 @@ to fix now and still worth it, even though a later milestone replaces that code.
 | P1 | Holding A makes the player jump again on every landing. | `input.c` starts a jump whenever A is down while on the ground, not only on a new press. | Start a jump only on a new press (`!(joypad_previous & J_A)`). M2 adds jump buffering on top. | **Quick win**, then M2 |
 | P2 | The player walks through platform A at body height. | Bug 7: horizontal collision checks one point near the feet. | Collision rewrite. Expected-failure test exists. | M2 |
 | P3 | Falling can turn upward; releasing A doesn't shorten a jump. | Bugs 5 and 6: gravity from a frame-count table. | Physics rewrite. Expected-failure test exists for 5. | M2 |
-| P4 | Level complete and game over are only flashes. No text, no score; level complete reloads the same level. | Not built yet. | Level complete and game over screens. | M7 |
+| P4 | Level complete and game over are only flashes. No text, no score; level complete reloads the same level. | Not built yet. | Level complete and game over screens. | M7. Level complete shows the fragments since 2026-10-04; game over waits |
 | P5 | During the game-over wait, the HUD still shows the old lives count for about 1.5 s. | The HUD updates only after the level reloads. | Comes with the game-over screen. | M7 |
-| P6 | On GBC, the screen never fades or flashes, and the level reload after game over or level complete is visible. | Fades write `BGP_REG`, which GBC ignores. | Palette module. | M4 |
+| P6 | On GBC, the screen never fades or flashes, and the level reload after game over or level complete is visible. | Fades write `BGP_REG`, which GBC ignores. | Palette module. | **Fixed** 2026-10-04 (M4, `src/engine/palette.c`) |
 
 ## Text
 
 | # | What you see | Fix | When |
 |---|---|---|---|
 | T1 | The intro credits say "v1.0.0" and "2024". | Update to the current year and a development version. | **Quick win** |
-| T2 | Intro text uses GBDK's built-in font, not the game's own. | Game font. | M5 |
+| T2 | Intro text uses GBDK's built-in font, not the game's own. | Game font. | Placeholder font since 2026-10-04 (`src/engine/text.c`); the M5 font replaces its tiles |
 
 ## Proposed quick wins
 

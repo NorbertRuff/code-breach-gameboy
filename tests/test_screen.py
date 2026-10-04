@@ -54,9 +54,12 @@ def test_no_sprite_is_drawn_over_the_hud(game):
     hud = game.pyboy.screen.ndarray[HUD_FIRST_LINE:].copy()
     game.place_player(296, 119)                     # over the pit, past gate A
     reached_hud = False
+    lives = game.lives()
     for _ in range(20):
         game.tick(render=True)
         player = game.player()
+        if game.lives() != lives:                   # fell out: the HUD's lives digit changes
+            break
         if player.py >= HUD_FIRST_LINE:
             reached_hud = True
             assert (game.pyboy.screen.ndarray[HUD_FIRST_LINE:] == hud).all(), f"sprite over the HUD at feet {player.py}"

@@ -14,9 +14,9 @@ def patrol_starts(game) -> list:
 
 
 def expected_sprite_count(game) -> int:
-    """The player's 4 hardware sprites unless it flashes, and 2 per actor whose 16 px body
-    is at least partly on screen."""
-    flashing = game.player().invincibility_frames & 2
+    """The player's 4 hardware sprites unless it blinks (invincible on DMG), and 2 per actor
+    whose 16 px body is at least partly on screen."""
+    flashing = game.mode == "dmg" and game.player().invincibility_frames & 2
     camera = game.camera_x()
     return (0 if flashing else 4) + 2 * sum(-8 < a.x - camera < 168 for a in game.actors())
 

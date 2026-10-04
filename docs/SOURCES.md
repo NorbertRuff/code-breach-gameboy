@@ -16,11 +16,13 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Autobank build flags (`-autobank -Wb-ext=.rel`, `-Wm-yoA`), MBC5 + RAM + battery header (`-Wl-yt0x1B`), GBC-compatible header (`-Wm-yc`), `.sym` output (`-Wm-yS`) | GBDK docs, toolchain settings; checked by the research agent on GBDK 4.5.0 | `Makefile` | In use |
 | One Makefile for PowerShell, cmd and Git Bash: force `cmd.exe` on Windows | Own finding (make picks `sh.exe` only when Git Bash is on PATH) | `Makefile` | In use |
 | Hardware detection `_cpu == CGB_TYPE`; guard VRAM bank 1 writes on DMG | GBDK docs (supported consoles), Pan Docs | `src/engine/platform.c` | In use |
-| Gray GBC palettes matching the DMG shades, attribute maps cleared at boot | Own design, from Pan Docs on CGB palettes and attributes | `src/engine/platform.c` | In use (until M4) |
+| Gray GBC palettes matching the DMG shades, attribute maps cleared at boot | Own design, from Pan Docs on CGB palettes and attributes | `src/engine/palette.c` `palette_init`, `src/engine/platform.c` | In use (until the M5 palettes) |
 | Window HUD at an absolute position: `move_win(7, 128)`, `WX = 7` is the left edge | GBDK docs (`move_win`, `scroll_win` is relative), flozz/gameboy-examples example 08 | `level_manager.c` `set_hud_window_tiles` | In use |
 | Metasprites for the 16×32 player (4 hardware sprites in 8×16 mode), `move_metasprite_ex` / `move_metasprite_flipx` | GBDK docs, `metasprites.h`; Larold's metasprite tutorial | `player.c` `player_draw` | In use |
-| DMG fades by stepping `BGP_REG` (`0xE4 → 0xF9 → 0xFE → 0xFF`) | The project's early versions; same technique in flozz example 09 | `utils.c` | In use (DMG) |
-| Flashes at most 3 per second | WCAG 2.3.1 "Three Flashes or Below Threshold" (found by the game-feel research) | `game_over.c` `palette_flash` | In use |
+| DMG fades by stepping `BGP_REG` (`0xE4 → 0xF9 → 0xFE → 0xFF`) | The project's early versions; same technique in flozz example 09 | `src/engine/palette.c` `palette_fade_to` | In use (DMG) |
+| Flashes at most 3 per second | WCAG 2.3.1 "Three Flashes or Below Threshold" (found by the game-feel research) | `src/engine/palette.c` `palette_flash` | In use |
+| GBC fades and the pale invincible player: scale all three RGB555 channels at once by shifting the whole color word and masking off the bits that slid into the next channel (`(c >> 2) & 0x1CE7`) | Own design; the masking is the usual trick for packed values ("SIMD within a register"); palette format from Pan Docs, CGB registers | `src/engine/palette.c` | In use |
+| Code that isn't per-frame in ROM banks: `#pragma bank 255` and `BANKED` functions, placed by autobank | GBDK docs, ROM/RAM banking and banked functions | `intro_credits.c`, `game_over.c`, `pause.c` | In use |
 | Load a level while the screen is black, then fade in | Own fix (review of the early versions, bug 3) | `main.c` `GAMEPLAY_START` | In use |
 | Parallax: a screen-line (LYC) interrupt changes `SCX` per band | Larold's Retro Gameyard, "Parallax Backgrounds with GBDK-2020"; GBDK examples `gb/lcd_isr_wobble`, `cross-platform/irq` | `src/engine/screen.c` `on_split_line` | In use |
 | Hide sprites over the bottom HUD with the same interrupt (`HIDE_SPRITES` at line 127) | Larold's Flappy Bird tutorial; BlackCastle `src/main.c` (idea only, no license) | `src/engine/screen.c` `on_split_line` | In use |
@@ -58,6 +60,8 @@ document or a person, add a row here in the same change. Status is *in use* or
 | ROM layout checks: `_HOME` below `0x4000`, header bytes, checksums | quintra `scripts/check_rom_layout.py`, `check_cartridge.py` (idea only) | `tests/test_rom.py` | In use |
 | Known bugs as strict expected failures; regression tests checked against the old build | Own convention | `tests/test_known_bugs.py`, `tests/test_regressions.py` | In use |
 | Replaying from one frame with `save_state` / `load_state` | PyBoy 2.7.0 docs | `tests/gamelib.py` `save`, `load`; `tests/test_physics.py` | In use |
+| Golden screenshots: render a screen and compare it pixel for pixel with a stored picture, rewritten on purpose (`make goldens`) | Snapshot testing, a common test technique; PyBoy 2.7.0 `screen.image` | `tests/test_golden.py` | In use |
+| Level replays as moves that watch the game (run to x, jump, follow a bot) instead of fixed frame counts | Own design, after frame-exact routes broke with small layout changes | `tests/gamelib.py` `Pilot`, `tests/test_level_1.py` | In use |
 | Reading game state at a fixed point in the frame: copy the struct from a `hook_register` callback on `player_draw`; test writes to the player wait for the same point | Own finding (PyBoy frames end mid-update) | `tests/gamelib.py` `player()`, `place_player()` | In use |
 | Reachability by simulating jumps with a copy of the game's physics, from every reachable surface; jump arcs drawn from the simulated paths | Own design (the plan in LEVEL_DESIGN.md section 1, step 3) | `tools/levelpreview.py`, `tools/physics.py` | In use |
 | Finding lag frames: count game-loop calls per frame with a PyBoy hook; time code by reading `LY` at function entries (114 CPU cycles per line) | Own method | `tests/gamelib.py` `track_frame_lines`, `tests/test_frame_budget.py`, `tools/frame_budget.py` | In use |
@@ -75,6 +79,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Hard mode after clearing (quota = all fragments) | Kirby's Dream Land extra mode (game-feel research), accepted by the owner | GAME_DESIGN.md | Planned (M7) |
 | Brighter palettes on GBA | Shantae's GBA enhancement (game-feel research), accepted by the owner | CGB_PLAN.md | Planned (M4) |
 | Readability: light shades behind the play lane, black outlines | GB Studio Central sprite style notes (game-feel research) | ART_PIPELINE.md | Planned (M5) |
+| Indexed PNG with palettes in groups of 4, light to dark, for `png2asset -keep_palette_order`; per-tile palettes in the attribute map | GBDK png2asset docs (`-keep_palette_order`, `-use_map_attributes`) | `tools/gbconvert.py` | In use (tool ready, art in M5) |
 
 ## Assets
 
@@ -92,6 +97,7 @@ games ships (decision 2026-10-03).
 | `graphics/start_screen/apexLogo.png`, `press_start.png`, `src/graphics/splashscreen.c` | Owner (ApexLab logo) | Keep the logo; redo the title screen in M5 |
 | Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`), HUD digits and heart (hand-written in `level_manager.c`) | Project code | Placeholders until M5 |
 | Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder until M5 |
+| Placeholder font (`src/graphics/font.c`): A-Z, 0-9, punctuation, 8×8 bold | Project code, drawn in the style of the existing HUD digits | Placeholder until the M5 font |
 | Sound effects in `src/sound/sound.c` | Project code (register values) | In use |
 | Music | Tronimal, Game Boy Music Packs #1 and #2, CC BY 4.0 | Planned (M6); credit required |
 | Sound effect packs | Tronimal GBFX / GBFX2, CC-BY | Planned (M6); credit required |

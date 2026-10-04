@@ -130,3 +130,12 @@ def test_enemy_over_a_pit_is_a_warning():
     tmj = small_map()
     tmj["layers"][0]["data"][12 * 20 + 13] = EMPTY      # a hole under the patrol
     assert any("no ground at column 13" in w for w in convert(tmj).warnings)
+
+
+def test_narrow_pit_is_a_warning():
+    tmj = small_map()
+    for column in (15, 16):
+        tmj["layers"][0]["data"][12 * 20 + column] = EMPTY
+    assert any("pit at columns 15-16 is 2 wide" in w for w in convert(tmj).warnings)
+    tmj["layers"][0]["data"][12 * 20 + 17] = EMPTY
+    assert not any("pit at" in w for w in convert(tmj).warnings)

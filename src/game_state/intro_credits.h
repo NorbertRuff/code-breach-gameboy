@@ -1,8 +1,8 @@
 #ifndef INTRO_CREDITS_H_
 #define INTRO_CREDITS_H_
 
-void show_intro_credits();
+#include <gb/gb.h>
 
-void handle_intro_credits();
+void play_intro_credits(void) BANKED;
 
 #endif

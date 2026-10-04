@@ -5,9 +5,6 @@
 #define PRESS_START_CYCLE_FRAMES 60
 #define PRESS_START_SHOWN_FRAMES 40
 
-void init_splash_screen();
-
-// Call once per frame while the title screen waits for START.
-void update_splash_screen(uint16_t *frame_counter);
+void run_title_screen(void);
 
 #endif // START_SCREEN_H_

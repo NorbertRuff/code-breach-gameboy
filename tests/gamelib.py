@@ -17,6 +17,7 @@ GAMEPLAY_START = 2
 COREGAMELOOP = 3
 GAMEPLAY_END = 4
 LEVEL_COMPLETE = 5
+PAUSED = 6
 
 # Hardware registers by name (Pan Docs).
 REGISTERS = {
@@ -66,8 +67,9 @@ for _name, _fmt in PLAYER_FIELDS:
     _offset += struct.calcsize("<" + _fmt)
 
 # Levels and the collision ring, from src/level/level_manager.h and level_data.h.
-LEVEL_GREYBOX_TEST = 0
-LEVEL_TEST_JUMPS = 1
+LEVEL_1 = 0
+LEVEL_GREYBOX_TEST = 1
+LEVEL_TEST_JUMPS = 2
 RING_COLUMNS = 32
 RING_ROWS = 16
 TILE_SIZE = 8
@@ -141,7 +143,8 @@ def read_symbol(pyboy: PyBoy, symbol: str, size: int = 1) -> bytes:
 class Game:
     """One running ROM plus the test's output folder for screenshots."""
 
-    def __init__(self, pyboy: PyBoy, mode: str, out_dir: Path, test_name: str):
+    def __init__(self, pyboy: PyBoy, mode: str, out_dir: Path, test_name: str,
+                 level: int = LEVEL_GREYBOX_TEST):
         self.pyboy = pyboy
         self.mode = mode
         self.out_dir = out_dir
@@ -153,7 +156,25 @@ class Game:
         # Writes to the player wait for the same point, so they never land mid-update.
         self._drawn_player = None
         self._player_writes = {}
+        self._update_end_callbacks = []
         pyboy.hook_register(None, "_player_draw", self._at_player_draw, None)
+        # The game starts in level 1; most tests play the greybox test level. main() runs
+        # once, after the C globals are set, so the first GAMEPLAY_START loads `level`.
+        # Builds from before level 1 (tools/test_against.py) number the levels otherwise
+        # and start in the greybox level anyway: leave those alone.
+        if self.has_symbol("_level_1"):
+            pyboy.hook_register(None, "_main", self._set_level_index, level)
+
+    def has_symbol(self, symbol: str) -> bool:
+        try:
+            self.pyboy.symbol_lookup(symbol)
+            return True
+        except ValueError:
+            return False
+
+    def _set_level_index(self, level: int) -> None:
+        _, addr = self.pyboy.symbol_lookup("_level_index")
+        self.pyboy.memory[addr] = level
 
     def _at_player_draw(self, _context) -> None:
         """The frame's update is done: apply waiting writes, then copy the struct."""
@@ -248,6 +269,8 @@ class Game:
         """The actors in play, in array order. Each has the Actor fields, plus bot: is it
         a patrol bot."""
         count = self.u8("_actor_count")
+        if not count:
+            return []                           # PyBoy refuses an empty memory slice
         raw = read_symbol(self.pyboy, "_actors", ACTOR_SIZE * count)
         _, bot_type = self.pyboy.symbol_lookup("_bot_type")
         actors = []
@@ -290,6 +313,30 @@ class Game:
     def reg(self, name: str) -> int:
         return self.pyboy.memory[REGISTERS[name]]
 
+    def gbc_colors(self, sprites: bool = False) -> list:
+        """GBC only: the 32 colors (RGB555) of the 8 background or sprite palettes. Reads
+        palette memory through its index register, which is put back afterwards."""
+        index_reg, data_reg = (0xFF6A, 0xFF6B) if sprites else (0xFF68, 0xFF69)
+        memory = self.pyboy.memory
+        saved = memory[index_reg]
+        raw = []
+        for i in range(64):
+            memory[index_reg] = i
+            raw.append(memory[data_reg])
+        memory[index_reg] = saved
+        return [raw[i] | raw[i + 1] << 8 for i in range(0, 64, 2)]
+
+    def background_is_black(self) -> bool:
+        """Is the background (with the HUD) all black? DMG: BGP is 0xFF. GBC: every
+        background color is 0."""
+        if self.mode == "dmg":
+            return self.reg("BGP") == 0xFF
+        return not any(self.gbc_colors())
+
+    def sprite_palettes(self):
+        """What the sprites are drawn with: OBP0 on DMG, the sprite colors on GBC."""
+        return self.reg("OBP0") if self.mode == "dmg" else self.gbc_colors(sprites=True)
+
     def window_tile(self, col: int, row: int) -> int:
         """Tile index in the window map (VRAM bank 0). LCDC bit 6 picks the map."""
         base = 0x9C00 if self.reg("LCDC") & 0x40 else 0x9800
@@ -331,8 +378,36 @@ class Game:
                 lines.append(self.lines_since_vblank(start.pop("vblanks")))
 
         self.pyboy.hook_register(None, "_main_game_loop", at_update_start, None)
-        self.pyboy.hook_register(None, "_wait_vbl_done", at_update_end, None)
+        self.at_update_end(at_update_end)
         return lines
+
+    def at_update_end(self, callback) -> None:
+        """Call callback(None) whenever the game starts waiting for VBlank. PyBoy allows one
+        hook per address, so the trackers share this one."""
+        if not self._update_end_callbacks:
+            self.pyboy.hook_register(None, "_wait_vbl_done",
+                                     lambda _: [c(None) for c in self._update_end_callbacks], None)
+        self._update_end_callbacks.append(callback)
+
+    def track_sprites_per_line(self) -> list:
+        """From now on, add to the returned list, for every gameplay update, the most
+        hardware sprites on one screen line (8x16 sprites; the hardware draws at most 10
+        per line). Counted by y only: the hardware counts sprites off screen to the side
+        too. Reads OAM when an update ends, so each entry is the frame being shown."""
+        most = []
+        self.at_update_end(lambda _: most.append(self.sprites_on_busiest_line()))
+        return most
+
+    def sprites_on_busiest_line(self) -> int:
+        """The most hardware sprites in OAM on one screen line (8x16 sprites; the hardware
+        draws at most 10 per line). By y only: sprites off screen to the side count too."""
+        oam = self.pyboy.memory[0xFE00:0xFEA0]
+        per_line = [0] * 144
+        for i in range(0, 160, 4):
+            top = oam[i] - 16
+            for line in range(max(top, 0), min(top + 16, 144)):
+                per_line[line] += 1
+        return max(per_line)
 
     # --- changing the game (tests only) ----------------------------------------
     # Some situations would take minutes of play to reach. These write the game's
@@ -419,3 +494,116 @@ class Game:
         self.tick(render=True)
         pixels = self.pyboy.screen.ndarray[:, :, :3].reshape(-1, 3)
         return len({tuple(p) for p in pixels})
+
+
+class Pilot:
+    """Plays a level with moves that watch the player every frame: run to an x, jump, drop
+    off a ledge, get past a bot, open a gate. Positions are world pixels, like Tiled's.
+    Any move that costs a life fails, with the place. log gets a line per move."""
+
+    FOLLOW_GAP = 40     # px between the body centers while following a bot
+    TIMEOUT = 600       # frames a move may take
+
+    def __init__(self, game: Game, log=None):
+        self.game = game
+        self.log = log or (lambda _: None)
+        self.held = set()
+        self.lives = game.lives()
+
+    def where(self) -> str:
+        p = self.game.player()
+        return f"x {p.px}, y {p.py}, fragments {self.game.level().section_collected}"
+
+    def buttons(self, wanted: str) -> None:
+        """Hold exactly the named buttons ("a right", or "" for none)."""
+        wanted = set(wanted.split())
+        for button in self.held - wanted:
+            self.game.pyboy.button_release(button)
+        for button in wanted - self.held:
+            self.game.pyboy.button_press(button)
+        self.held = wanted
+
+    def frame(self) -> None:
+        """Step one frame; fail if it cost a life."""
+        self.game.frames(1)
+        if self.game.lives() != self.lives:
+            raise AssertionError(f"lost a life at {self.where()}")
+
+    def wait(self, condition, what: str) -> None:
+        for _ in range(self.TIMEOUT):
+            if condition():
+                return
+            self.frame()
+        raise AssertionError(f"waited too long for {what} at {self.where()}")
+
+    def run_to(self, x: int) -> None:
+        """Run until the body center reaches x."""
+        right = x > self.game.player().px
+        self.buttons("right" if right else "left")
+        self.wait(lambda: self.game.player().px >= x if right else self.game.player().px <= x, f"x {x}")
+
+    def stop(self) -> None:
+        """Let go of everything and wait until standing still on the ground."""
+        self.buttons("")
+        self.wait(lambda: self.game.player().on_ground and self.game.player().velocity_x == 0, "a stop")
+
+    def jump(self, hold: int, steer: int = 0) -> None:
+        """Jump right holding A for hold frames. steer: frames to hold right, or 0 to hold
+        it until the landing and keep running."""
+        self.wait(lambda: self.game.player().on_ground, "ground to jump from")
+        for frame in range(self.TIMEOUT):
+            self.buttons(("right" if not steer or frame < steer else "") + (" a" if frame < hold else ""))
+            self.frame()
+            if frame and self.game.player().on_ground:
+                break
+        self.buttons("" if steer else "right")
+        self.log(f"landed at {self.where()}")
+
+    def drop_off(self) -> None:
+        """Walk right off the ledge and fall straight down."""
+        self.buttons("right")
+        self.wait(lambda: not self.game.player().on_ground, "the ledge's edge")
+        self.buttons("")
+        self.wait(lambda: self.game.player().on_ground, "a landing")
+        self.log(f"dropped to {self.where()}")
+
+    def bot(self, patrol_left: int):
+        """The bot whose patrol starts at x patrol_left (its Tiled rectangle's left edge)."""
+        for actor in self.game.actors():
+            if actor.bot and actor.min_x == patrol_left + 8:
+                return actor
+        raise AssertionError(f"no bot patrols from x {patrol_left} at {self.where()}")
+
+    def wait_for_bot(self, patrol_left: int, x_from: int, x_to: int) -> None:
+        """Stand still until the bot walks right, away from the player, between two x."""
+        self.stop()
+        self.wait(lambda: self.bot(patrol_left).direction == 1 and x_from <= self.bot(patrol_left).x <= x_to,
+                  f"the bot from x {patrol_left}")
+
+    def pass_bot(self, patrol_left: int, hold: int = 30, distance: int = 48) -> None:
+        """Wait until the bot walks away, follow it, and jump over it when it turns back
+        and is distance px away."""
+        self.stop()
+        self.wait(lambda: self.bot(patrol_left).direction == 1 and self.bot(patrol_left).x - self.game.player().px > 32,
+                  f"the bot from x {patrol_left} to walk away")
+
+        def turned_back() -> bool:
+            gap = self.bot(patrol_left).x - self.game.player().px
+            self.buttons("right" if gap > self.FOLLOW_GAP else "")
+            return self.bot(patrol_left).direction == -1 and gap <= distance
+
+        self.wait(turned_back, f"the bot from x {patrol_left} to turn back")
+        self.jump(hold)
+
+    def open_gate(self, section: int) -> None:
+        """Run right into a gate until it opens and the section (1 = B) starts."""
+        self.buttons("right")
+        self.wait(lambda: self.game.level().section >= section, "the gate to open")
+        self.log(f"gate opened at {self.where()}")
+
+    def reach_exit(self) -> None:
+        """Run right until the level is complete."""
+        self.buttons("right")
+        self.wait(lambda: self.game.state() == LEVEL_COMPLETE, "the exit")
+        self.buttons("")
+        self.log(f"level complete, {self.where()}")

@@ -5,7 +5,7 @@ the flashcart.
 
 [PyBoy](https://github.com/Baekalfen/PyBoy) 2.7.0 is a Game Boy emulator with a Python
 API. It runs without a window, far faster than real time. Tests press buttons, step
-frames, read memory and take screenshots. The whole suite runs in about 2 seconds.
+frames, read memory and take screenshots. The whole suite runs in about 20 seconds.
 
 ## The loop
 
@@ -33,8 +33,8 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | File | Holds |
 |---|---|
 | `pytest.ini` | Test folder, strict expected failures, warning filter |
-| `tests/conftest.py` | Fixtures: `game` (one booted ROM per test and mode), `mode`, `rom_dir`, `rom_bytes` |
-| `tests/gamelib.py` | `boot()`, the `Game` helper class, the `Player` struct mirror, constants copied from the C headers |
+| `tests/conftest.py` | Fixtures: `game` (one booted ROM per test and mode, in the greybox level or the one `@pytest.mark.level` names), `mode`, `rom_dir`, `rom_bytes` |
+| `tests/gamelib.py` | `boot()`, the `Game` helper class, `Pilot` (level replays), the `Player` struct mirror, constants copied from the C headers |
 | `tests/test_rom.py` | Header bytes, checksums, ROM size, bank 0 layout from the linker map |
 | `tests/test_boot.py` | Hardware detection, reaching gameplay, walking, jumping, screen drawn |
 | `tests/test_regressions.py` | One test per fixed bug |
@@ -47,8 +47,16 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_screen.py` | The screen splits: band and level scroll per screen line, the band drawn once and kept by streaming, no sprite over the HUD, the band palette light to dark |
 | `tests/test_sections.py` | Gates as solid columns, closed below the quota, opening on touch, the opened gate as checkpoint, the camera and player lock, lives and game over per section, the exit |
 | `tests/test_frame_budget.py` | A route that finishes the greybox level (both gates, the exit): no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right |
+| `tests/test_level_1.py` | The level complete summary shows the fragments and START goes on. `Pilot` replays finish level 1 without losing a life, through section B's high and low routes, from two start times, with no lag frames, every update within `FRAME_LINE_LIMIT`, and at most 10 sprites on any screen line (`game.track_sprites_per_line()`) |
+| `tests/test_pause.py` | START pauses (nothing moves, the label shows) and resumes; SELECT while paused cycles the levels |
+| `tests/test_palette.py` | Only `src/engine/palette.c` writes palettes (a source scan); losing a life fades out and back in through the same steps on DMG and GBC; the invincible player blinks on DMG and is pale on GBC; the band and HUD use their own GBC palettes |
+| `tests/test_golden.py` | Key screens (level 1 start, the rack stair, the pause, the invincible player) match `tests/golden/<screen>_<mode>.png` pixel for pixel; a mismatch saves the new picture and a mask of the changed pixels to `tests/out/`. `make goldens` rewrites them after an intended change |
+| `tests/test_gbconvert.py` | The art converter on generated pictures: upscale and the given size, snapping, palette per tile, flipped sprite tiles, tile budget, every rule break, previews |
+| `tests/test_sketch2tmj.py` | Level sketches: level 1 and the greybox level survive the trip to a sketch and back; a sketch with every legend character converts; errors |
+| `tests/test_fuzz.py` | Random play from level 1 with fixed seeds, pause and level-select included: after every frame a valid state, no lag frame, the body in no solid tile, at most 10 sprites on a line, the camera inside the level, the HUD count right; and, when each update ends, every screen column matching the map (markers only where the level has that object) and the collision ring matching the tiles. For a bigger scan, loop over more seeds with `play`, `problems` and `screen_mismatch` |
+| `tests/test_text.py` | Screen text in the game's font: the intro credits (reached from play, since the test build skips the intro) are the right font tiles in the right places |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
-| `tests/test_savetest.py` | Cartridge RAM survives power cycles (`obj/savetest.gb`) |
+| `tests/test_savetest.py` | Cartridge RAM survives power cycles, for `obj/savetest.gb` (MBC5) and the MBC1 and MBC3 variants; each header names its mapper |
 
 ## How PyBoy is set up
 
@@ -85,7 +93,11 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   `place_player` then runs 10 frames: a far move makes the camera jump, and redrawing a
   whole screen of columns takes about 6 frames. A 1-frame button press in a lag frame
   is never read.
-- **Levels.** The game plays `levels/greybox_test.tmj`. `game.load_level(LEVEL_TEST_JUMPS)`
+- **Levels.** The game starts in level 1, but `Game` writes `level_index` when `main()`
+  starts, so tests play `levels/greybox_test.tmj`. Builds from before level 1 (an old
+  commit under `tools/test_against.py`) number the levels otherwise and start in the
+  greybox level anyway, so `Game` leaves them alone. `@pytest.mark.level(LEVEL_1)` on a
+  test starts it in another level. `game.load_level(LEVEL_TEST_JUMPS)`
   restarts in the test room with the jump metric fixtures. Test geometry lives in Tiled
   levels: writing collision from a test doesn't last once columns stream.
 - `game.actors()` reads the actors in play through `ACTOR_FIELDS` (checked like the
@@ -104,6 +116,13 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   buttons named, like `(26, "a right")`. Routes are input, so they stay valid when game
   state moves in memory, but a physics or enemy change can break them: a route test
   checks that its route still gets where it should.
+- **Level replays.** `Pilot(game)` plays a level with moves that watch the player every
+  frame: `run_to(x)`, `jump(hold, steer)`, `drop_off()`, `stop()`, `wait_for_bot`,
+  `pass_bot` (wait until the bot walks away, follow it, jump over it when it turns back),
+  `open_gate(section)` and `reach_exit()`. x is in world pixels (Tiled's x); a bot is
+  named by its patrol rectangle's left edge. A move that loses a life fails with the
+  place and the fragments so far. `Pilot(game, print)` logs every landing, which helps
+  when writing a route.
 - **Frame budget.** The ROM counts lag frames in `lag_frames` (`src/main.c`): every
   VBlank that passes during an update is a frame shown without one.
   `game.track_frame_lines()` returns a list that fills with, for every update, the screen
@@ -143,8 +162,12 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
   `@pytest.mark.xfail(reason=...)`. `pytest.ini` sets `xfail_strict = true`: when the bug
   is fixed, the test passes and the run fails, so the test moves to
   `test_regressions.py` without the marker.
-- **DMG-only effects** (fades and flashes through `BGP_REG`, until the palette module in
-  M4) use `@pytest.mark.parametrize("mode", ["dmg"])` instead of running in both modes.
+- **Fades and flashes run in both modes** since the palette module. Check them with
+  `game.background_is_black()` (DMG: `BGP` is `0xFF`; GBC: every background color is 0),
+  `game.sprite_palettes()` (DMG: `OBP0`; GBC: the sprite colors) and
+  `game.gbc_colors(sprites=False)`, which reads GBC palette memory through its index
+  register and puts the register back. A test that only makes sense on one system uses
+  `@pytest.mark.parametrize("mode", ["dmg"])`.
 - **Build variants** for one-off checks: `make OBJDIR=<folder> EXTRA_CFLAGS=-D...`. For
   example, `EXTRA_CFLAGS=-DSKIP_INTRO_AND_START=0` builds a ROM with the intro and title
   screen. Always use a separate `OBJDIR` so `obj/` keeps the normal build.
@@ -161,21 +184,22 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
    directly. Some EverDrive clones only write the save to the SD card on one of them.
 4. Press A to clear the save when done.
 
-If the count never goes up, battery saves don't work on this cartridge, and the game
-falls back to passwords (docs/DECISIONS.md).
+If the count never goes up, try the same with `obj/savetest_mbc1.gb` and
+`obj/savetest_mbc3.gb` (built by `make savetest` too): the same test with an MBC1 or MBC3
+header, named on the second line of the screen. Some clones keep saves only for some
+mappers. If no variant keeps the count, battery saves don't work on this cartridge, and
+the game falls back to passwords (docs/DECISIONS.md).
 
 ## Continuous integration
 
 `.github/workflows/build.yml` runs on every push and pull request, on `ubuntu-24.04`:
 download and cache GBDK 4.5.0, `make all savetest` (the build fails if a ROM bank
-overflows), `make test`, then upload the ROMs. On failure it uploads `tests/out/`.
+overflows), `make test`, then upload the ROMs (the game and the three save test ROMs). On failure it uploads `tests/out/`.
 
 ## Still planned
 
 | Test | When |
 |---|---|
-| Golden screenshots per screen and mode, `pytest --update-golden` to accept changes | M4 |
-| Replays: recorded inputs in `tests/replays/*.json` that must still finish a level | M3 |
 | Golden copies of the `make shots` contact sheets, to spot visual changes. For now, compare by hand: `tools/shots.py --out tests/out/shots_before` before a change, `make shots` after, then `tools/compare_shots.py tests/out/shots_before tests/out/shots` | M4 |
 
 ## What PyBoy cannot prove

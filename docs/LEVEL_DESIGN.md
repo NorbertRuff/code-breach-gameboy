@@ -10,7 +10,7 @@ Agreed on 2026-10-02: **Claude drafts, the owner reacts.**
 | Step | Who | Output |
 |---|---|---|
 | 1. Brief | Claude proposes, owner edits in chat | Section-by-section plan, stored in this file |
-| 2. Greybox | Claude | Text sketch in chat, then a Tiled map (`levels/level_N.tmj`) using the plain block tileset |
+| 2. Greybox | Claude | Text sketch in chat, then a Tiled map (`levels/level_N.tmj`) using the plain block tileset: `tools/sketch2tmj.py sketch.txt -o levels/level_N.tmj` turns the sketch into the map |
 | 3. Preview and checks | Claude | `make preview` → `tests/out/levels/<name>.png`: the whole level with column numbers, enemies, fragments and jump arcs. Plus a reachability report: can every fragment, gate and the exit be reached with the real jump? ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md) section 5) |
 | 4. Owner pass | Owner | Edits in Tiled, or notes by column number. Plays it in Emulicious. |
 | 5. Tune | Claude | Applies the notes. A PyBoy replay test proves the level can be finished. |
@@ -19,7 +19,9 @@ Agreed on 2026-10-02: **Claude drafts, the owner reacts.**
 **Feedback format:** refer to tile columns. Both the preview and Tiled's status bar show
 them. Examples: "col 42: gap too wide", "section B drags", "the bot at col 88 is unfair".
 
-**Text sketch legend** (used for quick drafts in chat):
+**Text sketch legend** (used for quick drafts in chat; `tools/sketch2tmj.py` converts a
+sketch to a Tiled map, and `--from-tmj levels/<map>.tmj` prints a map as a sketch, so the
+sketches in this file can be redrawn after an edit in Tiled):
 
 | Char | Meaning |
 |---|---|
@@ -28,7 +30,7 @@ them. Examples: "col 42: gap too wide", "section B drags", "the bot at col 88 is
 | `=` | One-way platform (from level 2) |
 | `^` | Hazard (from level 4) |
 | `*` | Code fragment |
-| `E` | Enemy (patrol range set in Tiled) |
+| `E` | Enemy: a run of `E`s is one patrol bot standing on the row below, the run is its patrol range |
 | `P` | Player start |
 | `G` | Security gate (section end and checkpoint) |
 | `D` | Exit elevator |
@@ -105,6 +107,12 @@ What follows from these numbers:
   stairs (steps of 1–4 tiles), or with a one-way platform: it doesn't block walking and
   can be jumped through from below.
 - A climb of 2 or more tiles needs A held; a tap only clears 1-tile steps.
+- **A pit must be at least 3 tiles wide.** The body is 2 tiles wide: it walks across a
+  2-tile pit without falling in. `tools/tiled2c.py` warns about narrower pits.
+- **A bot can only be jumped with 8 free rows above its floor** (a shelf over a floor on
+  row 12 at row 3 or higher). Under a lower shelf the jump bonks too early: with 7 free
+  rows the body clears the bot for about 11 frames, which covers about 27 px against a
+  bot walking the other way, and passing a 16 px bot takes about 30.
 - **Level 1 limits** (difficulty rule below): steps up to 2 tiles, gaps up to 5 tiles
   (the standing maximum minus 2), so every jump also works from a standstill.
 
@@ -128,7 +136,8 @@ Names to use in briefs and feedback.
 
 ## 6. Level 1 brief: Server Room
 
-**Status: section plan accepted on 2026-10-02.** The greybox comes next, in M3.
+**Status: section plan accepted on 2026-10-02. Greybox drafted on 2026-10-04**
+(`levels/level_1.tmj`, below); waiting for the owner pass (step 4 in section 1).
 
 Checked against the jump metrics (section 4) on 2026-10-03. On the main path, steps are
 at most 2 tiles and gaps at most 5; the longest jump in section C is a 5-tile gap. Two
@@ -175,7 +184,133 @@ placed, no more than 3 on screen at once.
 - Every level ends at a lab elevator that takes the player deeper into the facility,
   toward the Mainframe.
 
+### Level 1 greybox (2026-10-04)
+
+`levels/level_1.tmj`, 174 tiles wide (sketch below: `tools/sketch2tmj.py --from-tmj
+levels/level_1.tmj`). `make preview` reaches every surface and all 14
+fragments. `tests/test_level_1.py` plays it from the start to the exit without losing a
+life, once through section B's high route and once through its low route, each collecting
+11 fragments (`tests/out/levels/level_1.png` is the full map).
+
+Columns 0–112 (sections A and B; the top line counts columns in tens):
+
+```
+0         1         2         3         4         5         6         7         8         9         0         1  
+.................................................................................................................
+.................................................................................................................
+....................................................................*......*.....................................
+............................*.....................................####...####....................................
+...........................###..............................................................................*....
+...........................................................................................................###...
+........................*.....................................###................................................
+.......................###................................................................*.....EEEEEEEEE........
+....................######........................................................####...###...##########........
+............*.......########............................###......................*####.........##########........
+...........####..###########..........................#####.....................######.........##############....
+.P......#######..###########...........EEEEEEE.*.G....#####........EEEEEE*EEEEEE######.........##############...G
+#################################...##################################################.........##################
+```
+
+Columns 113–173 (section C):
+
+```
+       2         3         4         5         6         7   
+.............................................................
+.............................................................
+.............................................................
+.............................................................
+.............................................................
+...................EEEEE.......*.............................
+................########.....####.......................*....
+.............*..########.....####......................###...
+............############.....######..........................
+.......EEEEE############.....######..........*...............
+....####################.....########.......##......##.......
+....####################.....########.EEEEEE##EEEEEE##.....D.
+########################.....################################
+```
+
+What changed from the brief, and why:
+- **The first trench is 3 tiles wide, not 2.** The body is 2 tiles wide, so it walks
+  across a 2-tile pit without falling in (section 4). The converter now warns about pits
+  narrower than 3.
+- **A4 kept:** the alcove above the rack stair needs a held jump of 3 tiles. It is bonus.
+- **C3 as proposed:** two low crates (2-tile steps) between the final bots instead of
+  shelves to escape onto. A fragment sits on the first one.
+- **C1, bots on alternating steps:** each bot step is 8 tiles wide, and its bot patrols
+  only the right 5, so there are 3 safe tiles to land on before jumping over it.
+- **B3, the bot's shelf:** 10 tiles wide. At 7, the bot's whole patrol (80 frames) was
+  barely longer than a full jump.
+- **B1, the split:** two steps up to a plateau where the routes part. The high route
+  climbs rack tops at rows 6, 3 and 3 (2 fragments). The low route drops into a floor
+  lane with 2 bots and 2 fragments. Either route plus the middle shelf opens gate B
+  (3 of 6). The low route's bots only patrol under the row-3 rack tops or open sky:
+  under a lower shelf a bot can't be jumped (section 4). The first rack top leaves 3
+  open columns next to the plateau, so the player can drop into the lane.
+- **Width: 174 tiles**, over the 120–160 target. Sections: A 50, B 63, C 61. The owner
+  pass decides where to trim (B's low lane and C's final run have the most slack).
+
+Fragments: A 4 (gate 3 of 4), B 6 (gate 3 of 6), C 4 (bonus): 14, one more than the brief,
+so each route of B has 2. 8 bots. An expert run takes about 25 seconds; the replay's
+worst frame ends at line 123 of the 140 allowed.
+
+Questions for the owner pass:
+- Is the high route in B worth its climb (3-tile jumps, above the level 1 limit of 2)?
+- Are the bot steps in C too hard for a first level?
+- Where to cut 14+ tiles.
+
 ## 7. Levels 2–5
 
 Briefed one at a time, after level 1 is playable. Themes and mechanics are in
 GAME_DESIGN.md and [LEVEL_PIPELINE.md](LEVEL_PIPELINE.md) section 5.
+
+### Level 2 brief: Code Testing Lab (draft)
+
+**Status: draft by Claude, 2026-10-04, for the owner to react to.** Nothing is built.
+Level 1's greybox pass comes first.
+
+Teaches: **one-way platforms**: jump up through them from below, land on top, walk under
+them. They also fix level 1's problem with split routes: a high route of one-way shelves
+can sit above a low route without blocking it. Bots are faster than in level 1.
+
+Proposed limits for level 2 (one tile more than level 1): climbs up to 3 tiles, gaps up
+to 6. Every one-way shelf is 3–4 tiles above the surface you jump from, so a held jump
+reaches it.
+
+**Section A, "Test bench"** (about 45 tiles)
+1. Flat start. A one-way shelf 3 tiles up with fragment 1: jump through it from below.
+   Floor everywhere under it, so missing costs nothing.
+2. Three one-way shelves stacked 3 tiles apart, like a bookcase. Fragment 2 on the top.
+3. A Gap-4 pit with a one-way shelf over its middle: the first time the shelf is the
+   only way across.
+4. A bot on the floor under a long one-way shelf: hop up and let it pass beneath. Shelves
+   as safe spots is the section's last lesson. Fragment 3 on the shelf, bonus fragment 4
+   high above the pit (a held jump from the top of the bookcase).
+5. **Gate A: 3 of 4.**
+
+**Section B, "Unit tests"** (about 50 tiles)
+1. A zig-zag climb: one-way shelves alternating left and right up to row 4, a fragment
+   halfway.
+2. The split, done right: a floor route with 2 fast bots and a fragment, and above it a
+   route of one-way shelves with 2 fragments and gaps of 3–5.
+3. The routes meet at a long one-way bridge over a Gap-8 pit, with 2-tile holes in it.
+4. A bonus alcove above the high route.
+5. **Gate B: 3 of 5.**
+
+**Section C, "Regression suite"** (about 50 tiles)
+1. Three tiers of one-way shelves with fast bots on two of them: pick the tier whose bot
+   is away.
+2. The longest jump: a Gap-6 from the end of a one-way shelf.
+3. A last bonus fragment off the path, then the exit elevator on the top tier.
+
+**Totals:** about 145 tiles. 13 fragments (A 4, B 5, C 4): 6 needed for the gates, 7 bonus.
+About 9 bots, at most 3 on screen.
+
+**Questions for the owner:**
+- **Down + A to drop through a one-way platform?** Many platformers have it, and it lets
+  a level send the player back down. Without it, descending needs a gap in the shelf or
+  its end. It changes the physics (`player.c` and `tools/physics.py` together).
+- **Faster bots:** 1.5 px per frame (the player's run speed, so they can't be outrun, only
+  jumped), or a speed property per bot in Tiled?
+- The collectible is called a bug report in GAME_DESIGN.md: only a new picture, or also a
+  new name in the HUD?

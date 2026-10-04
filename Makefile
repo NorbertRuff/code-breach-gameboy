@@ -6,9 +6,11 @@
 #   make run        build, then open the ROM in Emulicious
 #   make test       build, then run the PyBoy tests (DMG and GBC mode)
 #   make shots      build, then save review screenshots to tests/out/shots/
+#   make goldens    build, then rewrite the golden screenshots in tests/golden/
 #   make budget     build, then print where the frame time goes (tools/frame_budget.py)
 #   make venv       create .venv with the test tools from tools/requirements.txt
-#   make savetest   build obj/savetest.gb, the cartridge RAM persistence test
+#   make savetest   build obj/savetest.gb, the cartridge RAM persistence test, and its
+#                   MBC1 and MBC3 variants for the flashcart (savetest_mbc1/3.gb)
 #   make usage      show ROM and RAM use per bank
 #   make assets     regenerate src/graphics/*.c from the PNGs in graphics/
 #   make levels     regenerate src/levels/*.c from the Tiled maps in levels/
@@ -53,7 +55,12 @@ PYTHON ?= $(call fixpath,$(if $(wildcard $(VENV_PY)),$(VENV_PY),python))
 # Cartridge (docs/CGB_PLAN.md section 1):
 #   MBC5 + RAM + battery, 1 RAM bank (8 KB), ROM size picked automatically,
 #   GBC-enhanced header that still runs on DMG, cartridge title.
-CART_FLAGS := -Wl-yt0x1B -Wm-yoA -Wm-ya1 -Wm-yc -Wm-ynAPEXLAB
+CART_TYPE  := 0x1B
+CART_FLAGS := -Wl-yt$(CART_TYPE) -Wm-yoA -Wm-ya1 -Wm-yc -Wm-ynAPEXLAB
+
+# Save test variants: the same cartridge with another mapper, + RAM + battery.
+CART_TYPE_MBC1 := 0x03
+CART_TYPE_MBC3 := 0x13
 
 # -debug: .cdb/.noi/.map for Emulicious. -Wm-yS: .sym for PyBoy.
 LCCFLAGS := -debug
@@ -81,8 +88,9 @@ OBJS := $(addprefix $(OBJDIR)/,$(OBJNAMES))
 vpath %.c $(sort $(dir $(CSOURCES)))
 
 SAVETEST := $(OBJDIR)/savetest.gb
+SAVETEST_VARIANTS := $(OBJDIR)/savetest_mbc1.gb $(OBJDIR)/savetest_mbc3.gb
 
-.PHONY: all rebuild run test shots budget venv savetest usage assets levels preview clean
+.PHONY: all rebuild run test shots goldens budget venv savetest usage assets levels preview clean
 
 all: $(ROM)
 
@@ -105,13 +113,17 @@ rebuild:
 run: $(ROM)
 	java -jar $(EMULICIOUS) $(ROM)
 
-test: $(ROM) $(SAVETEST)
+test: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS)
 	$(PYTHON) -m pytest tests
 
-# Scripted playthrough of level 1: screenshots, contact sheets and the level map
-# in tests/out/shots/, for visual review.
+# Scripted playthroughs of the greybox level and level 1: screenshots, contact sheets
+# and the level map in tests/out/shots/, for visual review.
 shots: $(ROM)
 	$(PYTHON) tools/shots.py
+
+# Rewrites the golden screenshots (tests/test_golden.py). Look at them before committing.
+goldens: $(ROM)
+	$(PYTHON) -m pytest tests/test_golden.py --update-golden
 
 # Screen lines per part of a gameplay update, over the frame budget test's route.
 budget: $(ROM)
@@ -123,10 +135,15 @@ venv:
 
 # Standalone ROM with the same cartridge type as the game. It counts boots in
 # cartridge RAM, to check that saves survive a power cycle on the flashcart.
-savetest: $(SAVETEST)
+savetest: $(SAVETEST) $(SAVETEST_VARIANTS)
 
 $(SAVETEST): tools/savetest/savetest.c | $(OBJDIR)
 	$(LCC) $(LCCFLAGS) -Wm-yS $(CART_FLAGS) -o $@ $<
+
+# MBC1 and MBC3 headers, to find out whether the flashcart keeps saves for another
+# mapper (roadmap M7). The screen names the mapper.
+$(OBJDIR)/savetest_mbc%.gb: tools/savetest/savetest.c | $(OBJDIR)
+	$(LCC) $(LCCFLAGS) -Wm-yS $(subst -Wl-yt$(CART_TYPE),-Wl-yt$(CART_TYPE_MBC$*),$(CART_FLAGS)) -DMBC=$* -o $@ $<
 
 usage: $(ROM)
 	$(ROMUSAGE) $(MAP) -a -g

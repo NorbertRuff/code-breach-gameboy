@@ -76,8 +76,9 @@ Default DMG palettes: `BGP_REG = 0xE4` and `OBP0_REG = 0xE4` (index 0 white, 3 b
 
 ## 5. Fades and flashes
 
-Today `fade_in_screen`, `fade_out_screen` and the game-over flash write DMG registers only.
-The new palette module has one API for both systems:
+Until 2026-10-04, `fade_in_screen`, `fade_out_screen` and the game-over flash wrote DMG
+registers only. The palette module (`src/engine/palette.c`, built that day) has one API for
+both systems; the plan was:
 
 ```c
 void palette_fade_out(uint8_t frames_per_step);   // to black, 4 steps
@@ -103,6 +104,17 @@ Both paths take 4 steps, so fades last the same time on both systems.
 ## 7. Migration steps
 
 Each step lands with a PyBoy test that runs in both modes.
+
+Status 2026-10-04: steps 4 and 5 are done for what is drawn once per level: GBC
+background palette 0 is the level's, 1 the band's, 2 the HUD's, each from its asset, and
+the band rows and the HUD window get theirs in the attribute map. Streamed columns wait
+for per-tile palettes (M5). Step 3 is done too: `src/engine/palette.c` owns every palette write, and
+fades and flashes work on GBC too. A fade step on GBC scales the colors to about 5/8,
+1/4 and 0 with masked shifts of the whole RGB555 word, and writes all 8 palettes in one
+call (scaling each channel by multiplying took 2 frames per step). GBDK's
+`set_bkg_palette`/`set_sprite_palette` wait for STAT modes 0-1 before each byte (read
+from `gbdk/lib/gb/gb.lib`), so palette writes outside VBlank are safe on hardware,
+where palette memory is locked while a line is drawn.
 
 Status 2026-10-03: steps 1 and 2 are done (M0). `platform_init()` also loads gray GBC
 palettes that match the DMG shades and clears the attribute maps, so the game looks the

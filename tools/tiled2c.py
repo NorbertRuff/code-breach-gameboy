@@ -13,6 +13,7 @@ the conversion with a message that names the level and the problem.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import sys
 import xml.etree.ElementTree as ET
@@ -26,6 +27,7 @@ MIN_WIDTH, MAX_WIDTH = 20, 255
 MAX_FRAGMENTS = 32
 TILESET_BUDGET = 190       # unique tiles per level tileset, docs/ART_PIPELINE.md
 SECTIONS = 3
+MIN_PIT_WIDTH = 3          # tiles: the 16 px body walks across a narrower pit
 FLIP_FLAGS = 0xE0000000    # Tiled stores flips and rotation in a gid's top bits
 
 COLLISION_TYPES = {"": "COLLISION_NONE", "solid": "COLLISION_SOLID",
@@ -178,6 +180,8 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
     check_quotas(level, gates, fail)
     check_checkpoints(level, fail)
     warn_about_patrols(level)
+    if not test_room:
+        warn_about_narrow_pits(level)
     return level
 
 
@@ -232,6 +236,20 @@ def warn_about_patrols(level: Level) -> None:
             if level.tileset.collision[ground] not in ("solid", "one_way"):
                 level.warnings.append(f"{level.name}: enemy at x {e.x} has no ground at column {column}")
                 break
+
+
+def warn_about_narrow_pits(level: Level) -> None:
+    """Warn about pits in the bottom row narrower than MIN_PIT_WIDTH: the body is 2 tiles
+    wide, so it walks across them without falling in."""
+    column = 0
+    bottom_row = level.tiles[(MAP_ROWS - 1) * level.width:]
+    has_floor = lambda tile: level.tileset.collision[tile] in ("solid", "one_way")
+    for floor, run in itertools.groupby(bottom_row, key=has_floor):
+        width = len(list(run))
+        if not floor and 0 < column and column + width < level.width and width < MIN_PIT_WIDTH:
+            level.warnings.append(f"{level.name}: the pit at columns {column}-{column + width - 1} is "
+                                  f"{width} wide; the body walks across pits under {MIN_PIT_WIDTH}")
+        column += width
 
 
 def c_level(level: Level, source: str) -> tuple[str, str]:

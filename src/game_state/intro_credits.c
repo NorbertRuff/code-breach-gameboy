@@ -1,45 +1,39 @@
+// Runs once at boot: in a ROM bank, to keep bank 0 free for the per-frame code.
+#pragma bank 255
+
 #include <gb/gb.h>
-#include <stdio.h>
 
-#include "../utils.h"
 #include "intro_credits.h"
+#include "../engine/text.h"
+#include "../engine/palette.h"
+#include "../utils.h"
 
-void show_intro_credits()
+#define CREDITS_SCROLL_STEPS 32   // 4 px each: the text moves 128 px up
+
+// Draws the credits screen: a blank screen in the game's font, and four lines.
+static void print_credits(void)
 {
-	printf("                    ");
-	printf("                    ");
-	printf("                    ");
-	printf("    Developed By    ");
-	printf("                    ");
-	printf("                    ");
-	printf("                    ");
-	printf("    Norbert Ruff    ");
-	printf("                    ");
-	printf("                    ");
-	printf("                    ");
-	printf("    v0.2.0 (dev)    ");
-	printf("                    ");
-	printf("                    ");
-	printf("                    ");
-	printf("                    ");
-	printf("        2026        ");
-	printf("                    ");
+    text_load_font();
+    fill_bkg_rect(0, 0, DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, TEXT_SPACE_TILE);
+    text_print(4, 2, "Developed By");
+    text_print(4, 6, "Norbert Ruff");
+    text_print(4, 10, "v0.2.0 (dev)");
+    text_print(8, 15, "2026");
 }
 
-void handle_intro_credits()
+// Fades the credits in, holds them, scrolls them up off the screen and fades out.
+void play_intro_credits(void) BANKED
 {
-	scroll_bkg(0, 0);
-	show_intro_credits();
-	fade_in_screen(10);
-	performant_delay(200);
+    print_credits();
+    palette_fade_in(10);
+    wait_frames(200);
 
-	for (uint8_t i = 0; i < 32; i++)
-	{
-		scroll_bkg(0, 4);
-		performant_delay(5);
-	}
+    for (uint8_t i = 0; i < CREDITS_SCROLL_STEPS; i++) {
+        scroll_bkg(0, 4);
+        wait_frames(5);
+    }
 
-	performant_delay(50);
-	fade_out_screen(10);
-	scroll_bkg(0, -128);
+    wait_frames(50);
+    palette_fade_out(10);
+    scroll_bkg(0, -4 * CREDITS_SCROLL_STEPS);   // back to the top for the title screen
 }

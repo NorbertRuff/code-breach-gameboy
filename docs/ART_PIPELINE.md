@@ -70,19 +70,37 @@ for shipping.
 
 ## 4. `tools/gbconvert.py`
 
-Built in milestone M5. Input: an exported PNG plus its entry in `graphics/assets.json`
-(type `sprite` or `bg`, palette set, frame size, tile budget).
+Built on 2026-10-04 (M5), tested on generated pictures (`tests/test_gbconvert.py`) and
+checked end to end through png2asset. Run it as
+`.venv/Scripts/python.exe tools/gbconvert.py <asset> <exported.png>`.
 
-1. Detect the whole-number upscale (for example 4×) and shrink with nearest-neighbor.
-   Fail if the pixel grid doesn't line up.
+Input: an exported PNG plus its entry in `graphics/assets.json`:
+
+```json
+{ "programmer": { "type": "sprite", "palettes": "server_room", "budget": 48,
+                  "size": [80, 32], "out": "graphics/player/programmer.png" } }
+```
+
+`graphics/palettes.json` holds the palette sets, each with `bg` palettes (4 colors) and
+`sprite` palettes (3 colors; index 0 is transparent), every palette light to dark, as hex
+colors. Today it has only the `greybox` set (the DMG grays); the style guide adds the
+real sets.
+
+1. Shrink the whole-number upscale (for example 4×) with nearest-neighbor: to the
+   entry's `size` when given, else at the largest scale that fits. Fail if the pixel grid
+   doesn't line up. Give the size: art drawn only with 2 px features also fits at half
+   its size.
 2. Snap each pixel to the nearest style-guide color. Report the share of changed pixels.
    Fail above a threshold (start at 2%).
 3. For each 8×8 tile, check the color limit and that all colors come from one palette.
    Record that palette.
-4. Count unique tiles (sprites may use flips, backgrounds may not). Check the budget.
+4. Count unique tiles (sprites may use flips, backgrounds may not). A pattern used in
+   two palettes is one tile: the palette lives in the attribute map or the sprite's
+   attributes, as png2asset stores it. Check the budget.
 5. Write an indexed PNG with palettes in groups of 4, each ordered light → dark. This
-   goes to `png2asset -keep_palette_order`.
-6. Write previews to `build/previews/`: `<asset>_cgb.png` and `<asset>_dmg.png` at 4×
+   goes to `png2asset -keep_palette_order`. Sprite palettes get a filler color at index 0,
+   saved as transparent.
+6. Write previews to `tests/out/previews/`: `<asset>_cgb.png` and `<asset>_dmg.png` at 4×
    with a tile grid. Print a short report.
 
 Errors name the tile position and the colors at fault, so they can be fixed in Claude

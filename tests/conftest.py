@@ -13,6 +13,11 @@ OBJ = Path(os.environ.get("APEXLAB_OBJ", ROOT / "obj"))
 OUT = ROOT / "tests" / "out"
 
 
+def pytest_addoption(parser):
+    parser.addoption("--update-golden", action="store_true",
+                     help="rewrite the golden screenshots in tests/golden/ (make goldens)")
+
+
 def pytest_sessionstart(session):
     # Screenshots from an earlier run would be mistaken for this run's results.
     if OUT.is_dir():
@@ -30,7 +35,7 @@ def rom_dir(tmp_path_factory) -> Path:
     if not (OBJ / "ApexLab.gb").exists():
         pytest.exit("obj/ApexLab.gb is missing: run 'make test' (or 'make' first)")
     folder = tmp_path_factory.mktemp("roms")
-    for name in ("ApexLab", "savetest"):
+    for name in ("ApexLab", "savetest", "savetest_mbc1", "savetest_mbc3"):
         for ext in (".gb", ".sym", ".map"):
             src = OBJ / f"{name}{ext}"
             if src.exists():
@@ -51,8 +56,11 @@ def mode(request) -> str:
 
 @pytest.fixture
 def game(request, rom_dir, mode):
+    """The ROM booted in mode, starting in the greybox test level, or in the level a
+    @pytest.mark.level(LEVEL_...) marker names."""
     pyboy = boot(rom_dir / "ApexLab.gb", mode)
-    g = Game(pyboy, mode, OUT, request.node.name)
+    marker = request.node.get_closest_marker("level")
+    g = Game(pyboy, mode, OUT, request.node.name, *(marker.args if marker else ()))
     yield g
     report = getattr(request.node, "rep_call", None)
     if report is not None and report.failed:

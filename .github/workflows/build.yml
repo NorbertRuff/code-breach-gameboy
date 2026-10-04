@@ -53,3 +53,5 @@ jobs:
           path: |
             obj/ApexLab.gb
             obj/savetest.gb
+            obj/savetest_mbc1.gb
+            obj/savetest_mbc3.gb

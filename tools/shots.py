@@ -1,9 +1,12 @@
-"""Play a fixed script through level 1 and save screenshots for visual review.
+"""Play fixed scripts through the greybox test level and level 1, and save screenshots
+for visual review.
 
 Run with "make shots". Writes, per mode (dmg, cgb):
-  tests/out/shots/<mode>/NN_<name>.png   one picture per step
+  tests/out/shots/<mode>/NN_<name>.png   one picture per step in the greybox level
   tests/out/shots/<mode>_contact.png     all steps on one sheet, 2x, with labels
   tests/out/shots/<mode>_level_map.png   the whole 32x18 background map from VRAM, 2x
+  tests/out/shots/<mode>_level_1/ and <mode>_level_1_contact.png: level 1 played by its
+                                         replay (tests/test_level_1.py), high route
 
 The script uses the same helpers as the tests (tests/gamelib.py). Long ways are skipped
 by moving the player (place_player), lives are lost with lose_life, and game over comes
@@ -21,7 +24,8 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, Game, boot  # noqa: E402
+from gamelib import COREGAMELOOP, LEVEL_1, Game, Pilot, boot  # noqa: E402
+from test_level_1 import play_level_1  # noqa: E402
 
 OUT = ROOT / "tests" / "out" / "shots"
 SHADES = [(232, 232, 232), (160, 160, 160), (88, 88, 88), (16, 16, 16)]
@@ -188,6 +192,31 @@ def run(mode: str, rom: Path) -> None:
     print(f"{mode}: {len(rec.shots)} shots, contact sheet {OUT / f'{mode}_contact.png'}")
 
 
+def run_level_1(mode: str, rom: Path) -> None:
+    """Level 1 played by its replay: a shot at the start, after every third landing, at
+    each gate, and at the exit (the level-complete flash)."""
+    pyboy = boot(rom, mode)
+    game = Game(pyboy, mode, OUT, mode, LEVEL_1)
+    rec = Recorder(game, OUT / f"{mode}_level_1")
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    rec.shot("start")
+    landings = []
+
+    def on_move(line: str) -> None:
+        if line.startswith("gate"):
+            rec.shot("gate_opened")
+        elif line.startswith("landed"):
+            landings.append(line)
+            if len(landings) % 3 == 0:
+                rec.shot(f"landing_{len(landings)}")
+
+    play_level_1(Pilot(game, on_move))
+    rec.shot("level_complete_flash")
+    contact_sheet(rec.shots).save(OUT / f"{mode}_level_1_contact.png")
+    pyboy.stop(save=False)
+    print(f"{mode}: {len(rec.shots)} level 1 shots, contact sheet {OUT / f'{mode}_level_1_contact.png'}")
+
+
 def main() -> None:
     global OUT
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -199,6 +228,7 @@ def main() -> None:
         OUT = Path(args.out)
     for mode in ("dmg", "cgb"):
         run(mode, Path(args.rom))
+        run_level_1(mode, Path(args.rom))
 
 
 if __name__ == "__main__":

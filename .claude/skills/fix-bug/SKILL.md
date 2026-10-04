@@ -13,8 +13,9 @@ Conventions this follows are in `docs/TESTING.md`. The owner runs git; don't com
    using the `Game` helpers in `tests/gamelib.py`.
    - Drive the game with input (`game.hold`, `game.press`). Write game state
      (`set_state`, `set_lives`, `set_player_y`) only when input can't reach the situation.
-   - DMG-only effects (anything through `BGP_REG`/`OBP0_REG`, until the M4 palette module):
-     `@pytest.mark.parametrize("mode", ["dmg"])`.
+   - Fades, flashes and palettes work on both systems (`src/engine/palette.c`): check them
+     with `game.background_is_black()`, `game.sprite_palettes()` and `game.gbc_colors()`.
+     Only a bug on one system gets `@pytest.mark.parametrize("mode", ["dmg"])` (or `"cgb"`).
    - If the bug already has an `xfail` test in `tests/test_known_bugs.py`, move it to
      `test_regressions.py` and drop the marker.
 3. **See it fail** on the current code:

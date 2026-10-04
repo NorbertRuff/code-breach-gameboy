@@ -19,11 +19,15 @@ The rules come from `docs/ART_PIPELINE.md`; reasons are in `docs/CGB_PLAN.md`.
    - No flipped background tiles (DMG can't flip them). Sprites may flip.
    - Tile budget: `docs/ART_PIPELINE.md` section 2. The player is 16×32 in 8×16 sprite mode.
    - Real GBC screens wash colors out: keep mid and dark channel values in `$00–$0F`.
-3. **Save the PNG** in `graphics/<area>/<name>.png`, indexed, palette in groups of 4,
-   light → dark. Until `tools/gbconvert.py` exists (M5), check it with Pillow: palette
-   entries, used indices, colors per 8×8 tile. `Image.remap_palette` reorders a palette
-   without changing the picture.
-4. **Convert.** Add a line to the `assets` target in the `Makefile`, then run
+3. **Convert the export with `tools/gbconvert.py`** (`docs/ART_PIPELINE.md` section 4):
+   add the asset to `graphics/assets.json` (type, palette set, budget, size, output path)
+   and its palettes to `graphics/palettes.json` (light → dark), then
+   `.venv/Scripts/python.exe tools/gbconvert.py <asset> <export.png>`. It shrinks the
+   upscale, snaps the colors, checks every tile, and writes the indexed PNG to
+   `graphics/<area>/<name>.png` plus GBC and DMG previews in `tests/out/previews/`. Look
+   at both previews. For art from elsewhere without a palette set, check with Pillow
+   instead: palette entries, used indices, colors per 8×8 tile.
+4. **Make the C data.** Add a line to the `assets` target in the `Makefile`, then run
    `make assets` and read the output for `not recognized` (png2asset only warns):
    - Sprite: `-spr8x16 -keep_palette_order -sw W -sh H -px X -py Y -b 255`
    - Background or tileset: `-map -noflip -keep_palette_order -b 255`
@@ -33,12 +37,15 @@ The rules come from `docs/ART_PIPELINE.md`; reasons are in `docs/CGB_PLAN.md`.
    asset per `WITH_BANK`, and metasprite draws count too. Tile regions: sprite-only
    0–127, shared 128–255, background-only 0–127.
 6. **Test the palette order**, like `test_player_palette_is_light_to_dark` in
-   `tests/test_regressions.py`, reading `_<name>_palettes`.
+   `tests/test_regressions.py`, reading `_<name>_palettes`. Load GBC palettes through
+   `src/engine/palette.c` (`palette_set_bkg`, `palette_set_sprite`), never directly.
 7. **Compare before and after:**
    - before the change: `.venv/Scripts/python.exe tools/shots.py --out tests/out/shots_before`
    - after: `make shots`
    - `.venv/Scripts/python.exe tools/compare_shots.py tests/out/shots_before tests/out/shots`
-   Look at the `diff_*.png` pictures and both contact sheets (DMG and GBC).
+   Look at the `diff_*.png` pictures and both contact sheets (DMG and GBC). If the
+   golden screenshots fail (`tests/test_golden.py`), look at the new pictures in
+   `tests/out/`, then `make goldens`.
 8. **Update the records:** the Assets row in `docs/SOURCES.md` (origin, license, credit),
    the asset list in `docs/ART_PIPELINE.md`, and a `CREDITS.md` entry for CC-BY material.
 9. **Report** with the before/after pictures and a suggested commit message.

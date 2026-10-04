@@ -5,6 +5,7 @@ quota of 1 and their bottom tile on row 14; the exit at column 62."""
 from gamelib import (COLLISION_NONE, COLLISION_SOLID, COREGAMELOOP, HUD_DIGIT_TILE_BASE,
                      HUD_SLASH_TILE, LEVEL_COMPLETE, LEVEL_SIZE, SPRITE_RIGHT_W)
 from test_streaming import MARKER_TILE
+from test_text import font_tiles
 
 GATE_A, GATE_BOTTOM_ROW, MAP_TOP_ROW = 33, 14, 3
 GATE_A_X = GATE_A * 8
@@ -111,3 +112,32 @@ def test_exit_completes_the_level(game):
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.place_player(490, 103)                         # on the top step, in the exit
     assert game.state() == LEVEL_COMPLETE
+
+
+def test_closed_gate_buzzes_once_per_touch(game):
+    # Walking into a gate without its quota plays the "denied" sound once, not every frame.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.place_player(240, 119)
+    buzzes = []
+    game.pyboy.hook_register(None, "_sound_play_denied", lambda calls: calls.append(1), buzzes)
+    game.hold("right", 40)
+    assert len(buzzes) == 1
+    game.hold("left", 10)
+    game.hold("right", 20)
+    assert len(buzzes) == 2
+
+
+def test_game_over_shows_a_message_then_restarts_the_section(game):
+    game.start_on_open_ground()
+    band = [game.bkg_tile(col, row) for row in range(3) for col in range(32)]
+    game.set_lives(1)
+    game.lose_life()
+    game.frames(200)                                    # the flashes, then the message
+    assert [game.bkg_tile(5 + i, 7) for i in range(9)] == font_tiles("GAME OVER")
+    assert game.window_tile(1, 0) == HUD_DIGIT_TILE_BASE    # the HUD shows 0 lives
+    assert [game.bkg_tile(col, row) for row in range(3) for col in range(32)] == band
+    game.press("start")
+    game.wait_for_state(COREGAMELOOP, timeout=200)
+    game.frames(30)
+    assert game.lives() == 3 and game.window_tile(1, 0) == HUD_DIGIT_TILE_BASE + 3
+    assert MARKER_TILE["fragment"] in {game.bkg_tile(col, row) for col in range(32) for row in range(3, 16)}

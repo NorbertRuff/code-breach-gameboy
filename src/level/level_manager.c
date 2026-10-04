@@ -3,50 +3,25 @@
 #include "../graphics/greybox.h"
 #include "../graphics/greybox_band.h"
 #include "../graphics/hud.h"
+#include "../graphics/hud_digits.h"
 #include "../graphics/programmer.h"
 #include "../levels/greybox_test.h"
+#include "../levels/level_1.h"
 #include "../levels/test_jumps.h"
 #include "../engine/banking.h"
+#include "../engine/palette.h"
+#include "../player/player.h"
 
 Level current_level;
-uint8_t level_index = LEVEL_GREYBOX_TEST;
+uint8_t level_index = LEVEL_1;
 
 // Read by the tests to notice Level struct changes.
 const uint8_t level_struct_size = sizeof(Level);
 
 #define BAND_TILE_BASE greybox_TILE_COUNT   // band tiles right after the level's tiles
 
-// 8x8 2bpp digit tiles for HUD counter.
-// Each row: two identical bytes (same bit pattern for both bit-planes → color 0 or 3 only).
-// Tiles 0-9 map to digits '0'-'9', tile 10 maps to '/'.
-static const uint8_t hud_digit_tiles[12 * 16] = {
-    // '0'
-    0x3C,0x3C, 0x66,0x66, 0x6E,0x6E, 0x76,0x76, 0x66,0x66, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
-    // '1'
-    0x18,0x18, 0x38,0x38, 0x18,0x18, 0x18,0x18, 0x18,0x18, 0x18,0x18, 0x7E,0x7E, 0x00,0x00,
-    // '2'
-    0x3C,0x3C, 0x66,0x66, 0x06,0x06, 0x0C,0x0C, 0x18,0x18, 0x30,0x30, 0x7E,0x7E, 0x00,0x00,
-    // '3'
-    0x3C,0x3C, 0x66,0x66, 0x06,0x06, 0x1C,0x1C, 0x06,0x06, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
-    // '4'
-    0x0C,0x0C, 0x1C,0x1C, 0x3C,0x3C, 0x6C,0x6C, 0x7E,0x7E, 0x0C,0x0C, 0x0C,0x0C, 0x00,0x00,
-    // '5'
-    0x7E,0x7E, 0x60,0x60, 0x7C,0x7C, 0x06,0x06, 0x06,0x06, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
-    // '6'
-    0x3C,0x3C, 0x66,0x66, 0x60,0x60, 0x7C,0x7C, 0x66,0x66, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
-    // '7'
-    0x7E,0x7E, 0x06,0x06, 0x06,0x06, 0x0C,0x0C, 0x18,0x18, 0x18,0x18, 0x18,0x18, 0x00,0x00,
-    // '8'
-    0x3C,0x3C, 0x66,0x66, 0x66,0x66, 0x3C,0x3C, 0x66,0x66, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
-    // '9'
-    0x3C,0x3C, 0x66,0x66, 0x66,0x66, 0x3E,0x3E, 0x06,0x06, 0x66,0x66, 0x3C,0x3C, 0x00,0x00,
-    // '/'
-    0x00,0x00, 0x06,0x06, 0x0C,0x0C, 0x18,0x18, 0x30,0x30, 0x60,0x60, 0x00,0x00, 0x00,0x00,
-    // heart ♥
-    0x00,0x00, 0x66,0x66, 0xFF,0xFF, 0xFF,0xFF, 0x7E,0x7E, 0x3C,0x3C, 0x18,0x18, 0x00,0x00,
-};
-
-// Shows the HUD window at the bottom of the screen and loads its frame tiles.
+// Shows the HUD window at the bottom of the screen and loads its frame tiles and, on
+// GBC, its palette.
 void set_hud_window_tiles(void)
 {
     SHOW_WIN;
@@ -54,16 +29,19 @@ void set_hud_window_tiles(void)
     WITH_BANK(hud, {
         set_win_data(HUD_TILE_BASE, hud_TILE_COUNT, hud_tiles);
         set_win_based_tiles(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, hud_map, HUD_TILE_BASE);
+        palette_set_bkg(HUD_PALETTE, 1, hud_palettes);
     });
+    palette_use_win(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, HUD_PALETTE);
 }
 
-// Loads the player's sprite tiles and palette.
+// Loads the player's sprite tiles and palette, and its pale copy for invincibility.
 void set_programmer_metasprite(void)
 {
     WITH_BANK(programmer, {
         set_sprite_data(0, programmer_TILE_COUNT, programmer_tiles);
-        set_sprite_palette(0, programmer_PALETTE_COUNT, programmer_palettes);
+        palette_set_sprite(0, programmer_PALETTE_COUNT, programmer_palettes);
     });
+    palette_set_pale_sprite(PLAYER_PALE_PALETTE, 0);
 }
 
 // Shows a heart and the number of lives in the HUD's top-left corner.
@@ -121,24 +99,32 @@ static void draw_band(void)
     WITH_BANK(greybox_band, {
         set_bkg_data(BAND_TILE_BASE, greybox_band_TILE_COUNT, greybox_band_tiles);
         set_bkg_based_tiles(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, greybox_band_map, BAND_TILE_BASE);
+        palette_set_bkg(BAND_PALETTE, 1, greybox_band_palettes);
     });
+    palette_use_bkg(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, BAND_PALETTE);
 }
 
 // Sets up a level behind a dark screen: header, tiles, HUD. The columns are drawn by
 // level_stream_reset() once the camera is placed.
 void level_load(uint8_t index)
 {
-    if (index == LEVEL_TEST_JUMPS) {
+    if (index == LEVEL_GREYBOX_TEST) {
+        current_level.bank = BANK(greybox_test);
+        WITH_BANK(greybox_test, copy_header(&greybox_test));
+    } else if (index == LEVEL_TEST_JUMPS) {
         current_level.bank = BANK(test_jumps);
         WITH_BANK(test_jumps, copy_header(&test_jumps));
     } else {
-        current_level.bank = BANK(greybox_test);
-        WITH_BANK(greybox_test, copy_header(&greybox_test));
+        current_level.bank = BANK(level_1);
+        WITH_BANK(level_1, copy_header(&level_1));
     }
     level_stream_start();
 
-    WITH_BANK(greybox, set_bkg_data(0, greybox_TILE_COUNT, greybox_tiles));
-    set_bkg_data(HUD_DIGIT_TILE_BASE, 12, hud_digit_tiles);
+    WITH_BANK(greybox, {
+        set_bkg_data(0, greybox_TILE_COUNT, greybox_tiles);
+        palette_set_bkg(LEVEL_PALETTE, 1, greybox_palettes);
+    });
+    WITH_BANK(hud_digits, set_bkg_data(HUD_DIGIT_TILE_BASE, hud_digits_TILE_COUNT, hud_digits_tiles));
     draw_band();
     set_hud_window_tiles();
     set_programmer_metasprite();

@@ -45,6 +45,15 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
   at half speed, the level below it, and sprites are off over the HUD. A greybox band
   placeholder. The scroll no longer changes partway down the screen. Worst update on the
   route: line 124. 166 tests pass. Bank 0 has 2,658 bytes free.
+- **2026-10-04, M3 and M4 work in one session:** level 1 greybox (`levels/level_1.tmj`,
+  174 tiles) with replay tests that finish it on both routes; pause and level-select
+  cheat; a buzz at closed gates; style pass on the older files (no compiler warnings);
+  palette module with fades and flashes on GBC (fixes review item P6), a pale invincible
+  player, band and HUD palettes; golden screenshots; a random-play test, which found bugs
+  21 and 22 (both fixed); MBC1 and MBC3 save test ROMs; `tools/gbconvert.py` and
+  `tools/sketch2tmj.py`; three frame-time savings (worst update on level 1: line 123);
+  `printf` replaced by a text routine and a placeholder font. 241 tests pass. Bank 0 has
+  4,758 bytes free, WRAM uses 1,339 of 4,096 bytes.
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 
@@ -119,6 +128,8 @@ Ordered by how visible they are to the player.
 | 18 | Bumping the head under a ceiling the corner slide can't clear is a lag frame. Fixed in M2. | `src/player/player.c` `slide_past_corner` | It tried 8 shifted positions, each a full 16×32 area check: about 55 scanlines. | Compute the slide from the head row's end tiles, then one area check. Found by `tests/test_levelpreview.py` on 2026-10-03. |
 | 19 | Picking up a fragment in an update that also draws a column is a lag frame. Fixed in M3. | `src/main.c` `main_game_loop`, `src/level/level_manager.c` `hud_update_count`, `src/level/level_stream.c` `level_collect_fragment` | That update ends 177 lines after VBlank starts; a frame has 154. A normal update ends near line 100. Drawing a column adds about 32 lines, a pickup about 40: 23 for the HUD count's four divisions by 10 (library calls, about 6 lines each), 4 for its window write, and 11 for finding the fragment and redrawing its tile. `player_update` took about 45; since M3 step 1d it takes about 24, and the update ends at line 157. | A cheaper `player_update` (M3 step 1d), and HUD digits counted by subtraction instead of division (27 → 5 lines). The update now ends at line 133. Found by `tests/test_frame_budget.py` on 2026-10-03. |
 | 20 | Patrol bots are drawn 1 px above the floor they walk on. Fixed in M3. | `src/enemy/enemy.c` `enemy_draw` | It used the feet row as the hardware sprite y. Hardware y is the screen row + 16, so the 16 px sprite ended one row above the feet. Same kind of offset as bug 17. | Draw the bot as a metasprite whose pivot is placed from its box, like the player. Found while moving the enemies into the M3 actor system on 2026-10-03. |
+| 21 | Paused at the top of a jump beside the greybox level's platform bots, part of the "PAUSE" label is missing on hardware. Fixed in M3. | `src/game_state/pause.c` `PAUSE_TOP` | The label sat at screen y 64, the height of those bots. Label (5 sprites), player (2) and two bots (4) made 11 on one line; the hardware draws the first 10 in OAM order, and the label came last. | The label moved into the parallax band (y 8), where no bot goes: at most 7 sprites on a line. Found by the random-play test (`tests/test_fuzz.py`) on 2026-10-04. |
+| 22 | After losing a life past a gate near the level's end (gate B of the greybox level), the screen shows 7 columns of old tiles past the end. Fixed in M3. | `src/engine/camera.c` `follow_focus` | A restart puts the left limit in force: just past the gate, x 408. The level's last camera position is 352, and the left limit was applied after the clamp to the level's end, so it won. | The level's end wins over the left limit; a new limit also takes force when the camera reaches the level's end, so the player's wall stays right of the gate. Found by the random-play scan on 2026-10-04. |
 
 ## Tech debt
 

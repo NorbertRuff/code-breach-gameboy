@@ -3,7 +3,9 @@ prints, for each part of a gameplay update, the screen line where it starts and 
 lines it takes, counted from the start of VBlank (154 lines per frame). Then the worst
 update, part by part.
 
-Run with "make budget" (DMG mode), or: tools/frame_budget.py --mode cgb --rom <file.gb>
+Run with "make budget" (DMG mode, greybox route), or:
+    tools/frame_budget.py --mode cgb --route level1 --rom <file.gb>
+The level1 route is the replay that finishes level 1 (tests/test_level_1.py).
 
 Each part runs until the next part in PARTS starts. A part that an update skips (the HUD
 count without a pickup) adds its time to the part before it.
@@ -18,8 +20,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, LINES_PER_FRAME, Game, boot  # noqa: E402
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_GREYBOX_TEST, LINES_PER_FRAME, Game, Pilot, boot  # noqa: E402
 from test_frame_budget import FRAME_LINE_LIMIT, GREYBOX_ROUTE  # noqa: E402
+from test_level_1 import play_level_1  # noqa: E402
+
+# Route name: the level it plays and how.
+ROUTES = {
+    "greybox": (LEVEL_GREYBOX_TEST, lambda game: game.play_route(GREYBOX_ROUTE)),
+    "level1": (LEVEL_1, lambda game: play_level_1(Pilot(game))),
+}
 
 # C functions in the order an update calls them, and a label for each. The first starts
 # the update; the last is the game waiting for the next VBlank.
@@ -60,11 +69,12 @@ def function_addresses(sym_file: Path) -> dict:
     return found
 
 
-def record_updates(rom: Path, mode: str) -> tuple[list, int]:
+def record_updates(rom: Path, mode: str, route: str) -> tuple[list, int]:
     """Plays the route. Returns, per update, the (label, line) of each part it reached
     (the first call only), and the lag frames the ROM counted."""
+    level, play = ROUTES[route]
     pyboy = boot(rom, mode)
-    game = Game(pyboy, mode, ROOT / "tests" / "out", "frame_budget")
+    game = Game(pyboy, mode, ROOT / "tests" / "out", "frame_budget", level)
     game.wait_for_state(COREGAMELOOP, timeout=300)
     updates, current = [], {}
 
@@ -85,13 +95,13 @@ def record_updates(rom: Path, mode: str) -> tuple[list, int]:
             print(f"(no function {function} in the ROM: part '{label}' left out)")
             continue
         pyboy.hook_register(*addresses[function], at_part, label)
-    game.play_route(GREYBOX_ROUTE)
+    play(game)
     lag_frames = game.u8("_lag_frames")
     pyboy.stop(save=False)
     return updates, lag_frames
 
 
-def print_report(updates: list, lag_frames: int, mode: str) -> None:
+def print_report(updates: list, lag_frames: int, mode: str, route: str) -> None:
     """The table of parts, then the worst update part by part."""
     starts, takes = {}, {}
     for parts in updates:
@@ -99,7 +109,7 @@ def print_report(updates: list, lag_frames: int, mode: str) -> None:
             starts.setdefault(label, []).append(line)
             takes.setdefault(label, []).append(next_line - line)
 
-    print(f"{mode} mode, {len(updates)} updates on the frame budget route.")
+    print(f"{mode} mode, {len(updates)} updates on the {route} route.")
     print(f"Screen lines from the start of VBlank: a frame has {LINES_PER_FRAME}, the tests allow {FRAME_LINE_LIMIT}.\n")
     print(f"{'part':26s} {'starts at':>14s} {'takes':>14s}   updates")
     print(f"{'':26s} {'avg':>7s}{'worst':>7s} {'avg':>7s}{'worst':>7s}")
@@ -118,9 +128,10 @@ def print_report(updates: list, lag_frames: int, mode: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--mode", choices=("dmg", "cgb"), default="dmg")
+    parser.add_argument("--route", choices=ROUTES, default="greybox")
     parser.add_argument("--rom", type=Path, default=ROOT / "obj" / "ApexLab.gb")
     args = parser.parse_args()
-    print_report(*record_updates(args.rom, args.mode), args.mode)
+    print_report(*record_updates(args.rom, args.mode, args.route), args.mode, args.route)
 
 
 if __name__ == "__main__":

@@ -7,9 +7,11 @@
 
 #define TILE_SIZE 8
 
-// Levels level_load() knows, by index.
-#define LEVEL_GREYBOX_TEST 0
-#define LEVEL_TEST_JUMPS   1    // fixtures for tests/test_jump_metrics.py
+// Levels level_load() knows, by index: the game's levels first, then the test rooms.
+#define LEVEL_1            0    // Server Room
+#define LEVEL_GREYBOX_TEST 1    // the tests' level
+#define LEVEL_TEST_JUMPS   2    // fixtures for tests/test_jump_metrics.py
+#define LEVEL_COUNT        3
 
 // Collision ring: the collision of the columns in the background map. 32 columns that
 // wrap like the map, 16 screen rows each (the HUD rows are left out).
@@ -53,6 +55,9 @@ typedef struct {
 extern Level current_level;
 extern uint8_t level_index;     // the level GAMEPLAY_START loads
 extern uint8_t collision_ring[RING_COLUMNS * RING_ROWS];
+// Per ring column: 1 if it may hold a tile the body acts on (fragment, hazard, exit), so
+// the player skips the columns without one.
+extern uint8_t ring_column_touched[RING_COLUMNS];
 
 void level_load(uint8_t index);
 void level_read_entity(uint8_t index, LevelEntity* entity);

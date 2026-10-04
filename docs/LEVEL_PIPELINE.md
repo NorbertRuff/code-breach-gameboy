@@ -114,15 +114,20 @@ The converter fails the build when:
   of it (2 free columns, the body's 4 rows free of solid and hazard tiles, ground below);
 - the tileset has more unique tiles than the budget in [ART_PIPELINE.md](ART_PIPELINE.md).
 
-It warns when an enemy's patrol range has no ground under it.
+It warns when an enemy's patrol range has no ground under it, and when a pit in the
+bottom row is narrower than 3 tiles (the 2-tile-wide body walks across it).
 
 ## 4. Levels wider than 256 px
 
 The background map in VRAM is 32×32 tiles and wraps around. As the camera moves, the
-column about to come into view is copied in with `set_bkg_submap()`. On GBC the attribute
-column is copied too, with `set_bkg_submap_attributes()`. One column per frame is within
-the DMG's VRAM write budget. GBDK ships a large-map scrolling example that shows the
-pattern. The "Drawing Large Maps" notes in GAME_DESIGN.md describe the same technique.
+column about to come into view is read into a 13-byte buffer and written with
+`set_bkg_tiles()` (section 3; `set_bkg_submap()` was the first plan, see DECISIONS.md).
+A column draw takes about 30-40 screen lines, so one column per frame fits the frame
+budget. On GBC the band and HUD attributes are written once per level; the streamed
+columns keep palette 0 until the M5 tilesets bring a palette per tile, and then the
+attribute column is written with the tile column. GBDK ships a large-map scrolling
+example that shows the pattern. The "Drawing Large Maps" notes in GAME_DESIGN.md describe
+the same technique.
 
 ## 5. Preview and reachability check: `tools/levelpreview.py`
 

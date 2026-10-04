@@ -4,6 +4,7 @@
 #include "../sound/sound.h"
 #include "../engine/banking.h"
 #include "../engine/camera.h"
+#include "../engine/platform.h"
 
 // Read by the tests to notice Player struct changes.
 const uint8_t player_struct_size = sizeof(Player);
@@ -220,10 +221,11 @@ static void check_touched_tiles(Player* p)
     p->touched_hazard = 0;
     p->touched_exit = 0;
     for (uint8_t column = LEFT_COLUMN(p->x); column <= last && column < current_level.width; column++) {
+        if (!ring_column_touched[column & (RING_COLUMNS - 1)]) continue;   // most columns
         const uint8_t* cell = &collision_ring[RING_INDEX(column, top)];
         for (uint8_t row = top; row <= bottom; row++, cell++) {
             uint8_t type = *cell;
-            if (type < FIRST_TOUCHED_TYPE) continue;    // most tiles: nothing to do
+            if (type < FIRST_TOUCHED_TYPE) continue;
             if (type == COLLISION_COLLECTIBLE) level_collect_fragment(column, row);
             else if (type == COLLISION_HAZARD) p->touched_hazard = 1;
             else p->touched_exit = 1;
@@ -260,10 +262,15 @@ void player_update(Player* player)
 }
 
 // Puts the player first in the sprite list, so the sprite covers its collision box.
-// Flashes while invincible. Returns the number of hardware sprites used.
+// While invincible it blinks on DMG and is pale on GBC. Returns the number of hardware
+// sprites used.
 uint8_t player_draw(Player* player, int16_t camera_x)
 {
-    if (player->invincibility_frames & 2) return 0;
+    uint8_t palette = 0;
+    if (player->invincibility_frames) {
+        if (is_cgb) palette = PLAYER_PALE_PALETTE;
+        else if (player->invincibility_frames & 2) return 0;
+    }
 
     // The metasprite pivot lies programmer_PIVOT_X/Y in from the box's top-left corner,
     // and hardware sprite coordinates start 8 px left of and 16 px above the screen.
@@ -274,9 +281,9 @@ uint8_t player_draw(Player* player, int16_t camera_x)
     uint8_t used;
     WITH_BANK(programmer, {
         if (player->direction) {
-            used = move_metasprite_ex(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
+            used = move_metasprite_ex(programmer_metasprites[player->draw_frame], 0, palette, 0, x, y);
         } else {
-            used = move_metasprite_flipx(programmer_metasprites[player->draw_frame], 0, 0, 0, x, y);
+            used = move_metasprite_flipx(programmer_metasprites[player->draw_frame], 0, palette, 0, x, y);
         }
     });
     return used;

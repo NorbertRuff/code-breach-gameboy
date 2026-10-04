@@ -1,58 +1,10 @@
 #include <gb/gb.h>
-
 #include "utils.h"
 
-void performant_delay(uint16_t time)
+// Waits a number of frames.
+void wait_frames(uint16_t frames)
 {
-    uint16_t i;
-    for (i = 0; i < time; i++)
-    {
+    for (uint16_t i = 0; i < frames; i++) {
         wait_vbl_done();
-    }
-}
-
-void fade_out_screen(uint16_t time)
-{
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        switch (i)
-        {
-        case 0:
-            BGP_REG = 0xE4;
-            break;
-        case 1:
-            BGP_REG = 0xF9;
-            break;
-        case 2:
-            BGP_REG = 0xFE;
-            break;
-        case 3:
-            BGP_REG = 0xFF;
-            break;
-        }
-        performant_delay(time);
-    }
-}
-
-void fade_in_screen(uint16_t time)
-{
-    for (uint8_t i = 0; i < 3; i++)
-    {
-        switch (i)
-        {
-        case 0:
-            BGP_REG = 0xFE;
-            break;
-        case 1:
-            BGP_REG = 0xF9;
-            break;
-        case 2:
-            BGP_REG = 0xE4;
-            break;
-        case 3:
-            BGP_REG = 0xE0;
-            break;
-        }
-        performant_delay(time);
     }
 }

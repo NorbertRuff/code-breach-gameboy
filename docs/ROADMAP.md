@@ -113,7 +113,8 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
 - [x] Security gates with a fragment quota. Checkpoints at opened gates. Exit elevator.
       The camera locks behind an opened gate (`camera.c` gets a left limit).
 - [x] HUD: lives and fragments against the current quota.
-- [ ] Pause menu. Level-select cheat for testing.
+- [x] Pause menu. Level-select cheat for testing. START pauses ("PAUSE" label in the band), SELECT
+      while paused loads the next level (`LEVEL_SELECT_CHEAT`). Menu entries wait for M7.
 - [x] Parallax: screen-line interrupt at the end of the 3-row band (slower `SCX` for the
       band, camera `SCX` below it) and `HIDE_SPRITES` from line 127 over the HUD, in one
       handler. Band drawn once per level; streaming skips rows 0–2. Source: Larold's
@@ -127,23 +128,30 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
 - [x] Every update within the frame budget: fix bug 19. The route's worst update ends at
       line 133 of 154.
 - [ ] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
-- [ ] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
+      Greybox, preview and replay test done 2026-10-04 (`levels/level_1.tmj`,
+      `tests/test_level_1.py`, LEVEL_DESIGN.md section 6). Open: **(owner)** pass in
+      Tiled and Emulicious, then tuning.
+- [x] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
       `main.c`, `utils.c`, `sound.c`, `src/game_state/` (`src/enemy/` was replaced by
-      `src/actor/` in step 2).
+      `src/actor/` in step 2). Done 2026-10-04; the build has no warnings.
 
 ## M4 — Game Boy Color support
 
 Done when the game runs in color on GBC and unchanged on DMG. Steps in
 [CGB_PLAN.md](CGB_PLAN.md) section 7. Can run alongside M2 and M3.
 
-- [ ] `src/engine/platform.c`: `is_cgb`.
-- [ ] `src/engine/palette.c`: load, fade, flash for both systems. No other file writes
-      palette registers.
-- [ ] Load the exported palettes for background, HUD and sprites.
-- [ ] Attribute maps behind `is_cgb`, including streamed columns.
+- [x] `src/engine/platform.c`: `is_cgb`. (M0)
+- [x] `src/engine/palette.c`: load, fade, flash for both systems. No other file writes
+      palette registers. Done 2026-10-04, `tests/test_palette.py`.
+- [ ] Load the exported palettes for background, HUD and sprites. Done 2026-10-04 for
+      the current assets (level tiles, band, HUD, player); the M5 art adds the rest.
+- [ ] Attribute maps behind `is_cgb`, including streamed columns. The band and HUD have
+      theirs (2026-10-04); streamed columns wait for per-tile palettes from the M5 tilesets.
 - [ ] Brighter palette set when `_is_GBA` is set.
-- [ ] Invincibility shown with a pale sprite palette on GBC instead of blinking.
-- [ ] Golden screenshots per mode.
+- [x] Invincibility shown with a pale sprite palette on GBC instead of blinking.
+      Done 2026-10-04 (sprite palette 1).
+- [x] Golden screenshots per mode. `tests/test_golden.py`, `tests/golden/`, rewritten by
+      `make goldens` (2026-10-04).
 - [ ] **(owner)** Check on DMG and GBC.
 
 ## M5 — Art pipeline and the Server Room art pass
@@ -151,12 +159,14 @@ Done when the game runs in color on GBC and unchanged on DMG. Steps in
 Done when level 1 looks like the final game in both modes.
 
 - [ ] **(owner)** Claude Design style guide: palettes and character look.
-- [ ] `tools/gbconvert.py` with previews ([ART_PIPELINE.md](ART_PIPELINE.md)).
+- [x] `tools/gbconvert.py` with previews ([ART_PIPELINE.md](ART_PIPELINE.md)). Built and
+      tested 2026-10-04; `graphics/palettes.json` waits for the style guide's palettes.
 - [ ] Player sprite with all animations.
 - [ ] Security bot enemy.
 - [ ] Server Room tileset with Tiled terrain sets. Swap it in for the greybox tileset.
 - [ ] Security gate and exit elevator art.
-- [ ] HUD frame and font. Replace `printf` text with the game font.
+- [ ] HUD frame and font. Replace `printf` text with the game font. `printf` is gone
+      (2026-10-04): `src/engine/text.c` with a placeholder font; the M5 font swaps the tiles.
 - [ ] Title screen from `apexLogo`. Remove `splashscreen.c`.
 - [ ] Parallax band art for the Server Room (32×3 tiles, wraps).
 - [ ] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md):
@@ -177,12 +187,17 @@ Done when level 1 looks like the final game in both modes.
 
 - [ ] Find out why saves don't persist on the EverDrive clone: build `savetest` variants
       with MBC1 (`0x03`) and MBC3 (`0x13`) headers, and try them on the cart. If none
-      keep the count, use passwords instead of battery saves.
+      keep the count, use passwords instead of battery saves. Variants built 2026-10-04
+      (`obj/savetest_mbc1.gb`, `obj/savetest_mbc3.gb`, `make savetest`); **(owner)** try
+      them on the cart (TESTING.md, "Save test on the real Game Boy").
 - [ ] Save data in cartridge RAM: unlocked levels, best score, 100% marks, a checksum
       for first boot.
-- [ ] Level select, game over with continue, level complete screen with score.
+- [ ] Level select, game over with continue, level complete screen with score. The level
+      complete summary exists (2026-10-04: fragments, 100%, START); level select and game
+      over wait.
 - [ ] Story text: 3-line boot screen, one AI log line per elevator ride, "PATCH n/5"
       progress.
+      Text drafted 2026-10-04 in [STORY.md](STORY.md); **(owner)** edit it.
 - [ ] Hard mode, unlocked after clearing the game.
 - [ ] Ending and the in-game credits screen.
 
@@ -201,6 +216,7 @@ replay test that finishes it.
 
 - [ ] **(owner)** Full playthrough on DMG and GBC.
 - [ ] No lag frames in any level. Sprite flicker below the per-line limit.
+      Level 1's replay test checks both (2026-10-04): no lag frames, at most 6 sprites per line.
 - [ ] Difficulty and checkpoint tuning.
 - [ ] Project README, screenshots, itch.io page.
 - [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;

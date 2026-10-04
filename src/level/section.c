@@ -7,6 +7,7 @@
 
 static uint8_t opening_gate = NOT_OPENING;   // index of the gate that is opening
 static uint8_t frames_to_next_row;
+static uint8_t touching_closed_gate;         // the denied sound plays once per touch
 
 // World x just right of a gate: where the next section starts.
 static uint16_t gate_right(const Gate* gate)
@@ -59,7 +60,8 @@ static uint8_t touches_gate(const Player* player, const Gate* gate)
 
 // Touching the current section's gate with its quota collected opens it: the next
 // section starts, the gate is its checkpoint, and the camera won't go back past it once
-// it gets there. The gate then retracts one row every GATE_ROW_FRAMES frames.
+// it gets there. The gate then retracts one row every GATE_ROW_FRAMES frames. Without
+// the quota, touching it buzzes once.
 void sections_update(const Player* player)
 {
     if (opening_gate != NOT_OPENING && --frames_to_next_row == 0) {
@@ -70,7 +72,16 @@ void sections_update(const Player* player)
     uint8_t section = current_level.section;
     if (section >= current_level.gate_count) return;
     Gate* gate = &current_level.gates[section];
-    if (current_level.section_collected[section] < gate->quota || !touches_gate(player, gate)) return;
+    if (!touches_gate(player, gate)) {
+        touching_closed_gate = 0;
+        return;
+    }
+    // Too few fragments? A buzz when the touch starts, so the player knows why.
+    if (current_level.section_collected[section] < gate->quota) {
+        if (!touching_closed_gate) sound_play_denied();
+        touching_closed_gate = 1;
+        return;
+    }
 
     current_level.section++;
     opening_gate = section;

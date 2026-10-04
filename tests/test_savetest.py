@@ -12,11 +12,17 @@ import pytest
 from gamelib import boot, read_symbol
 
 
-@pytest.fixture
-def savetest_rom(rom_dir):
-    rom = rom_dir / "savetest.gb"
+# The ROM name and the cartridge type its header must hold (byte 0x147).
+SAVETESTS = {"savetest": 0x1B, "savetest_mbc1": 0x03, "savetest_mbc3": 0x13}
+
+
+@pytest.fixture(params=SAVETESTS)
+def savetest_rom(request, rom_dir):
+    """The game's cartridge type (MBC5), then the MBC1 and MBC3 variants for the
+    flashcart (roadmap M7)."""
+    rom = rom_dir / f"{request.param}.gb"
     if not rom.exists():
-        pytest.skip("obj/savetest.gb is missing: run 'make savetest' or 'make test'")
+        pytest.skip(f"obj/{request.param}.gb is missing: run 'make savetest' or 'make test'")
     return rom
 
 
@@ -44,3 +50,7 @@ def test_save_survives_power_cycles(savetest_rom, mode):
 
     _, third = run_once(savetest_rom, mode, ram)
     assert third["boot_count"] == 3
+
+
+def test_savetest_headers_name_their_mapper(savetest_rom):
+    assert savetest_rom.read_bytes()[0x147] == SAVETESTS[savetest_rom.stem]

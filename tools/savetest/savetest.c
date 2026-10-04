@@ -1,5 +1,6 @@
 // Cartridge RAM persistence test. Built by "make savetest" into obj/savetest.gb, with
-// the same cartridge type as the game (MBC5 + RAM + battery).
+// the same cartridge type as the game (MBC5 + RAM + battery), and into
+// savetest_mbc1.gb and savetest_mbc3.gb with those mappers (MBC set by the Makefile).
 //
 // Each boot adds 1 to a counter in cartridge RAM. On a flashcart, power the Game Boy
 // off and on a few times: if the count goes up, battery saves work. A clears the save.
@@ -13,6 +14,10 @@
 // little endian), checksum.
 #define SRAM ((volatile uint8_t *)0xA000)
 #define SAVE_SIZE 7
+
+#ifndef MBC
+#define MBC 5   // the mapper in the header, shown on screen
+#endif
 
 static const uint8_t magic[4] = { 'A', 'P', 'X', '1' };
 
@@ -58,7 +63,7 @@ void main(void)
     write_ok = (read_back == boot_count) && save_is_valid();
     DISABLE_RAM;
 
-    printf("APEXLAB SAVE TEST\n\n");
+    printf("APEXLAB SAVE TEST\nCARTRIDGE: MBC%u\n\n", (uint16_t)MBC);
     printf(save_found ? "SAVE FOUND\n" : "NO SAVE: NEW ONE\n");
     printf("BOOT COUNT: %u\n", boot_count);
     printf(write_ok ? "WRITE: OK\n" : "WRITE: FAILED\n");

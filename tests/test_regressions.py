@@ -5,16 +5,18 @@ import hashlib
 import pytest
 
 from gamelib import (BOT_TILES, COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END,
-                     HUD_DIGIT_TILE_BASE, HUD_SLASH_TILE, LEVEL_COMPLETE, palette_lumas,
+                     HUD_DIGIT_TILE_BASE, HUD_SLASH_TILE, LEVEL_COMPLETE, PAUSED, palette_lumas,
                      read_symbol)
 from test_frame_budget import GREYBOX_ROUTE
 
-dmg_only = pytest.mark.parametrize("mode", ["dmg"])  # BGP_REG effects are DMG-only until M4
 
 
 def vram_maps_hash(game) -> str:
-    """Hash of both background maps (0x9800-0x9FFF): changes when tiles are drawn."""
-    return hashlib.md5(bytes(game.pyboy.memory[0x9800:0xA000])).hexdigest()
+    """Hash of both tile maps (0x9800-0x9FFF in VRAM bank 0): changes when tiles are
+    drawn. Bank 0 explicitly: on GBC, the selected bank may be bank 1, the attributes.
+    PyBoy refuses a banked slice ending at 0xA000, so the last byte is read on its own."""
+    maps = bytes(game.pyboy.memory[0, 0x9800:0x9FFF]) + bytes([game.pyboy.memory[0, 0x9FFF]])
+    return hashlib.md5(maps).hexdigest()
 
 
 # Bug 1 ---------------------------------------------------------------------------
@@ -50,23 +52,22 @@ def test_hud_counter_shows_two_digits(game):
 
 # Bug 3 ---------------------------------------------------------------------------
 
-@dmg_only
 def test_level_loads_while_screen_is_dark(game):
     # From power-on to gameplay: whenever the tile maps change during a frame, the
-    # background palette was all black (BGP = 0xFF) when that frame started. The fade-in
-    # may begin in the same frame the last tiles are written.
+    # background was all black when that frame started (on GBC too, since the palette
+    # module). The fade-in may begin in the same frame the last tiles are written.
     previous = vram_maps_hash(game)
-    bgp_at_start = game.reg("BGP")
+    black_at_start = game.background_is_black()
     for _ in range(300):
         game.frames(1)
         current = vram_maps_hash(game)
         if current != previous:
-            assert bgp_at_start == 0xFF, f"tiles changed while visible (BGP={bgp_at_start:#04x})"
+            assert black_at_start, "tiles changed while visible"
         previous = current
-        bgp_at_start = game.reg("BGP")
+        black_at_start = game.background_is_black()
         if game.state() == COREGAMELOOP:
             break
-    assert game.reg("BGP") == 0xE4, "the screen did not fade back in"
+    assert game.u8("_palette_fade_step") == 0 and not game.background_is_black(),         "the screen did not fade back in"
 
 
 # Bug 4 ---------------------------------------------------------------------------
@@ -193,36 +194,34 @@ def test_holding_a_jumps_only_once(game):
 
 # Bugs 9 and 14 -------------------------------------------------------------------
 
-def flashes_per_second(bgp_by_frame) -> int:
-    """Most changes into BGP = 0xFF (black) within any 60-frame window."""
-    onsets = [i for i in range(1, len(bgp_by_frame))
-              if bgp_by_frame[i] == 0xFF and bgp_by_frame[i - 1] != 0xFF]
-    return max((sum(1 for t in onsets if start <= t < start + 60) for start in range(len(bgp_by_frame))),
+def flashes_per_second(black_by_frame) -> int:
+    """Most changes into an all-black screen within any 60-frame window."""
+    onsets = [i for i in range(1, len(black_by_frame)) if black_by_frame[i] and not black_by_frame[i - 1]]
+    return max((sum(1 for t in onsets if start <= t < start + 60) for start in range(len(black_by_frame))),
                default=0)
 
 
-@dmg_only
 @pytest.mark.parametrize("event", ["level_complete", "game_over"])
 def test_flashes_are_slow_and_restore_palettes(game, event):
     # Forcing the state saves collecting 12 fragments or losing 3 lives by hand.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.frames(5)
-    obp0_before = game.reg("OBP0")
+    sprites_before = game.sprite_palettes()
     if event == "level_complete":
         game.set_state(LEVEL_COMPLETE)
     else:
         game.set_lives(1)
         game.set_state(GAMEPLAY_END)
-    bgp = []
+    black = []
     for _ in range(600):
         game.frames(1)
-        bgp.append(game.reg("BGP"))
-        if game.state() == COREGAMELOOP and game.reg("BGP") == 0xE4:
+        black.append(game.background_is_black())
+        if game.state() == COREGAMELOOP and game.u8("_palette_fade_step") == 0:
             break
     else:
         raise AssertionError("the level never restarted")
-    assert flashes_per_second(bgp) <= 3
-    assert game.reg("OBP0") == obp0_before, "sprite palette not restored after the flash"
+    assert 1 <= flashes_per_second(black) <= 3
+    assert game.sprite_palettes() == sprites_before, "sprite palettes not restored after the flash"
 
 
 # Bug 17 --------------------------------------------------------------------------
@@ -292,3 +291,32 @@ def test_bot_sprites_stand_on_their_feet_row(game):
     oam = game.pyboy.memory[0xFE00:0xFEA0]
     bottoms = [oam[i] - 16 + 15 for i in range(0, 160, 4) if oam[i] and oam[i + 2] in BOT_TILES]
     assert bottoms == [71, 71]
+
+
+# Bug 21 --------------------------------------------------------------------------
+
+def test_pause_label_leaves_room_on_its_lines(game):
+    # Paused at the top of a jump beside the greybox level's platform bots: the label, the
+    # player and both bots shared screen lines, 11 sprites, and the hardware draws 10.
+    game.start_on_open_ground()
+    game.pyboy.button_press("a")
+    game.frames(24)
+    game.press("start")
+    game.pyboy.button_release("a")
+    game.frames(2)
+    assert game.state() == PAUSED
+    assert game.sprites_on_busiest_line() <= 10
+
+
+# Bug 22 --------------------------------------------------------------------------
+
+def test_restart_after_a_late_gate_never_shows_past_the_level_end(game):
+    # Gate B of the greybox level leaves 13 columns before the end, less than a screen.
+    # A restart there put the camera's left edge just past the gate, 56 px beyond the
+    # level's last camera position, and showed old columns past the end.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.play_route(GREYBOX_ROUTE[:11])                 # through gate A and into gate B
+    assert game.level().section == 2
+    game.lose_life()
+    game.wait_for_state(COREGAMELOOP)
+    assert game.camera_x() <= game.level().width_px - 160
