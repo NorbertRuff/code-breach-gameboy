@@ -5,7 +5,7 @@ limit. Level 1's test (test_level_1.py) explains the Pilot moves and the x value
 
 import pytest
 
-from gamelib import (COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST,
+from gamelib import (COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST,
                      LINES_PER_FRAME, Pilot)
 from test_frame_budget import FRAME_LINE_LIMIT
 from test_level_1 import SPRITES_PER_LINE
@@ -121,7 +121,7 @@ def test_level_2_can_be_finished(game, route, start_delay):
     assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
 
 
-@pytest.mark.parametrize("level, next_level", [(LEVEL_1, LEVEL_2), (LEVEL_2, LEVEL_1),
+@pytest.mark.parametrize("level, next_level", [(LEVEL_1, LEVEL_2), (LEVEL_2, LEVEL_3), (LEVEL_3, LEVEL_1),
                                                (LEVEL_GREYBOX_TEST, LEVEL_GREYBOX_TEST)])
 def test_level_complete_goes_on_to_the_next_level_with_full_lives(game, level, next_level):
     # The summary shows the level's fragments; START goes on. After the last level comes

@@ -31,12 +31,12 @@ tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next le
 
 | Directory | Purpose |
 |---|---|
-| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen`, `game_over` (also `level_complete`), `pause` (the label) |
-| `src/engine/` | `platform.c` (`is_cgb`), `palette.c` (every palette write), `text.c` (screen text in the game's font), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK`), `camera.c`, `screen.c` (line interrupts) |
+| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen`, `game_flow` (level start, section restart, losing a life; banked), `game_over` (also `level_complete`), `pause` (the label) |
+| `src/engine/` | `platform.c` (`is_cgb`), `palette.c` and `palette_effects.c` (every palette write; loads in bank 0, fades and flashes banked), `text.c` (screen text in the game's font), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK`), `camera.c`, `screen.c` (line interrupts) |
 | `src/player/` | `Player` struct and physics: `player_update`, `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad, Down and A into the player |
 | `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
-| `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `lift.c` (the lift) |
+| `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `chaser.c` (the chaser), `lift.c` (the lift) |
 | `src/sound/` | `sound.c` (the effect player), `effects.c` (generated: `make sounds`), `music.c` (the level's song through hUGEDriver) |
 | `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus hand-made `splashscreen.c`, `hud_digits.c`, `font.c`) |
 | `graphics/`, `levels/`, `music/`, `sounds/` | Sources: PNGs and Tiled `.tsx`, Tiled maps `.tmj`, hUGETracker songs `.uge`, FX Hammer effect packs `.sav` and the effect list `effects.txt` |
@@ -86,7 +86,7 @@ camera gets a left limit just past the gate, and a restart puts the player right
 
 ## Actors (`src/actor/`)
 
-Moving level objects (patrol bots and lifts) are actors; the player is not. `actors_spawn`
+Moving level objects (patrol bots, chasers and lifts) are actors; the player is not. `actors_spawn`
 reads the level's entities in x order with a cursor and spawns each one that has an
 `ActorType` once it is within 16 px of the screen's right edge. A bot walks at its
 entity's `speed` (1 or 2 px per frame), kept as the signed `velocity_x`. An `ActorType`
@@ -104,6 +104,9 @@ finds the lift under its body with `actors_lift_at(body_x)` (lifts never overlap
 `ride_lift` adds the lift's step when the feet stood on the row above its top before the
 step, `move_y` lands on that row when the feet reach it falling, and `update_ground`
 counts it as ground. Lifts don't hurt (`actors_touch` skips them).
+
+A chaser reads the player's place from `actor_player_x` and `actor_player_feet`, which
+`actors_update` sets each frame, and walks toward it while it is in sight.
 
 ## Camera and screen splits
 

@@ -81,15 +81,17 @@ or git keeps the old one). Details of how the code does it belong in
   lifts; the reachability check treats a lift as one-way tops on every row it passes.
   Horizontal lifts and other speeds only if a level needs them.
 - **Chasers** (level 3, owner 2026-10-04): a bot that stands still until the player is
-  within about 6 tiles on its floor, then walks toward them at 1 px per frame (the player
-  runs at 1.5), only inside its range from Tiled.
+  within about 6 tiles on its floor (feet within 2 tiles of its own), then walks toward them
+  at 1 px per frame (the player runs at 1.5), only inside its range. In Tiled an `enemy`
+  with `kind` = `chaser`; the bot's art until M5.
 - **Level 1** (Server Room) greybox: kept as built after the owner's hardware pass
   (2026-10-04). **Level 2** (Code Testing Lab) greybox: built 2026-10-04, the low route
   needs the bridge's fragment for gate B; kept as built after the owner's hardware pass
-  (2026-10-04).
+  (2026-10-04). **Level 3** (AI Research Wing) greybox: built 2026-10-04 with lifts,
+  chasers and 2 patrol bots (owner asked for the bots). **Proposed** until the owner plays it.
 - **The game starts in level 1;** level indices list the game's levels, then the test
-  rooms (the greybox level the tests use, `test_jumps` for the jump metrics, `test_lifts`
-  for the lift).
+  rooms (the greybox level the tests use, `test_jumps` for the jump metrics, `test_movers`
+  for the lift and the chaser).
 
 ## Player physics
 
@@ -134,7 +136,9 @@ or git keeps the old one). Details of how the code does it belong in
   of the screen's right edge, removed a screen behind the camera until the section
   restarts, at most 8, one type table. The sprite list is rebuilt every frame.
 - **Bank 0 is for per-frame code;** code that never runs in a gameplay frame lives in ROM
-  banks (`#pragma bank 255`, `BANKED`).
+  banks (`#pragma bank 255`, `BANKED`). Code that reads banked data inside the caller's
+  `WITH_BANK` stays in bank 0 (2026-10-04: the palette fades and the level start/restart
+  flow moved out, about 730 bytes).
 - **Screen text** in the game's own font (`src/engine/text.c`); `printf` took 2.6 KB of bank 0.
 - **SDCC pitfall:** `?:` passed straight as a function argument can compile wrong
   (`head_row` is a function for this).
@@ -162,7 +166,7 @@ or git keeps the old one). Details of how the code does it belong in
 - **The music step runs in the line-23 interrupt, not VBlank** (2026-10-04, owner): about 9
   lines per frame, up to 18; in VBlank it delayed every update.
 - **Songs:** level 1 "Tech", level 2 "Neurotic Robonaut" (owner, after the hardware pass,
-  2026-10-04); only Tronimal's own songs, not the packs' remixes of other people's.
+  2026-10-04), level 3 "Observing Jupiter" (owner: keep, 2026-10-04); only Tronimal's own songs, not the packs' remixes of other people's.
 - **Screen songs:** title "Decampment", game over "Gone Missing", level complete "Delight",
   each after the screen's flashes; the level's song starts again after them (2026-10-04,
   owner approved after listening).

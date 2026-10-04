@@ -7,18 +7,16 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 ## Status (2026-10-04)
 
 - **Playable:** level 1 (Server Room, art pending) and the level 2 greybox (Code Testing
-  Lab), both kept after the owner's hardware pass, with music, the GBFX sound effects and
-  songs for the title, game over and level complete screens (owner approved the sounds).
-  The lift for level 3 is built and tested (test room), the level 3 brief drafted and
-  answered. Next: the chaser, the level 3 greybox, then M7 passwords; M5 art waits for
-  the style guide.
-- **Tests:** `make test` 209 tests in about 13 s; `make test-full` 305 in about 17 s.
-- **Memory:** bank 0 has 1,044 bytes free (the lift took about 1 KB); WRAM uses 1,489 of
-  4,096 bytes.
-- **Frame budget** (worst update, line of the 140 allowed; average): level 1 130 (78),
-  level 2 107 (66), greybox route 120 (79); the lift checks cost about 2 lines on average
-  even without lifts. The music step costs about 9 lines, up to 18; a streamed column's
-  write 5 (was 12).
+  Lab), both kept after the owner's hardware pass, and the new level 3 greybox (AI
+  Research Wing) with lifts and chasers; music, the GBFX sound effects and songs for the
+  title, game over and level complete screens (owner approved the sounds).
+  Next: the owner's level 3 pass, then M7 passwords; M5 art waits for the style guide.
+- **Tests:** `make test` 218 tests in about 15 s; `make test-full` 321 in about 18 s.
+- **Memory:** bank 0 has 1,253 bytes free (palette fades and the level flow moved to ROM
+  banks; lifts and chasers added); WRAM uses 1,492 of 4,096 bytes.
+- **Frame budget** (worst update, line of the 140 allowed; average): level 1 125 (79),
+  level 2 108 (66), level 3 131 (91), greybox route 121 (80). Lifts cost about 10 lines on
+  average where they are; the music step about 9, up to 18; a streamed column's write 5.
 
 ## Bugs
 
@@ -101,8 +99,8 @@ Done when level 1 looks like the final game in both modes.
       (`make soundtest`). Done 2026-10-04; owner approved the picks.
 - [ ] Music per level, title, game over and ending. Levels 1 and 2, title, game over and
       level complete have songs (owner approved 2026-10-04; both packs in `music/packs/`,
-      all 18 songs in the sound test). Levels 3-5 and the ending wait for those
-      (candidate for the ending: "Closing").
+      all 18 songs in the sound test); level 3 too (owner: keep). Levels 4-5 and the
+      ending wait for those (candidate for the ending: "Closing").
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
 
@@ -129,8 +127,9 @@ replay test that finishes it.
       Greybox done and kept after the owner's hardware pass ([LEVEL_DESIGN.md](LEVEL_DESIGN.md)
       section 7). Next: the art pass (M5).
 - [ ] Level 3, AI Research Wing: vertical movers and chasers. Lifts done 2026-10-04
-      (`src/actor/lift.c`, tested in `levels/test_lifts.tmj`); brief drafted and answered
-      ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7). Next: chasers, then the greybox.
+      (`src/actor/lift.c`), chasers done (`src/actor/chaser.c`), both tested in
+      `levels/test_movers.tmj`; greybox built ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7)
+      with a replay test; **(owner)** play it. Then the art pass.
 - [ ] Level 4, Network Hub: hazards.
 - [ ] Level 5, Mainframe: the KERNEL boss (concept in GAME_DESIGN.md).
       **(owner)** Review the detailed boss design before it's built.

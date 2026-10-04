@@ -5,7 +5,7 @@ until they end (src/sound/music.c, src/sound/sound.c)."""
 import sys
 from pathlib import Path
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_COMPLETE, PAUSED, TITLE_SCREEN_STATE
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_COMPLETE, PAUSED, TITLE_SCREEN_STATE
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
@@ -42,7 +42,7 @@ def test_the_music_keeps_playing_while_paused(game):
 def track_songs(game) -> list:
     """From now on, add the name of each song the game starts to the returned list."""
     names = {game.pyboy.symbol_lookup(symbol)[1]: symbol[len("_song_"):]
-             for symbol in ("_song_tech", "_song_neurotic_robonaut", "_song_decampment",
+             for symbol in ("_song_tech", "_song_neurotic_robonaut", "_song_observing_jupiter", "_song_decampment",
                             "_song_gone_missing", "_song_delight")}
     registers = game.pyboy.register_file
     started = []
@@ -63,7 +63,7 @@ def test_each_level_and_screen_starts_its_own_song(game):
     # After the title, game over and level complete, a level's song starts again.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     songs = track_songs(game)
-    for level in (LEVEL_1, LEVEL_2):
+    for level in (LEVEL_1, LEVEL_2, LEVEL_3):
         game.load_level(level)
     game.set_state(TITLE_SCREEN_STATE)
     press_start_on_screen(game)
@@ -72,8 +72,8 @@ def test_each_level_and_screen_starts_its_own_song(game):
     press_start_on_screen(game)
     game.set_state(LEVEL_COMPLETE)
     press_start_on_screen(game)
-    assert songs == ["tech", "neurotic_robonaut", "decampment", "neurotic_robonaut",
-                     "gone_missing", "neurotic_robonaut", "delight", "tech"]
+    assert songs == ["tech", "neurotic_robonaut", "observing_jupiter", "decampment", "observing_jupiter",
+                     "gone_missing", "observing_jupiter", "delight", "tech"]
 
 
 def test_a_sound_effect_takes_its_channels_until_it_ends(game):

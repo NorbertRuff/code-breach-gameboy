@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include "../level/level_data.h"
 
-// Actors are the level's moving objects (patrol bots and lifts), spawned from its entity
-// list as the camera reaches them. The player is not an actor.
+// Actors are the level's moving objects (patrol bots, chasers and lifts), spawned from
+// its entity list as the camera reaches them. The player is not an actor.
 #define MAX_ACTORS 8          // 2 or 3 hardware sprites each, after the player's 4
 
 typedef struct ActorType ActorType;
@@ -45,12 +45,14 @@ struct ActorType {
 extern Actor actors[MAX_ACTORS];
 extern uint8_t actor_count;
 extern uint8_t lifts_in_play;   // most levels have none: the lift code then does nothing
+extern uint16_t actor_player_x;     // the player's body center and feet row, world pixels,
+extern uint8_t actor_player_feet;   // for actors that react to it (set by actors_update)
 
 void actors_load_tiles(void);
 void actors_reset(uint8_t section);
 void actors_spawn(int16_t camera_x);
 void actors_move_lifts(void);
-void actors_update(int16_t camera_x);
+void actors_update(int16_t camera_x, uint16_t player_x, uint8_t player_feet);
 Actor* actors_lift_at(uint16_t body_x);
 uint8_t actors_touch(int16_t left, int16_t top, int16_t right, int16_t bottom);
 uint8_t actors_draw(uint8_t first_sprite, int16_t camera_x);

@@ -102,6 +102,6 @@ games ships (decision 2026-10-03).
 | Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`), HUD digits and heart (hand-written in `level_manager.c`) | Project code | Placeholders until M5 |
 | Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder until M5 |
 | Placeholder font (`src/graphics/font.c`): A-Z, 0-9, punctuation, 8×8 bold | Project code, drawn in the style of the existing HUD digits | Placeholder until the M5 font |
-| Music: `music/*.uge` (Tech, Neurotic Robonaut, Decampment, Gone Missing, Delight); both packs in `music/packs/` for the sound test | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
+| Music: `music/*.uge` (Tech, Neurotic Robonaut, Observing Jupiter, Decampment, Gone Missing, Delight); both packs in `music/packs/` for the sound test | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
 | hUGEDriver 6.1.3 (`lib/hUGEDriver/`) | SuperDisk, github.com/SuperDisk/hUGEDriver release, public domain | In use; credited in `CREDITS.md` |
 | Sound effects: `sounds/GBFX.sav`, `sounds/GBFX2.sav` (picks in `sounds/effects.txt`) | Tronimal, GBFX and GBFX2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |

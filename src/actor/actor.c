@@ -1,6 +1,7 @@
 #include "actor.h"
 #include "bot.h"
 #include "lift.h"
+#include "chaser.h"
 #include "../level/level_manager.h"
 
 // Read by the tests to notice Actor struct changes.
@@ -13,6 +14,8 @@ const uint8_t actor_struct_size = sizeof(Actor);
 Actor actors[MAX_ACTORS];
 uint8_t actor_count;
 uint8_t lifts_in_play;
+uint16_t actor_player_x;
+uint8_t actor_player_feet;
 
 // The actor type of each entity type. Fragments are drawn in the map, and gates and the
 // exit are not actors.
@@ -22,6 +25,7 @@ static const ActorType* const actor_types[] = {
     0,           // ENTITY_GATE
     0,           // ENTITY_EXIT
     &lift_type,  // ENTITY_LIFT
+    &chaser_type,  // ENTITY_CHASER
 };
 #define ACTOR_TYPE_COUNT (sizeof(actor_types) / sizeof(actor_types[0]))
 
@@ -86,11 +90,13 @@ void actors_move_lifts(void)
     }
 }
 
-// Moves every other actor. One that falls DESPAWN_BEHIND px behind the screen's left edge
-// is removed, and comes back only when the section restarts: the last actor takes its
-// place, and is updated next.
-void actors_update(int16_t camera_x)
+// Moves every other actor, with the player's place for those that react to it. One that
+// falls DESPAWN_BEHIND px behind the screen's left edge is removed, and comes back only
+// when the section restarts: the last actor takes its place, and is updated next.
+void actors_update(int16_t camera_x, uint16_t player_x, uint8_t player_feet)
 {
+    actor_player_x = player_x;
+    actor_player_feet = player_feet;
     int16_t despawn_x = camera_x - DESPAWN_BEHIND;
     Actor* actor = actors;
     for (uint8_t i = 0; i < actor_count; ) {

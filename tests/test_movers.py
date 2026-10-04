@@ -1,13 +1,15 @@
-"""Lifts (level 3's mechanic, M8): a one-way platform that moves up and down its travel
-and carries the player standing on it (src/actor/lift.c, src/player/player.c).
-levels/test_lifts.tmj: one lift, center x 132, its top from y 48 to y 104 (world pixels),
-over the floor, whose feet row is 119."""
+"""Level 3's movers (M8). Lifts: a one-way platform that moves up and down its travel and
+carries the player standing on it (src/actor/lift.c, src/player/player.c). Chasers: stand
+until they see the player near on their floor, then walk toward them inside their range
+(src/actor/chaser.c). levels/test_movers.tmj: one lift, center x 132, its top from y 48 to
+y 104 (world pixels); a chaser on the floor (feet row 119) with centers 216-296, starting
+at 296; a one-way shelf over the chaser's range, feet row 95."""
 
 import pytest
 
-from gamelib import COREGAMELOOP, LEVEL_TEST_LIFTS
+from gamelib import COREGAMELOOP, LEVEL_TEST_MOVERS, PLAYER_OFFSETS
 
-pytestmark = pytest.mark.level(LEVEL_TEST_LIFTS)
+pytestmark = pytest.mark.level(LEVEL_TEST_MOVERS)
 
 LIFT_X = 132
 LIFT_HIGHEST, LIFT_LOWEST = 48, 104
@@ -16,8 +18,13 @@ PAUSE_FRAMES = 30                                  # at each end
 CYCLE_FRAMES = 2 * (LIFT_LOWEST - LIFT_HIGHEST + PAUSE_FRAMES)   # 1 px per frame, up and down
 
 
+CHASER_MIN_X, CHASER_MAX_X = 216, 296
+SHELF_FEET = 95
+SIGHT_X = 48                                       # src/actor/chaser.c
+
+
 def the_lift(game):
-    return next(actor for actor in game.actors() if not actor.bot)
+    return next(actor for actor in game.actors() if actor.lift)
 
 
 def record_updates(game) -> list:
@@ -86,3 +93,42 @@ def test_the_player_jumps_off_and_drops_through_a_lift(game):
     game.pyboy.button_release("down")
     game.frames(90)
     assert game.player().py == FLOOR_FEET, "Down + A didn't drop through the lift"
+
+
+def the_chaser(game):
+    return next(actor for actor in game.actors() if actor.chaser)
+
+
+def make_invincible(game):
+    """The player can't be hurt for the next 255 frames (the game counts it down)."""
+    _, base = game.pyboy.symbol_lookup("_player")
+    game.pyboy.memory[base + PLAYER_OFFSETS["invincibility_frames"]] = 255
+
+
+def test_a_chaser_stands_until_it_sees_the_player(game):
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.place_player(LIFT_X, FLOOR_FEET)               # the chaser is in play, the player far
+    game.frames(60)
+    assert the_chaser(game).x == CHASER_MAX_X
+    game.place_player(CHASER_MAX_X - SIGHT_X + 4, FLOOR_FEET)
+    x_before = the_chaser(game).x
+    game.frames(10)
+    assert the_chaser(game).x == x_before - 10, "it didn't walk 1 px per frame toward the player"
+
+
+def test_a_chaser_doesnt_see_the_player_on_a_shelf_above_it(game):
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.place_player(CHASER_MAX_X - 16, SHELF_FEET)
+    game.frames(60)
+    assert game.player().on_ground and the_chaser(game).x == CHASER_MAX_X
+
+
+def test_a_chaser_stays_inside_its_range(game):
+    # Lured step by step to the left end of its range by an invincible player, who ends
+    # just past it.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    make_invincible(game)
+    for x in (CHASER_MAX_X - 36, CHASER_MAX_X - 72, CHASER_MIN_X - 10):
+        game.place_player(x, FLOOR_FEET)
+        game.frames(40)
+    assert the_chaser(game).x == CHASER_MIN_X

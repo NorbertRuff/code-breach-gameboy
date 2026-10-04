@@ -112,8 +112,9 @@ The owner walks through every file and must be able to say what each part does:
 
 - `is_cgb` (`src/engine/platform.h`) guards every VRAM bank 1 / attribute write: on DMG it
   would overwrite the tile map.
-- Palettes go through `src/engine/palette.c` only (`tests/test_palette.py` fails on any
-  other write); it has both paths for loads, fades and flashes. `BGP_REG`/`OBP*_REG` do
+- Palettes go through the palette module only, `src/engine/palette.c` and
+  `palette_effects.c` (`tests/test_palette.py` fails on any other write); it has both paths
+  for loads, fades and flashes. `BGP_REG`/`OBP*_REG` do
   nothing on GBC; GBC palette registers do nothing on DMG.
 - Every palette is ordered index 0 lightest → 3 darkest.
 - No background tile flips (`png2asset -noflip`). Only VRAM bank 0 for tiles, 8 KB WRAM,

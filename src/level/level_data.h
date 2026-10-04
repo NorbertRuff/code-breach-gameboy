@@ -28,6 +28,8 @@
 #define ENTITY_EXIT     3   // x, y: top-left of its tile
 #define ENTITY_LIFT     4   // x: left edge, y: its top row at the lowest point, param: travel
                             // up from there in px, speed: px per frame (1)
+#define ENTITY_CHASER   5   // x: left end of its range, y: feet row, param: range width in px,
+                            // speed: px per frame (1)
 
 typedef struct {
     uint8_t type;

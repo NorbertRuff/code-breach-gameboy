@@ -261,6 +261,8 @@ def draw(level: tiled2c.Level, result: Exploration) -> Image.Image:
         if e.kind == "enemy":   # fast bots in red
             pen.rectangle([at(e.x, e.y - 15), at(e.x + e.param, e.y + 1)],
                           outline=(240, 140, 0) if e.speed == 1 else (230, 30, 30), width=e.speed)
+        elif e.kind == "chaser":   # its range, in purple
+            pen.rectangle([at(e.x, e.y - 15), at(e.x + e.param, e.y + 1)], outline=(170, 40, 200), width=2)
         elif e.kind == "lift":    # the area its platform sweeps
             pen.rectangle([at(e.x, e.y - e.param), at(e.x + tiled2c.LIFT_WIDTH, e.y + TILE)],
                           outline=(0, 160, 200), width=2)

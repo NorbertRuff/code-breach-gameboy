@@ -28,6 +28,7 @@ MAX_FRAGMENTS = 32
 TILESET_BUDGET = 190       # unique tiles per level tileset, docs/ART_PIPELINE.md
 SECTIONS = 3
 BOT_SPEEDS = (1, 2)         # px per frame, the enemy property "speed" (default 1)
+ENEMY_KINDS = ("patrol", "chaser")   # the enemy property "kind" (default patrol)
 LIFT_WIDTH = 24            # px, src/actor/lift.h
 LIFT_SPEEDS = (1,)         # px per frame, the lift property "speed" (default 1)
 LIFT_MIN_GAP = 2 * TILE    # px between two lifts: a body never stands on two at once
@@ -38,7 +39,8 @@ FLIP_FLAGS = 0xE0000000    # Tiled stores flips and rotation in a gid's top bits
 COLLISION_TYPES = {"": "COLLISION_NONE", "solid": "COLLISION_SOLID",
                    "one_way": "COLLISION_ONE_WAY", "hazard": "COLLISION_HAZARD"}
 ENTITY_TYPES = {"enemy": "ENTITY_ENEMY", "fragment": "ENTITY_FRAGMENT",
-                "gate": "ENTITY_GATE", "exit": "ENTITY_EXIT", "lift": "ENTITY_LIFT"}
+                "gate": "ENTITY_GATE", "exit": "ENTITY_EXIT", "lift": "ENTITY_LIFT",
+                "chaser": "ENTITY_CHASER"}
 OBJECT_CLASSES = set(ENTITY_TYPES) | {"player_start"}
 
 
@@ -149,10 +151,15 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
             patrol = int(obj["width"])
             if not 2 * TILE <= patrol <= 255:
                 fail(f"{where}: an enemy's patrol width must be 16 to 255 px, not {patrol}")
+            kind = properties(obj).get("kind", "patrol")
+            if kind not in ENEMY_KINDS:
+                fail(f"{where}: an enemy's kind must be {' or '.join(ENEMY_KINDS)}, not {kind}")
             speed = properties(obj).get("speed", 1)
-            if speed not in BOT_SPEEDS:
-                fail(f"{where}: an enemy's speed must be 1 or 2 px per frame, not {speed}")
-            entities.append(Entity("enemy", left, world_y + int(obj["height"]) - 1, patrol, speed))
+            if speed not in (BOT_SPEEDS if kind == "patrol" else (1,)):
+                fail(f"{where}: a {kind} enemy's speed must be "
+                     f"{'1 or 2' if kind == 'patrol' else '1'} px per frame, not {speed}")
+            entities.append(Entity("enemy" if kind == "patrol" else "chaser",
+                                   left, world_y + int(obj["height"]) - 1, patrol, speed))
             continue
         if obj_class == "lift":
             # Rectangle: the area the 8 px platform sweeps, from its highest to its lowest place.
@@ -267,8 +274,8 @@ def check_lifts(level: Level, fail) -> None:
 
 
 def warn_about_patrols(level: Level) -> None:
-    """Warn when an enemy patrols over a tile without ground under its feet."""
-    for e in (e for e in level.entities if e.kind == "enemy"):
+    """Warn when an enemy (a bot or a chaser) can walk over a tile without ground under its feet."""
+    for e in (e for e in level.entities if e.kind in ("enemy", "chaser")):
         row = (e.y + 1) // TILE - MAP_TOP_ROW
         for column in range(e.x // TILE, (e.x + e.param - 1) // TILE + 1):
             ground = level.tiles[row * level.width + column] if 0 <= row < MAP_ROWS else 0

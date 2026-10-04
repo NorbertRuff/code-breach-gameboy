@@ -33,6 +33,7 @@ sketches in this file can be redrawn after an edit in Tiled):
 | `E` | Enemy: a run of `E`s is one patrol bot standing on the row below, the run is its patrol range |
 | `F` | Fast enemy: like `E`, at 2 px per frame instead of 1 (the bot's `speed` property in Tiled) |
 | `L` | Lift (from level 3): a block of `L`s 3 wide, from the row of its highest place to its lowest |
+| `C` | Chaser (from level 3): like `E`; the run is the range it may walk in (`kind` = `chaser` in Tiled) |
 | `P` | Player start |
 | `G` | Security gate (section end and checkpoint) |
 | `D` | Exit elevator |
@@ -318,8 +319,9 @@ About 9 bots, at most 3 on screen.
 
 ### Level 3 brief: AI Research Wing (draft)
 
-**Status: draft by Claude, 2026-10-04.** The lift is built and tested (`levels/test_lifts.tmj`,
-DECISIONS.md "Lifts"). Next: the chaser, then the greybox.
+**Status: draft by Claude, 2026-10-04. Greybox built the same day** (`levels/level_3.tmj`,
+below), after the owner's answers. Lifts and chasers are tested in `levels/test_movers.tmj`.
+Next: the owner plays it.
 
 Teaches: **lifts** (vertical movers) and **chasers** (bots that follow the player). Lifts
 reach heights no jump can: the level goes up, with shelves 5-9 tiles above the floor.
@@ -351,6 +353,73 @@ Limits on fixed ground as in level 2 (climbs up to 3, gaps up to 6).
 - **Chaser:** stands still until the player is within about 6 tiles on its floor, then
   walks toward them at 1 px per frame, only inside its range in Tiled.
 - **Lifts:** wait about half a second at each end (built). Vertical only for now.
+
+### Level 3 greybox (2026-10-04)
+
+`levels/level_3.tmj`, 170 tiles wide (`L` lifts, `C` chasers' ranges). `make preview`
+reaches every surface and all 13 fragments; `tests/test_level_3.py` plays it from the start
+to the exit without losing a life, collecting all 13.
+
+Columns 0-83 (section A and the start of B):
+
+```
+0         1         2         3         4         5         6         7         8   
+....................................*...............................................
+..............................LLL======.............................................
+..............................LLL..............*....................................
+..............*...............LLL...................................................
+........LLL=======....LLL====.LLL...................................................
+........LLL...........LLL.....LLL...................................................
+........LLL...........LLL.....LLL.............LLL...................................
+........LLL...........LLL.....................LLL.......................*...........
+........LLL...........LLL.....................LLL.....................======........
+........LLL...........LLL.....................LLL...................................
+........LLL...........LLL.....................LLL...................................
+.P...........EEEEE.*...................................*.G........CCCCCCCCCCCCCC....
+##########################################...........###############################
+```
+
+Columns 84-169 (the rest of B, and C):
+
+```
+      9         0         1         2         3         4         5         6
+.............................................................*........................
+.....*................................................................................
+...........*.....................................LLL======............................
+....LLL=========...........................*.....LLL........LLL.......................
+....LLL.............................LLL========..LLL........LLL.....*..EEEEEEEE...D...
+....LLL.............................LLL..........LLL........LLL...####################
+....LLL.............................LLL..........LLL........LLL...####################
+....LLL.............................LLL..........LLL........LLL...####################
+....LLL.............................LLL..........LLL........LLL...####################
+....LLL.............................LLL..........LLL........LLL...####################
+............................................................LLL...####################
+CCCCCCCCCCCCCC......*...*...G...........CCCCCCCCCCCCC.............####################
+######################################################################################
+```
+
+What changed from the brief, and why:
+- **Two patrol bots** (the brief had 3-4): one on the floor under the first high shelf,
+  clear of L1 where the player waits; one on the top block before the exit. Lifts and
+  chasers are this level's lessons, and every one of them is an actor too (at most 8 in
+  play, 3 sprites per lift).
+- **A1, the first lifts wait at the bottom 2 tiles above the floor:** stand under one and
+  jump straight up while it waits; the shelves they reach are 7 rows up, out of a jump's reach.
+- **A2, between L2 and L3 the shelf is at L2's top;** L3 waits 2 rows lower, so the player
+  steps off the shelf onto it, then rides up to the high shelf (fragment 3).
+- **A3, the pit is 11 tiles wide** with L4 in the middle (gaps of 4); fragment 4 hangs over
+  L4's highest place, so riding it collects it.
+- **B1, chaser 1's shelf is 4 tiles up:** from it, a running jump clears the chaser (it
+  waits at its range's right end, as it can't see the player on the shelf).
+- **B2, L5 starts 3 tiles up,** so a player boarding it is never in chaser 2's sight; its
+  high shelf ends past chaser 2's range.
+- **C, three lifts:** L6 to a shelf over chaser 3, L7 higher, and L8 up the shaft beside
+  the top block (fragment 12 at its highest place). The block's top is 8 rows below the
+  screen's top, so its bot can be jumped; the exit is past the bot.
+- **Fragments:** A 5 (gate 3 of 5), B 5 (gate 3 of 5), C 3 (bonus): 13. **Actors:** 8 lifts,
+  3 chasers, 2 bots; at most 4 in play at once. The replay's worst frame ends at line 131
+  of the 140 allowed (average 91; `tools/frame_budget.py --route level3`): lifts cost about
+  10 lines on average.
 
 ### Level 2 greybox (2026-10-04)
 

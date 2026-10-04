@@ -18,7 +18,7 @@ import tiled2c  # noqa: E402
 
 GREYBOX = tiled2c.load_level(ROOT / "levels" / "greybox_test.tmj")
 TEST_JUMPS = tiled2c.load_level(ROOT / "levels" / "test_jumps.tmj")
-TEST_LIFTS = tiled2c.load_level(ROOT / "levels" / "test_lifts.tmj")
+TEST_MOVERS = tiled2c.load_level(ROOT / "levels" / "test_movers.tmj")
 FIELDS = ("x", "y", "velocity_x", "velocity_y", "jump_buffer_frames", "coyote_frames", "on_ground")
 
 # Start position, then (frames, d-pad, A down) steps, with Down held as an optional 4th
@@ -84,7 +84,7 @@ def test_greybox_level_can_be_finished():
     assert len(result.paths) == len(result.surfaces)
 
 
-@pytest.mark.parametrize("name", ["level_1", "level_2"])
+@pytest.mark.parametrize("name", ["level_1", "level_2", "level_3"])
 def test_game_levels_pass_the_check(name):
     level = tiled2c.load_level(ROOT / "levels" / f"{name}.tmj")
     result = levelpreview.explore(level)
@@ -124,11 +124,11 @@ def test_check_drops_through_one_way_tops(monkeypatch):
 
 
 def test_check_rides_lifts():
-    # In test_lifts.tmj the one-way shelf (row 7 of the screen, feet y 55) is 64 px over the
+    # In test_movers.tmj the one-way shelf (row 7 of the screen, feet y 55) is 64 px over the
     # floor: out of a jump's reach, reached from the lift next to it.
     on_shelf = lambda result: any(s.feet == 55 for s in result.paths)
-    assert on_shelf(levelpreview.explore(TEST_LIFTS))
-    without_lift = copy.deepcopy(TEST_LIFTS)
+    assert on_shelf(levelpreview.explore(TEST_MOVERS))
+    without_lift = copy.deepcopy(TEST_MOVERS)
     without_lift.entities = [e for e in without_lift.entities if e.kind != "lift"]
     assert not on_shelf(levelpreview.explore(without_lift))
 

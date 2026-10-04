@@ -44,7 +44,7 @@ LLL.................
 ....................
 ....................
 .....*.......*......
-.P...EEE..G..*.GFFD*
+.P...EEE..GCC*.GFFD*
 ###^^###############
 """
 
@@ -59,6 +59,8 @@ def test_a_sketch_with_every_character_converts():
     assert (fast_bot.x, fast_bot.param, fast_bot.speed) == (16 * 8, 2 * 8, 2)
     assert level.tileset.collision[level.tiles[6 * 20 + 9]] == "one_way"
     assert level.tileset.collision[level.tiles[12 * 20 + 3]] == "hazard"
+    chaser = next(e for e in level.entities if e.kind == "chaser")
+    assert (chaser.x, chaser.param, chaser.speed) == (11 * 8, 2 * 8, 1)
     lift = next(e for e in level.entities if e.kind == "lift")    # rows 2-5: tops at world y 40-64
     assert (lift.x, lift.y, lift.param) == (0, 64, 24)
 

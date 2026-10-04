@@ -1,7 +1,7 @@
 """The pause (START) and the level-select cheat (SELECT while paused)."""
 
-from gamelib import (COREGAMELOOP, GAMEPLAY_START, LEVEL_1, LEVEL_2, LEVEL_GREYBOX_TEST,
-                     LEVEL_TEST_JUMPS, PAUSED)
+from gamelib import (COREGAMELOOP, GAMEPLAY_START, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_GREYBOX_TEST,
+                     LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, PAUSED)
 
 PAUSE_TILES = {44, 46, 48, 50, 52}      # P, A, U, S, E (src/game_state/pause.c)
 
@@ -47,7 +47,7 @@ def test_holding_start_pauses_once(game):
 def test_select_while_paused_loads_the_next_level(game):
     # The game fixture starts in the greybox level; the levels go round in index order.
     game.start_on_open_ground()
-    for expected in (LEVEL_TEST_JUMPS, LEVEL_1, LEVEL_2, LEVEL_GREYBOX_TEST):
+    for expected in (LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_GREYBOX_TEST):
         game.press("start")
         game.frames(2)
         game.press("select")

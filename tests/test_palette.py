@@ -18,10 +18,10 @@ PALETTE_WRITES = re.compile(r"\b(BGP_REG|OBP0_REG|OBP1_REG|BCPS_REG|BCPD_REG|OCP
 def test_only_the_palette_module_writes_palettes():
     writers = [f"{path.relative_to(ROOT)}:{number}"
                for path in sorted((ROOT / "src").rglob("*.[ch]"))
-               if path.name not in ("palette.c", "palette.h")
+               if path.name not in ("palette.c", "palette_effects.c", "palette.h")
                for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
                if PALETTE_WRITES.search(line.split("//")[0])]
-    assert not writers, f"palette writes outside src/engine/palette.c: {writers}"
+    assert not writers, f"palette writes outside the palette module: {writers}"
 
 
 def background_palette_state(game):

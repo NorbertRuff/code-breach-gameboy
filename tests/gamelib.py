@@ -75,9 +75,10 @@ for _name, _fmt in PLAYER_FIELDS:
 # Levels and the collision ring, from src/level/level_manager.h and level_data.h.
 LEVEL_1 = 0
 LEVEL_2 = 1
-LEVEL_GREYBOX_TEST = 2
-LEVEL_TEST_JUMPS = 3
-LEVEL_TEST_LIFTS = 4
+LEVEL_3 = 2
+LEVEL_GREYBOX_TEST = 3
+LEVEL_TEST_JUMPS = 4
+LEVEL_TEST_MOVERS = 5
 RING_COLUMNS = 32
 RING_ROWS = 16
 TILE_SIZE = 8
@@ -181,9 +182,10 @@ class Game:
             return False
 
     def rom_level_index(self, level: int) -> int:
-        """A LEVEL_* index in this build's numbering: builds before level 2 had the test
-        rooms one index lower."""
-        return level - 1 if level > LEVEL_2 and not self.has_symbol("_level_2") else level
+        """A LEVEL_* index in this build's numbering: builds before level 3 had the test
+        rooms one index lower, builds before level 2 two."""
+        missing = sum(not self.has_symbol(f"_level_{n}") for n in (2, 3))
+        return level - missing if level >= LEVEL_GREYBOX_TEST else level
 
     def _set_level_index(self, level: int) -> None:
         _, addr = self.pyboy.symbol_lookup("_level_index")
@@ -279,18 +281,19 @@ class Game:
         return p
 
     def actors(self) -> list:
-        """The actors in play, in array order. Each has the Actor fields, plus bot: is it
-        a patrol bot."""
+        """The actors in play, in array order. Each has the Actor fields, plus bot, chaser and
+        lift: is it one."""
         count = self.u8("_actor_count")
         if not count:
             return []                           # PyBoy refuses an empty memory slice
         raw = read_symbol(self.pyboy, "_actors", ACTOR_SIZE * count)
-        _, bot_type = self.pyboy.symbol_lookup("_bot_type")
+        types = {name: self.pyboy.symbol_lookup(f"_{name}_type")[1] if self.has_symbol(f"_{name}_type") else None
+                 for name in ("bot", "chaser", "lift")}
         actors = []
         for i in range(count):
             values = struct.unpack_from(ACTOR_FORMAT, raw, i * ACTOR_SIZE)
             actor = SimpleNamespace(**{name: v for (name, _), v in zip(ACTOR_FIELDS, values)})
-            actor.bot = actor.type == bot_type
+            actor.bot, actor.chaser, actor.lift = (actor.type == types[name] for name in ("bot", "chaser", "lift"))
             actors.append(actor)
         return actors
 
@@ -633,6 +636,41 @@ class Pilot:
 
         self.wait(turned_back, f"the bot from x {patrol_left} to turn back")
         self.jump(hold)
+
+    def lift(self, center_x: int):
+        """The lift whose center is at x center_x (its Tiled rectangle's left edge + 12)."""
+        for actor in self.game.actors():
+            if actor.lift and actor.x == center_x:
+                return actor
+        raise AssertionError(f"no lift at x {center_x} at {self.where()}")
+
+    def wait_for_lift(self, center_x: int, at_top: bool, frames_left: int = 20) -> None:
+        """Stand still until the lift waits at its highest (or lowest) place, with at least
+        frames_left frames of its pause to go."""
+        def waiting() -> bool:
+            lift = self.lift(center_x)
+            return lift.y == (lift.min_y if at_top else lift.max_y) and lift.wait_frames >= frames_left
+        self.wait(waiting, f"the lift at x {center_x} to wait at its {'top' if at_top else 'bottom'}")
+
+    def on_lift(self, center_x: int) -> bool:
+        """Standing on the lift? The player is read as of its last draw, the lift live, so
+        a moving lift may be 1 px further."""
+        player, lift = self.game.player(), self.lift(center_x)
+        return player.on_ground and abs(player.py - (lift.y - 1)) <= 1 and abs(player.px - center_x) < 20
+
+    def board_lift(self, center_x: int) -> None:
+        """Stand under a lift and jump straight up onto it while it waits at its lowest place."""
+        self.run_to(center_x); self.stop()
+        self.wait_for_lift(center_x, at_top=False, frames_left=26)
+        self.jump(12, direction="")
+        assert self.on_lift(center_x), f"missed the lift at x {center_x}: {self.where()}"
+
+    def ride_to_top(self, center_x: int) -> None:
+        """Stand on the lift until it waits at its highest place."""
+        self.buttons("")
+        self.wait(lambda: self.on_lift(center_x) and self.lift(center_x).y == self.lift(center_x).min_y,
+                  f"the lift at x {center_x} to reach its top")
+        self.log(f"lift at its top: {self.where()}")
 
     def open_gate(self, section: int) -> None:
         """Run right into a gate until it opens and the section (1 = B) starts."""

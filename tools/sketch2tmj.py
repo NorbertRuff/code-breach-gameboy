@@ -10,6 +10,7 @@ docs/LEVEL_DESIGN.md section 1:
     E  enemy: a run of E's is one patrol bot, standing on the row below it; the run is
        its patrol range. Separate two bots' runs by another character.
     F  a fast enemy (speed 2 px per frame), like E
+    C  a chaser, like E: the run is the range it may walk in
     L  a lift: a block of L's 3 wide, from the row of its highest place to its lowest
 Lines starting with '#' and a space are comments; "# quota: 3 3" gives the gates' quotas
 from left to right (default 3 each). A line of only digits and spaces (a column ruler) is
@@ -35,6 +36,7 @@ DEFAULT_QUOTA = 3
 TILE_CHARS = {".": "empty", "#": "solid", "=": "one_way", "^": "hazard"}
 OBJECT_CHARS = {"*": "fragment", "P": "player_start", "G": "gate", "D": "exit"}
 BOT_CHARS = {"E": 1, "F": 2}               # enemy runs by speed
+CHASER_CHAR = "C"
 LIFT_COLUMNS = tiled2c.LIFT_WIDTH // TILE
 
 
@@ -85,10 +87,11 @@ def sketch_to_tmj(rows: list[str], quotas: list[int]) -> dict:
                 data += [ids["empty"] + 1] * LIFT_COLUMNS
                 c += LIFT_COLUMNS
                 continue
-            if char in BOT_CHARS:
+            if char in BOT_CHARS or char == CHASER_CHAR:
                 run = len(row[c:]) - len(row[c:].lstrip(char))
-                properties = [{"name": "kind", "type": "string", "value": "patrol"}]
-                if BOT_CHARS[char] != 1:
+                kind = "chaser" if char == CHASER_CHAR else "patrol"
+                properties = [{"name": "kind", "type": "string", "value": kind}]
+                if BOT_CHARS.get(char, 1) != 1:
                     properties.append({"name": "speed", "type": "int", "value": BOT_CHARS[char]})
                 add_object({"type": "enemy", "x": c * TILE, "y": (r + 1) * TILE - BOT_HEIGHT,
                             "width": run * TILE, "height": BOT_HEIGHT, "properties": properties})
@@ -149,8 +152,9 @@ def tmj_to_sketch(tmj: dict) -> str:
         if obj.get("type") == "enemy":
             row = (int(obj["y"]) + int(obj["height"])) // TILE - 1
             speed = tiled2c.properties(obj).get("speed", 1)
+            chaser = tiled2c.properties(obj).get("kind") == "chaser"
             for c in range(col, col + int(obj["width"]) // TILE):
-                grid[row][c] = {v: k for k, v in BOT_CHARS.items()}[speed]
+                grid[row][c] = CHASER_CHAR if chaser else {v: k for k, v in BOT_CHARS.items()}[speed]
             continue
         kind = names[obj["gid"] - 1]
         grid[int(obj["y"]) // TILE - 1][col] = {v: k for k, v in OBJECT_CHARS.items()}[kind]

@@ -24,12 +24,13 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, Game, Pilot, boot  # noqa: E402
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, Game, Pilot, boot  # noqa: E402
 from test_level_1 import play_level_1  # noqa: E402
 from test_level_2 import play_level_2  # noqa: E402
+from test_level_3 import play_level_3  # noqa: E402
 
 # The game's levels by number: the level index and the replay that plays it.
-LEVELS = {1: (LEVEL_1, play_level_1), 2: (LEVEL_2, play_level_2)}
+LEVELS = {1: (LEVEL_1, play_level_1), 2: (LEVEL_2, play_level_2), 3: (LEVEL_3, play_level_3)}
 
 OUT = ROOT / "tests" / "out" / "shots"
 SHADES = [(232, 232, 232), (160, 160, 160), (88, 88, 88), (16, 16, 16)]
