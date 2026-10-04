@@ -12,6 +12,8 @@ from PIL import Image, ImageChops
 
 from gamelib import COREGAMELOOP, LEVEL_1, Pilot
 
+pytestmark = pytest.mark.both_modes   # the mode changes the result: run both in the quick tier too
+
 GOLDEN = Path(__file__).resolve().parent / "golden"
 
 

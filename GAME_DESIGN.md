@@ -55,7 +55,7 @@ What that means in practice:
 - [x] Feature flags — SKIP_INTRO_AND_START, EMPTY_BACKGROUND, DISABLE_BACKGROUND_SCROLLING
 
 ### Known Issues / In Progress
-Full bug list with causes: [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
+Bug list of the 2026-10-02 audit: [docs/archive/PROJECT_STATE.md](docs/archive/PROJECT_STATE.md); open bugs are in the ROADMAP.
 - [ ] Game-over reload visual bug — **cause found**: `scroll_win(0, 128)` is relative, so every second level load moves the HUD window to the top and it covers the screen. Fix: `move_win(7, 128)` (roadmap M1).
 - [ ] Enemy sprites are mushroom placeholders — need proper security-bot sprites per theme
 - [ ] ONE_WAY platform collision defined but not implemented

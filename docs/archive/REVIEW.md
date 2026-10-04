@@ -6,9 +6,9 @@ logic, visuals"). Method: a scripted PyBoy playthrough in DMG and GBC mode (`mak
 
 Pictures from this pass:
 
-- [DMG contact sheet](img/review-2026-10-03-dmg.png): 17 steps, from level start to after game over
-- [GBC contact sheet](img/review-2026-10-03-cgb.png): the same steps in GBC mode
-- [Level map](img/review-2026-10-03-level-map.png): all 32×18 tiles, column numbers every 5
+- [DMG contact sheet](../img/review-2026-10-03-dmg.png): 17 steps, from level start to after game over
+- [GBC contact sheet](../img/review-2026-10-03-cgb.png): the same steps in GBC mode
+- [Level map](../img/review-2026-10-03-level-map.png): all 32×18 tiles, column numbers every 5
 
 `make shots` makes new ones in `tests/out/shots/`.
 
@@ -74,5 +74,5 @@ The rest stays with its milestone.
 with a regression test in `tests/test_regressions.py` that fails on the old build:
 `test_level_and_player_are_above_the_hud` (L1), `test_player_palette_is_light_to_dark`
 (G1), `test_holding_a_jumps_only_once` (P1). G2 and T1 were checked on screenshots.
-[After the quick wins](img/review-2026-10-03-dmg-after-quick-wins.png): the floor and
+[After the quick wins](../img/review-2026-10-03-dmg-after-quick-wins.png): the floor and
 platforms are visible blocks above the HUD, and the player has a black outline on DMG.

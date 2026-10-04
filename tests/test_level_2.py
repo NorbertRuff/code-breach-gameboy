@@ -9,6 +9,7 @@ from gamelib import (COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_COMPLETE, LEVEL_GREYB
                      LINES_PER_FRAME, Pilot)
 from test_frame_budget import FRAME_LINE_LIMIT
 from test_level_1 import SPRITES_PER_LINE
+from test_text import font_tiles
 
 
 def section_a(pilot: Pilot) -> None:
@@ -103,7 +104,7 @@ def play_level_2(pilot: Pilot, low_route: bool = False) -> None:
 
 
 @pytest.mark.level(LEVEL_2)
-@pytest.mark.parametrize("start_delay", [0, 5])
+@pytest.mark.parametrize("start_delay", [0, pytest.param(5, marks=pytest.mark.full)])
 @pytest.mark.parametrize("route", ["high", "low"])
 def test_level_2_can_be_finished(game, route, start_delay):
     # Two start times put the bots in other places: the route must not depend on luck.
@@ -123,11 +124,15 @@ def test_level_2_can_be_finished(game, route, start_delay):
 @pytest.mark.parametrize("level, next_level", [(LEVEL_1, LEVEL_2), (LEVEL_2, LEVEL_1),
                                                (LEVEL_GREYBOX_TEST, LEVEL_GREYBOX_TEST)])
 def test_level_complete_goes_on_to_the_next_level_with_full_lives(game, level, next_level):
-    # After the last level comes level 1 again (no ending yet); a test room starts over.
+    # The summary shows the level's fragments; START goes on. After the last level comes
+    # level 1 again (no ending yet); a test room starts over.
     game.load_level(level)
     game.set_lives(1)
+    total = game.level().fragment_count
     game.set_state(LEVEL_COMPLETE)
     game.frames(200)                                    # the flashes, then the summary
+    text = f"FRAGMENTS 00/{total:02d}"
+    assert [game.bkg_tile(2 + i, 8) for i in range(len(text))] == font_tiles(text)
     game.press("start")
     game.wait_for_state(COREGAMELOOP, timeout=200)
     assert game.u8("_level_index") == next_level and game.lives() == 3

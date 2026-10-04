@@ -64,14 +64,17 @@ def reaches(level, start_x: int, target_x: int, target_feet: int) -> bool:
     return any(s.feet == target_feet and s.x0 <= target_x <= s.x1 for s in result.paths)
 
 
-def test_check_agrees_with_the_jump_metrics():
+@pytest.mark.parametrize("height", [MAX_CLIMB_HELD, MAX_CLIMB_HELD + 1])
+def test_check_agrees_with_the_jump_metrics_on_walls(height):
     # The same limits the ROM shows in test_jump_metrics.py, found by the search.
-    for height, expected in ((MAX_CLIMB_HELD, True), (MAX_CLIMB_HELD + 1, False)):
-        wall = WALLS[height] * 8
-        assert reaches(TEST_JUMPS, wall - 16, wall + 32, (15 - height) * 8 - 1) == expected, f"wall {height}"
-    for gap, expected in ((MAX_GAP_RUNNING, True), (MAX_GAP_RUNNING + 1, False)):
-        ledge_end = PITS[gap] * 8 + 7
-        assert reaches(TEST_JUMPS, ledge_end - 24, ledge_end + gap * 8 + 24, FLOOR_Y) == expected, f"pit {gap}"
+    wall = WALLS[height] * 8
+    assert reaches(TEST_JUMPS, wall - 16, wall + 32, (15 - height) * 8 - 1) == (height == MAX_CLIMB_HELD)
+
+
+@pytest.mark.parametrize("gap", [MAX_GAP_RUNNING, MAX_GAP_RUNNING + 1])
+def test_check_agrees_with_the_jump_metrics_on_pits(gap):
+    ledge_end = PITS[gap] * 8 + 7
+    assert reaches(TEST_JUMPS, ledge_end - 24, ledge_end + gap * 8 + 24, FLOOR_Y) == (gap == MAX_GAP_RUNNING)
 
 
 def test_greybox_level_can_be_finished():

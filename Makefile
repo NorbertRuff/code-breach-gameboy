@@ -4,7 +4,8 @@
 #   make            build obj/ApexLab.gb (incremental; headers are tracked)
 #   make rebuild    clean, then build
 #   make run        build, then open the ROM in Emulicious
-#   make test       build, then run the PyBoy tests (DMG and GBC mode)
+#   make test       build, then the quick tests in parallel (DMG; GBC only where the mode matters)
+#   make test-full  build, then every test in DMG and GBC mode (before a commit, and in CI)
 #   make shots      build, then save review screenshots to tests/out/shots/
 #   make goldens    build, then rewrite the golden screenshots in tests/golden/
 #   make budget     build, then print where the frame time goes (tools/frame_budget.py)
@@ -95,7 +96,7 @@ vpath %.c $(sort $(dir $(CSOURCES)))
 SAVETEST := $(OBJDIR)/savetest.gb
 SAVETEST_VARIANTS := $(OBJDIR)/savetest_mbc1.gb $(OBJDIR)/savetest_mbc3.gb
 
-.PHONY: all rebuild run test shots goldens budget venv savetest usage assets levels music preview clean
+.PHONY: all rebuild run test test-full shots goldens budget venv savetest usage assets levels music preview clean
 
 all: $(ROM)
 
@@ -119,7 +120,10 @@ run: $(ROM)
 	java -jar $(EMULICIOUS) $(ROM)
 
 test: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS)
-	$(PYTHON) -m pytest tests
+	$(PYTHON) -m pytest tests -n auto
+
+test-full: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS)
+	$(PYTHON) -m pytest tests -n auto --full
 
 # Scripted playthroughs of the greybox level and level 1: screenshots, contact sheets
 # and the level map in tests/out/shots/, for visual review.

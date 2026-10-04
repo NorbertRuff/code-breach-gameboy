@@ -11,6 +11,8 @@ import pytest
 
 from gamelib import boot, read_symbol
 
+pytestmark = pytest.mark.both_modes   # the mode changes the result: run both in the quick tier too
+
 
 # The ROM name and the cartridge type its header must hold (byte 0x147).
 SAVETESTS = {"savetest": 0x1B, "savetest_mbc1": 0x03, "savetest_mbc3": 0x13}

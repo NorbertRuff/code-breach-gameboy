@@ -93,21 +93,6 @@ def test_losing_a_life_keeps_the_fragments(game):
     assert hud_count(game) == "01/01"
 
 
-def test_game_over_restarts_the_section_with_its_fragments_back(game):
-    pick_up_and_run_into_gate_a(game)
-    game.place_player(330, 87)                          # on the one-way shelf: column 41's fragment
-    assert game.level().section_collected[:2] == [1, 1]
-    game.set_lives(1)
-    game.lose_life()
-    game.wait_for_state(COREGAMELOOP, timeout=600)
-    level = game.level()
-    assert game.lives() == 3
-    assert level.section == 1 and level.section_collected[:2] == [1, 0], "only section B's fragments reset"
-    player = game.player()
-    assert (player.px, player.py) == CHECKPOINT_A
-    assert game.collision(41, 9) == 4, "column 41's fragment is back"
-
-
 def test_exit_completes_the_level(game):
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.place_player(490, 103)                         # on the top step, in the exit
@@ -128,7 +113,12 @@ def test_closed_gate_buzzes_once_per_touch(game):
 
 
 def test_game_over_shows_a_message_then_restarts_the_section(game):
-    game.start_on_open_ground()
+    # Game over in section B after picking up one of its fragments: "GAME OVER" in the play
+    # area (the band and the HUD stay), then START restarts section B at its checkpoint,
+    # with full lives and only section B's fragments back.
+    pick_up_and_run_into_gate_a(game)
+    game.place_player(330, 87)                          # on the one-way shelf: column 41's fragment
+    assert game.level().section_collected[:2] == [1, 1]
     band = [game.bkg_tile(col, row) for row in range(3) for col in range(32)]
     game.set_lives(1)
     game.lose_life()
@@ -138,6 +128,9 @@ def test_game_over_shows_a_message_then_restarts_the_section(game):
     assert [game.bkg_tile(col, row) for row in range(3) for col in range(32)] == band
     game.press("start")
     game.wait_for_state(COREGAMELOOP, timeout=200)
+    level, player = game.level(), game.player()
+    assert level.section == 1 and level.section_collected[:2] == [1, 0], "only section B's fragments reset"
+    assert (player.px, player.py) == CHECKPOINT_A
     game.frames(30)
     assert game.lives() == 3 and game.window_tile(1, 0) == HUD_DIGIT_TILE_BASE + 3
-    assert MARKER_TILE["fragment"] in {game.bkg_tile(col, row) for col in range(32) for row in range(3, 16)}
+    assert game.collision(41, 9) == 4 and game.bkg_tile(41, 9) == MARKER_TILE["fragment"],         "column 41's fragment is back"

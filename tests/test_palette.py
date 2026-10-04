@@ -4,7 +4,11 @@ fades and flashes on DMG and GBC (docs/CGB_PLAN.md sections 3 and 5)."""
 import re
 from pathlib import Path
 
+import pytest
+
 from gamelib import COREGAMELOOP, read_symbol
+
+pytestmark = pytest.mark.both_modes   # the mode changes the result: run both in the quick tier too
 
 ROOT = Path(__file__).resolve().parent.parent
 PALETTE_WRITES = re.compile(r"\b(BGP_REG|OBP0_REG|OBP1_REG|BCPS_REG|BCPD_REG|OCPS_REG|OCPD_REG"

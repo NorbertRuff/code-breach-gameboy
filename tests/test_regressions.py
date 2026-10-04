@@ -1,4 +1,5 @@
-"""One test per fixed bug. Bug numbers refer to docs/PROJECT_STATE.md."""
+"""One test per fixed bug. Bugs 1-22 are described in docs/archive/PROJECT_STATE.md; later
+bugs in the comment above their test."""
 
 import hashlib
 
@@ -52,6 +53,7 @@ def test_hud_counter_shows_two_digits(game):
 
 # Bug 3 ---------------------------------------------------------------------------
 
+@pytest.mark.both_modes
 def test_level_loads_while_screen_is_dark(game):
     # From power-on to gameplay: whenever the tile maps change during a frame, the
     # background was all black when that frame started (on GBC too, since the palette
@@ -165,6 +167,7 @@ def test_level_and_player_are_above_the_hud(game):
 
 # Review G1: sprite palettes are ordered light to dark ----------------------------
 
+@pytest.mark.both_modes
 def test_player_palette_is_light_to_dark(game):
     # DMG shows color index n as shade n, so index 1 must be the lightest visible color
     # and index 3 the darkest (index 0 is transparent). docs/ART_PIPELINE.md.
@@ -201,6 +204,7 @@ def flashes_per_second(black_by_frame) -> int:
                default=0)
 
 
+@pytest.mark.both_modes
 @pytest.mark.parametrize("event", ["level_complete", "game_over"])
 def test_flashes_are_slow_and_restore_palettes(game, event):
     # Forcing the state saves collecting 12 fragments or losing 3 lives by hand.

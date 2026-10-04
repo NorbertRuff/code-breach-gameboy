@@ -1,4 +1,4 @@
-"""Known bugs from docs/PROJECT_STATE.md, written as tests that fail today.
+"""Known bugs from docs/archive/PROJECT_STATE.md, written as tests that fail today.
 
 Mark each test xfail with strict=True: while the bug exists the run stays green, and
 once the bug is fixed the test passes, which fails the run (see pytest.ini). The fix

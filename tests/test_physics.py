@@ -3,11 +3,8 @@
 Places in levels/greybox_test.tmj used here (columns x 8 px, screen rows y 8 px; the
 floor is row 15): platform C is row 6, x 112-143; platform D is row 10, x 168-199;
 x = 156 is open floor with nothing above it; a one-way shelf is row 11, x 320-351 (feet
-y 87 on it); spikes
-sit on the floor at x 368-383.
+y 87 on it); spikes sit on the floor at x 368-383.
 """
-
-import random
 
 from gamelib import (COREGAMELOOP, CORNER_CORRECTION, COYOTE_FRAMES, JUMP_BUFFER_FRAMES,
                      SUBPIXELS)
@@ -20,16 +17,6 @@ def jumped_within(game, frames: int) -> bool:
         if game.player().velocity_y < 0:
             return True
     return False
-
-
-def test_tap_and_held_jump_heights(game):
-    game.start_on_open_ground()
-    start = game.save()
-    tap = game.jump_rise(1) / SUBPIXELS
-    game.load(start)
-    held = game.jump_rise(60) / SUBPIXELS
-    assert 10 <= tap <= 16, f"a tapped jump should rise about 1.5 tiles, rose {tap} px"
-    assert 34 <= held <= 40, f"a held jump should rise about 4.5 tiles, rose {held} px"
 
 
 def test_coyote_time(game):
@@ -142,19 +129,3 @@ def test_hazard_tile_costs_a_life(game):
     game.hold("right", 30)
     assert game.lives() == lives - 1
 
-
-def test_never_overlaps_solid_tiles_while_playing(game):
-    # Random but repeatable running and jumping for 20 seconds, checked every frame.
-    game.wait_for_state(COREGAMELOOP, timeout=300)
-    rng = random.Random(2)
-    buttons = ("left", "right", "a")
-    for _ in range(60):
-        pressed = [b for b in buttons if rng.random() < 0.5]
-        for b in pressed:
-            game.pyboy.button_press(b)
-        for _ in range(rng.randint(4, 30)):
-            game.frames(1)
-            hits = game.solid_tiles_overlapped()
-            assert not hits, f"player box {game.player_box()} overlaps {hits}"
-        for b in pressed:
-            game.pyboy.button_release(b)

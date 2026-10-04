@@ -16,6 +16,27 @@ OUT = ROOT / "tests" / "out"
 def pytest_addoption(parser):
     parser.addoption("--update-golden", action="store_true",
                      help="rewrite the golden screenshots in tests/golden/ (make goldens)")
+    parser.addoption("--full", action="store_true",
+                     help="every ROM test in DMG and GBC mode, plus the tests marked full (make test-full)")
+
+
+def pytest_generate_tests(metafunc):
+    # The quick tier runs ROM tests in DMG mode only, unless the mode changes the result.
+    # @pytest.mark.mode("cgb") pins a test to one system in both tiers.
+    if "mode" in metafunc.fixturenames:
+        pinned = metafunc.definition.get_closest_marker("mode")
+        both = metafunc.config.getoption("--full") or metafunc.definition.get_closest_marker("both_modes")
+        metafunc.parametrize("mode", list(pinned.args) if pinned else ["dmg", "cgb"] if both else ["dmg"])
+
+
+def pytest_collection_modifyitems(config, items):
+    # Tests marked full only run in the full tier.
+    if config.getoption("--full"):
+        return
+    skipped = [item for item in items if item.get_closest_marker("full")]
+    if skipped:
+        config.hook.pytest_deselected(items=skipped)
+        items[:] = [item for item in items if not item.get_closest_marker("full")]
 
 
 def pytest_sessionstart(session):
@@ -48,15 +69,9 @@ def rom_bytes(rom_dir) -> bytes:
     return (rom_dir / "ApexLab.gb").read_bytes()
 
 
-@pytest.fixture(params=["dmg", "cgb"])
-def mode(request) -> str:
-    """Every test that uses this runs twice: original Game Boy and Game Boy Color."""
-    return request.param
-
-
 @pytest.fixture
 def game(request, rom_dir, mode):
-    """The ROM booted in mode, starting in the greybox test level, or in the level a
+    """The ROM booted in mode (see pytest_generate_tests), starting in the greybox test level, or in the level a
     @pytest.mark.level(LEVEL_...) marker names."""
     pyboy = boot(rom_dir / "ApexLab.gb", mode)
     marker = request.node.get_closest_marker("level")

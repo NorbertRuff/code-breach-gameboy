@@ -9,7 +9,6 @@ named by the left edge of their patrol rectangle in Tiled.
 import pytest
 
 from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_COMPLETE, LINES_PER_FRAME, Pilot
-from test_text import font_tiles
 from test_frame_budget import FRAME_LINE_LIMIT
 
 SPRITES_PER_LINE = 10   # the hardware draws at most 10 sprites on one screen line
@@ -95,7 +94,7 @@ def play_level_1(pilot: Pilot, low_route: bool = False) -> None:
 
 
 @pytest.mark.level(LEVEL_1)
-@pytest.mark.parametrize("start_delay", [0, 5])
+@pytest.mark.parametrize("start_delay", [0, pytest.param(5, marks=pytest.mark.full)])
 @pytest.mark.parametrize("route", ["high", "low"])
 def test_level_1_can_be_finished(game, route, start_delay):
     # Two start times put the bots in other places: the route must not depend on luck.
@@ -111,13 +110,3 @@ def test_level_1_can_be_finished(game, route, start_delay):
     assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
     assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
 
-
-@pytest.mark.level(LEVEL_1)
-def test_level_complete_shows_the_fragments_until_start(game):
-    game.wait_for_state(COREGAMELOOP, timeout=300)
-    play_level_1(Pilot(game))
-    game.frames(200)                                    # the flashes, then the summary
-    text = "FRAGMENTS 11/14"
-    assert [game.bkg_tile(2 + i, 8) for i in range(len(text))] == font_tiles(text)
-    game.press("start")
-    game.wait_for_state(COREGAMELOOP, timeout=200)      # level 2 starts

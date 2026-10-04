@@ -1,7 +1,7 @@
 # Project State — Audit
 
 Snapshot of the codebase on 2026-10-02 at commit `bea580b` (master).
-This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
+This is a point-in-time audit. The live task list is [ROADMAP.md](../ROADMAP.md).
 
 ## Status since the audit
 
@@ -170,7 +170,7 @@ OAM: player uses entries 0–3, enemies use 4–11 (2 each, 4 enemies max).
 
 ## GBC readiness
 
-Nothing GBC-specific runs today. What has to change is in [CGB_PLAN.md](CGB_PLAN.md). The main blockers:
+Nothing GBC-specific runs today. What has to change is in [CGB_PLAN.md](../CGB_PLAN.md). The main blockers:
 
 - No `-Wm-yc` header flag, so a GBC runs the ROM in DMG mode.
 - No palettes are loaded. `png2asset` already exports them (the background has 3), but only the dead file calls `set_bkg_palette`.

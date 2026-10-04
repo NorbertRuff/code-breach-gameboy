@@ -36,8 +36,8 @@ jobs:
       - name: Build
         run: make all savetest
 
-      - name: Test (DMG and GBC mode)
-        run: make test
+      - name: Test (full tier: DMG and GBC mode)
+        run: make test-full
 
       - name: Upload test screenshots
         if: failure()

@@ -1,7 +1,7 @@
 """Random play: random buttons for a while (pause and the level-select cheat included),
 checking after every gameplay frame that nothing breaks. Fixed seeds, so a failure
 replays the same way: run the seed again with the printed frame. A scan of a few hundred
-seeds found bugs 21 and 22 (docs/PROJECT_STATE.md)."""
+seeds found bugs 21 and 22 (docs/archive/PROJECT_STATE.md)."""
 
 import random
 import sys
@@ -78,8 +78,9 @@ def problems(game) -> list:
     return found
 
 
-# Two seeds in each game level.
-RUNS = [pytest.param(seed, marks=pytest.mark.level(level), id=f"{name}-seed{seed}")
+# Two seeds in each game level; the second only in the full tier.
+RUNS = [pytest.param(seed, marks=[pytest.mark.level(level)] + ([pytest.mark.full] if seed == 2 else []),
+                     id=f"{name}-seed{seed}")
         for level, name in ((LEVEL_1, "level_1"), (LEVEL_2, "level_2")) for seed in (1, 2)]
 
 

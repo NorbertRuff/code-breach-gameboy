@@ -1,139 +1,54 @@
 # Roadmap
 
 From the current prototype to the full 5-level game, playable in color on GBC and in
-4 shades on DMG.
+4 shades on DMG. Claude writes the code; the owner runs git, reviews, and plays it in
+Emulicious and on hardware. Items marked **(owner)** need the owner.
 
-Workflow: Claude writes the code. The owner runs git (branches, commits, PRs), reviews,
-and plays it in Emulicious and on hardware. Each milestone ends with PyBoy tests passing
-in both modes.
+## Status (2026-10-04)
 
-Items marked **(owner)** need the owner: hardware, installs, or creative decisions.
+- **Playable:** level 1 (Server Room, art pending) and the level 2 greybox (Code Testing
+  Lab), with music. Next: the owner's level 2 pass, then M5 art or levels 3-5.
+- **Tests:** `make test` 188 tests in about 12 s; `make test-full` 280 in about 15 s.
+- **Memory:** bank 0 has 2,235 bytes free; WRAM uses 1,447 of 4,096 bytes.
+- **Frame budget** (worst update, line of the 140 allowed; average): level 1 126 (77),
+  level 2 105 (65), greybox route 118 (78). The music step costs about 9 lines, up to 18.
 
-The physics and level loading (M2) come before color (M4) and art (M5) on purpose. Level
-layouts depend on the jump, so the jump has to be final before level design starts.
-Levels are designed with plain blocks first, so design doesn't wait for art.
+## Bugs
+
+Open bugs, numbered on from the audit's 22 ([archive/PROJECT_STATE.md](archive/PROJECT_STATE.md)).
+A fixed bug leaves this list; its regression test keeps the number.
+
+- None open.
+
+## Waiting for the owner
+
+- Play level 2 on DMG and GBC; listen to the music and effects on hardware.
+- Try `savetest_mbc1.gb` and `savetest_mbc3.gb` on the EverDrive (M7).
+- Pick songs for title, game over and level complete (M6).
+- Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
+  bumps; colors on GBC).
+- Claude Design style guide (M5); edit the story text in [STORY.md](STORY.md) (M7).
+
+The physics and level loading (M2) came before color (M4) and art (M5) on purpose: level
+layouts depend on the jump, and levels are designed with plain blocks first.
 
 ---
 
-## M0 — Toolchain and test loop
+## M0–M3 — Done (2026-10-02 to 2026-10-04)
 
-Done when `make && make test` builds the ROM and runs a smoke test in DMG and GBC mode.
-
-- [x] **(owner)** Install GBDK-2020 4.5.0 into `gbdk/` (`gbdk-win64.zip` from GitHub releases).
-- [x] **(owner)** Emulicious into `emulicious/` for manual debugging.
-- [x] Rewrite the Makefile: one rule that finds all `src/**/*.c`, plus the header and
-      cartridge flags from [CGB_PLAN.md](CGB_PLAN.md) section 1 and `-Wm-yS` for symbols.
-      **Urgent:** ROM bank 0 has 85 bytes free. MBC5 + `-autobank` and banked assets
-      free it up. The Makefile must also work from Git Bash, not only PowerShell/cmd.
-      Flags and banking rules: [RESEARCH.md](RESEARCH.md) section 2.1.
-- [x] Fix `make assets`: png2asset ignores `-bank`, `-org` and `-name`. Use `-b 255`
-      and load banked assets through `NONBANKED` loaders.
-- [x] ROM layout check after linking: `romusage -R`, `_HOME` below `0x4000`, header
-      bytes `0x143 = 0x80` and `0x147 = 0x1B`.
-- [x] `tools/requirements.txt`, `.venv` setup, and gitignore entries.
-- [x] PyBoy harness: `tests/conftest.py`, `tests/gamelib.py`, and a boot smoke test.
-- [x] Save-persistence test ROM: `make savetest` builds `obj/savetest.gb`; a PyBoy test
-      checks the count survives power cycles.
-- [x] **(owner)** Run `obj/savetest.gb` on the EverDrive clone. Result 2026-10-03: the
-      count does not go up. The cart boots into its own game-select menu at every power-on,
-      and the game is started from there. Most likely the cart; revisit in M7.
-- [x] GitHub Actions CI: build and test on every PR.
-- [x] Remove dead code and files listed in [PROJECT_STATE.md](PROJECT_STATE.md).
-
-## M1 — Bug fixes
-
-Done when each bug in [PROJECT_STATE.md](PROJECT_STATE.md) has a fix and a regression test.
-
-- [x] HUD window covers the screen after restart (`scroll_win` → `move_win(7, 128)`).
-- [x] Two-digit HUD counter.
-- [x] Load the level while the screen is dark, then fade in.
-- [x] `set_bkg_data` tile count.
-- [x] Frame-based title screen blink.
-- [x] `performant_delay` counter type.
-- [x] Death when falling below the level.
-- [x] Slide in the wrong direction after releasing left (`uint8_t` fields).
-- [x] Level-complete flash slower than 3 flashes per second.
-- [x] Replace the obsolete `move_metasprite` / `move_metasprite_vflip` calls.
-- [x] One place for enemy spawns (removes the copy in `main.c`).
-- [x] Player started inside platform A and 1 px into the ground (bug 16).
-- [x] Flashes restore the palettes they found (bug 9).
-- [x] **(owner)** Invincibility time after losing a life: 1.5 s (90 frames), decided
-      2026-10-03.
-- [x] Review pass, asked for by the owner on 2026-10-03: findings in
-      [REVIEW.md](REVIEW.md), screenshots from `make shots`.
-- [x] Quick wins from [REVIEW.md](REVIEW.md), all five picked by the owner: level 1
-      lifted above the HUD, player palette light → dark, block tile for solid ground,
-      jump only on a new A press, intro text.
-
-Bugs 5, 6 and 7 (falling, jump cut, wall collision) are left for the M2 physics
-rewrite. Tests for 5 and 7 are already in `tests/test_known_bugs.py` as expected
-failures.
-
-## M2 — Physics and level loading
-
-Done when a greybox level made in Tiled loads, scrolls past 256 px, and plays with the
-new physics, and the jump metrics are written into [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
-**Closed 2026-10-03** (code and tests); the hardware check below is open.
-
-- [x] **(owner)** Confirm Tiled as the level editor ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)).
-- [x] Sub-pixel physics: positions in 1/32 px (`uint16_t`), two gravities (jump cut on
-      release), apex hang, coyote time, jump buffering, head-corner correction. Starting
-      values in [RESEARCH.md](RESEARCH.md) section 2.2.
-- [x] Camera: deadzone, 24 px look-ahead. The lock behind opened gates moved to M3,
-      with the gates.
-- [x] Collision: player box against tiles on both axes at all edges, plus one-way
-      platforms and hazards. Fixes bugs 5, 6, 7 and 17.
-- [x] Measure the jump and fill in [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 4.
-      Pinned by `tests/test_jump_metrics.py`.
-- [x] Greybox tileset: plain blocks for solid, one-way, hazard, gate, exit and fragment
-      markers. Generated by a script, readable on DMG.
-- [x] `tools/tiled2c.py` and `make levels`. Test level `levels/greybox_test.tmj`, 64 tiles
-      wide, and the test room `levels/test_jumps.tmj`.
-- [x] Collision ring in WRAM (32×16, 512 bytes), filled from the tileset table as columns
-      stream in. Delete the old collision map.
-- [x] Map streaming for levels wider than 256 px (`set_bkg_tiles` from a column buffer,
-      see DECISIONS.md). The game plays `levels/greybox_test.tmj`.
-- [x] `tools/levelpreview.py`: full-level PNG with column numbers and jump arcs, plus the
-      reachability check (`make preview`), on a frame-exact Python copy of the physics.
-- [ ] **(owner)** Check on DMG and GBC with the M2 hardware checklist (streaming, one-way
-      shelf, spikes, pit, respawn, head bumps). Open Tiled 1.12, then open and save
-      `levels/greybox_test.tmj` and run `make levels` and `make test`.
-
-## M3 — Level 1 greybox and gameplay objects
-
-Done when level 1 is playable start to finish in greybox, and a replay test finishes it.
-
-- [x] **(owner)** React to the level 1 brief in [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
-- [x] Entities: spawn from the level table with a cursor and a start index per section,
-      per-type update and draw from a type table, despawn off-screen (`src/actor/`).
-- [x] Sprites: rebuild the sprite list every frame with `move_metasprite_ex` /
-      `move_metasprite_flipx`, then `hide_sprites_range`.
-- [ ] Fixed pools with free lists for particles and projectiles, once the first one is
-      needed. (Sprites are kept out of the HUD rows by the parallax interrupt.)
-- [x] Security gates with a fragment quota. Checkpoints at opened gates. Exit elevator.
-      The camera locks behind an opened gate (`camera.c` gets a left limit).
-- [x] HUD: lives and fragments against the current quota.
-- [x] Pause menu. Level-select cheat for testing. START pauses ("PAUSE" label in the band), SELECT
-      while paused loads the next level (`LEVEL_SELECT_CHEAT`). Menu entries wait for M7.
-- [x] Parallax: screen-line interrupt at the end of the 3-row band (slower `SCX` for the
-      band, camera `SCX` below it) and `HIDE_SPRITES` from line 127 over the HUD, in one
-      handler. Band drawn once per level; streaming skips rows 0–2. Source: Larold's
-      parallax tutorial (SOURCES.md). `src/engine/screen.c`, greybox band placeholder.
-- [x] Lives and gates: losing a life returns to the last opened gate; game over refills
-      lives and restarts the current section (DECISIONS.md 2026-10-03).
-- [x] Frame budget counter and a lag test: `lag_frames` in the ROM,
-      `tests/test_frame_budget.py`. Its route found bug 19 (PROJECT_STATE.md).
-- [x] A cheaper `player_update` (about 44 → 24 lines per frame), and `make budget` to
-      see where the frame time goes.
-- [x] Every update within the frame budget: fix bug 19. The route's worst update ends at
-      line 133 of 154.
-- [x] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
-      Greybox, preview and replay tests done 2026-10-04 (`levels/level_1.tmj`,
-      `tests/test_level_1.py`, LEVEL_DESIGN.md section 6). Owner pass on DMG and GBC the
-      same day: good, kept as is.
-- [x] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
-      `main.c`, `utils.c`, `sound.c`, `src/game_state/` (`src/enemy/` was replaced by
-      `src/actor/` in step 2). Done 2026-10-04; the build has no warnings.
+- **M0, toolchain and test loop:** Makefile with MBC5 + autobank and banked assets, ROM
+  layout checks, PyBoy harness, CI, save-persistence test ROM.
+- **M1, bug fixes:** the audit's bugs fixed with regression tests; review pass and its
+  quick wins ([archive/REVIEW.md](archive/REVIEW.md)).
+- **M2, physics and level loading:** sub-pixel physics with coyote time, jump buffer and
+  corner correction; camera; tile collision; Tiled levels with `tools/tiled2c.py`; the
+  collision ring and column streaming; `tools/levelpreview.py` with the reachability check.
+  Jump metrics in [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 4.
+- **M3, level 1 and gameplay objects:** actors, gates with quotas and checkpoints, the
+  exit, HUD, pause and level-select cheat, parallax band and screen splits, lives rules,
+  frame budget work, level 1 greybox (owner pass: keep as is), style pass.
+- Still open from these: fixed pools with free lists for particles and projectiles, once
+  the first one is needed (M8).
 
 ## M4 — Game Boy Color support
 
@@ -165,8 +80,7 @@ Done when level 1 looks like the final game in both modes.
 - [ ] Security bot enemy.
 - [ ] Server Room tileset with Tiled terrain sets. Swap it in for the greybox tileset.
 - [ ] Security gate and exit elevator art.
-- [ ] HUD frame and font. Replace `printf` text with the game font. `printf` is gone
-      (2026-10-04): `src/engine/text.c` with a placeholder font; the M5 font swaps the tiles.
+- [ ] HUD frame and font (the placeholder font's tiles in `src/graphics/font.c` get swapped).
 - [ ] Title screen from `apexLogo`. Remove `splashscreen.c`.
 - [ ] Parallax band art for the Server Room (32×3 tiles, wraps).
 - [ ] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md):
@@ -176,32 +90,28 @@ Done when level 1 looks like the final game in both modes.
 
 - [x] **(owner)** Decide where the music comes from: Tronimal's Game Boy Music Packs #1
       and #2 (CC BY 4.0), decided 2026-10-02.
-- [x] hUGEDriver: driver in the build, songs in banked ROM, one step per frame from an
-      interrupt. Done 2026-10-04: hUGEDriver 6.1.3 (`lib/hUGEDriver/`), `tools/uge2c.py`
-      and `make music`, the step in the line interrupt below the band (DECISIONS.md),
-      `tests/test_music.py`. Frame budget: level 1's worst update 126 of 140.
+- [x] hUGEDriver in the build, songs in banked ROM (`make music`), one step per frame from
+      the line interrupt below the band.
 - [ ] Sound effects: Tronimal GBFX/GBFX2 converted with untoxa's VGM2GBSFX, played with
       a channel mute mask and priority over the music.
 - [ ] Music per level, title, game over and ending. Levels 1 and 2 have songs (Proposed);
       **(owner)** pick the rest by ear from the Tronimal packs.
-- [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes). Started
-      2026-10-04 with the two songs and hUGEDriver; add each new item with it.
+- [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
+      each new item with it.
 
 ## M7 — Saves and game flow
 
-- [ ] Find out why saves don't persist on the EverDrive clone: build `savetest` variants
-      with MBC1 (`0x03`) and MBC3 (`0x13`) headers, and try them on the cart. If none
-      keep the count, use passwords instead of battery saves. Variants built 2026-10-04
-      (`obj/savetest_mbc1.gb`, `obj/savetest_mbc3.gb`, `make savetest`); **(owner)** try
-      them on the cart (TESTING.md, "Save test on the real Game Boy").
+- [ ] Find out why saves don't persist on the EverDrive clone (the M0 test ROM's count
+      doesn't go up). MBC1 and MBC3 variants are built (`make savetest`); **(owner)** try
+      them (TESTING.md, "Save test on the real Game Boy"). If none keeps the count, use
+      passwords instead of battery saves.
 - [ ] Save data in cartridge RAM: unlocked levels, best score, 100% marks, a checksum
       for first boot.
 - [ ] Level select, game over with continue, level complete screen with score. The level
       complete summary and a game over message exist (2026-10-04), and level complete goes
       on to the next level; the level select and a real "continue" choice wait.
 - [ ] Story text: 3-line boot screen, one AI log line per elevator ride, "PATCH n/5"
-      progress.
-      Text drafted 2026-10-04 in [STORY.md](STORY.md); **(owner)** edit it.
+      progress. Drafted in [STORY.md](STORY.md); **(owner)** edit it.
 - [ ] Hard mode, unlocked after clearing the game.
 - [ ] Ending and the in-game credits screen.
 
@@ -210,12 +120,9 @@ Done when level 1 looks like the final game in both modes.
 One level at a time: the new mechanic, the brief, the greybox loop, the art pass, and a
 replay test that finishes it.
 
-- [ ] Level 2, Code Testing Lab: one-way platforms. Brief drafted 2026-10-04
-      (LEVEL_DESIGN.md section 7); decided: Down + A drops through, a speed property
-      per bot. Both built 2026-10-04 (physics, `tools/physics.py`, the reachability check,
-      `speed` in Tiled). Greybox built the same day (`levels/level_2.tmj`), with replays,
-      random play and the frame budget; level complete goes on to the next level.
-      **(owner)** Play it on DMG and GBC.
+- [ ] Level 2, Code Testing Lab: one-way platforms, Down + A drops through, fast bots.
+      Greybox done ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7); **(owner)** play it.
+      Then the art pass.
 - [ ] Level 3, AI Research Wing: vertical movers and chasers.
 - [ ] Level 4, Network Hub: hazards.
 - [ ] Level 5, Mainframe: the KERNEL boss (concept in GAME_DESIGN.md).
@@ -224,8 +131,8 @@ replay test that finishes it.
 ## M9 — Polish and release
 
 - [ ] **(owner)** Full playthrough on DMG and GBC.
-- [ ] No lag frames in any level. Sprite flicker below the per-line limit.
-      Level 1's replay test checks both (2026-10-04): no lag frames, at most 6 sprites per line.
+- [ ] No lag frames in any level. Sprite flicker below the per-line limit. The level
+      replay tests check both.
 - [ ] Difficulty and checkpoint tuning.
 - [ ] Project README, screenshots, itch.io page.
 - [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;
