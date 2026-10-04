@@ -1,5 +1,6 @@
 #include "actor.h"
 #include "bot.h"
+#include "lift.h"
 #include "../level/level_manager.h"
 
 // Read by the tests to notice Actor struct changes.
@@ -7,9 +8,11 @@ const uint8_t actor_struct_size = sizeof(Actor);
 
 #define SPAWN_AHEAD 16                          // px past the screen's right edge
 #define DESPAWN_BEHIND DEVICE_SCREEN_PX_WIDTH   // px past the screen's left edge
+#define LIFT_REACH 19   // px: the player's 16 px body overlaps a 24 px lift up to this far from its center
 
 Actor actors[MAX_ACTORS];
 uint8_t actor_count;
+uint8_t lifts_in_play;
 
 // The actor type of each entity type. Fragments are drawn in the map, and gates and the
 // exit are not actors.
@@ -18,6 +21,7 @@ static const ActorType* const actor_types[] = {
     0,           // ENTITY_FRAGMENT
     0,           // ENTITY_GATE
     0,           // ENTITY_EXIT
+    &lift_type,  // ENTITY_LIFT
 };
 #define ACTOR_TYPE_COUNT (sizeof(actor_types) / sizeof(actor_types[0]))
 
@@ -48,6 +52,7 @@ void actors_load_tiles(void)
 void actors_reset(uint8_t section)
 {
     actor_count = 0;
+    lifts_in_play = 0;
     spawn_cursor = current_level.section_start[section];
     read_next_entity();
 }
@@ -64,22 +69,35 @@ void actors_spawn(int16_t camera_x)
             Actor* actor = &actors[actor_count++];
             actor->type = type;
             type->spawn(actor, &next_entity);
+            lifts_in_play += type->is_lift;
         }
         spawn_cursor++;
         read_next_entity();
     }
 }
 
-// Moves every actor. One that falls DESPAWN_BEHIND px behind the screen's left edge is
-// removed, and comes back only when the section restarts: the last actor takes its
+// Moves the lifts, before the player's update, so the player rides along with them.
+void actors_move_lifts(void)
+{
+    if (!lifts_in_play) return;
+    Actor* actor = actors;
+    for (uint8_t i = 0; i < actor_count; i++, actor++) {
+        if (actor->type->is_lift) actor->type->update(actor);
+    }
+}
+
+// Moves every other actor. One that falls DESPAWN_BEHIND px behind the screen's left edge
+// is removed, and comes back only when the section restarts: the last actor takes its
 // place, and is updated next.
 void actors_update(int16_t camera_x)
 {
     int16_t despawn_x = camera_x - DESPAWN_BEHIND;
     Actor* actor = actors;
     for (uint8_t i = 0; i < actor_count; ) {
-        actor->type->update(actor);
+        const ActorType* type = actor->type;
+        if (!(lifts_in_play && type->is_lift)) type->update(actor);
         if ((int16_t)actor->x < despawn_x) {
+            lifts_in_play -= actor->type->is_lift;
             *actor = actors[--actor_count];
         } else {
             i++;
@@ -88,12 +106,25 @@ void actors_update(int16_t camera_x)
     }
 }
 
-// Does a box (world pixels, inclusive) overlap any actor's hit box?
+// The lift under the player's body (its center x in world pixels), or 0. Lifts never
+// overlap in x (tools/tiled2c.py), so there is at most one.
+Actor* actors_lift_at(uint16_t body_x)
+{
+    Actor* actor = actors;
+    for (uint8_t i = 0; i < actor_count; i++, actor++) {
+        // One unsigned compare: body_x within LIFT_REACH of the lift's center.
+        if (actor->type->is_lift && (uint16_t)(body_x + LIFT_REACH - actor->x) <= 2 * LIFT_REACH) return actor;
+    }
+    return 0;
+}
+
+// Does a box (world pixels, inclusive) overlap the hit box of an actor other than a lift?
 uint8_t actors_touch(int16_t left, int16_t top, int16_t right, int16_t bottom)
 {
     Actor* actor = actors;
     for (uint8_t i = 0; i < actor_count; i++, actor++) {
         const ActorType* type = actor->type;
+        if (lifts_in_play && type->is_lift) continue;
         int16_t x = actor->x, y = actor->y;
         if (right >= x + type->hit_left && left <= x + type->hit_right &&
             bottom >= y + type->hit_top && top <= y + type->hit_bottom) return 1;
@@ -107,11 +138,13 @@ uint8_t actors_draw(uint8_t first_sprite, int16_t camera_x)
 {
     Actor* actor = actors;
     for (uint8_t i = 0; i < actor_count; i++, actor++) {
-        // Entirely off screen (a 16 px body)? Skip it: an 8-bit sprite x would wrap into view.
-        int16_t screen_x = actor->x - camera_x;
-        if (screen_x <= -8 || screen_x >= DEVICE_SCREEN_PX_WIDTH + 8) continue;
-
+        // Entirely off screen? Skip it: an 8-bit sprite x would wrap into view. On screen,
+        // screen_x is within half_width of it: one unsigned compare checks both sides.
         const ActorType* type = actor->type;
+        uint8_t half_width = type->half_width;
+        int16_t screen_x = actor->x - camera_x;
+        if ((uint16_t)(screen_x + half_width - 1) >= DEVICE_SCREEN_PX_WIDTH + 2 * half_width - 1) continue;
+
         uint8_t x = screen_x + DEVICE_SPRITE_PX_OFFSET_X;
         uint8_t y = actor->y + DEVICE_SPRITE_PX_OFFSET_Y;
         if (actor->velocity_x > 0) {

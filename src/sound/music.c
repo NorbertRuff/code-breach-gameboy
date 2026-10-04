@@ -3,6 +3,9 @@
 #include "sound.h"
 #include "../engine/banking.h"
 #include "../level/level_manager.h"
+#include "../music/song_decampment.h"
+#include "../music/song_delight.h"
+#include "../music/song_gone_missing.h"
 #include "../music/song_neurotic_robonaut.h"
 #include "../music/song_tech.h"
 
@@ -31,4 +34,22 @@ void music_play_level(uint8_t level)
 {
     if (level == LEVEL_2) play_song(&song_neurotic_robonaut, BANK(song_neurotic_robonaut));
     else play_song(&song_tech, BANK(song_tech));
+}
+
+// The title screen's song.
+void music_play_title(void)
+{
+    play_song(&song_decampment, BANK(song_decampment));
+}
+
+// The game over screen's song.
+void music_play_game_over(void)
+{
+    play_song(&song_gone_missing, BANK(song_gone_missing));
+}
+
+// The level complete screen's song.
+void music_play_level_complete(void)
+{
+    play_song(&song_delight, BANK(song_delight));
 }

@@ -10,6 +10,7 @@ docs/LEVEL_DESIGN.md section 1:
     E  enemy: a run of E's is one patrol bot, standing on the row below it; the run is
        its patrol range. Separate two bots' runs by another character.
     F  a fast enemy (speed 2 px per frame), like E
+    L  a lift: a block of L's 3 wide, from the row of its highest place to its lowest
 Lines starting with '#' and a space are comments; "# quota: 3 3" gives the gates' quotas
 from left to right (default 3 each). A line of only digits and spaces (a column ruler) is
 skipped. The map uses the greybox tileset; make it look right in Tiled afterwards.
@@ -34,6 +35,7 @@ DEFAULT_QUOTA = 3
 TILE_CHARS = {".": "empty", "#": "solid", "=": "one_way", "^": "hazard"}
 OBJECT_CHARS = {"*": "fragment", "P": "player_start", "G": "gate", "D": "exit"}
 BOT_CHARS = {"E": 1, "F": 2}               # enemy runs by speed
+LIFT_COLUMNS = tiled2c.LIFT_WIDTH // TILE
 
 
 def tile_ids() -> dict[str, int]:
@@ -72,6 +74,17 @@ def sketch_to_tmj(rows: list[str], quotas: list[int]) -> dict:
         c = 0
         while c < width:
             char = row[c]
+            if char == "L":
+                # A lift's block starts on the row whose row above has no L there.
+                if r == 0 or rows[r - 1][c] != "L":
+                    bottom = r
+                    while bottom + 1 < ROWS and rows[bottom + 1][c] == "L":
+                        bottom += 1
+                    add_object({"type": "lift", "x": c * TILE, "y": r * TILE,
+                                "width": tiled2c.LIFT_WIDTH, "height": (bottom - r + 1) * TILE})
+                data += [ids["empty"] + 1] * LIFT_COLUMNS
+                c += LIFT_COLUMNS
+                continue
             if char in BOT_CHARS:
                 run = len(row[c:]) - len(row[c:].lstrip(char))
                 properties = [{"name": "kind", "type": "string", "value": "patrol"}]
@@ -129,6 +142,10 @@ def tmj_to_sketch(tmj: dict) -> str:
     quotas = []
     for obj in sorted(tmj["layers"][1]["objects"], key=lambda o: o["x"]):
         col = int(obj["x"]) // TILE
+        if obj.get("type") == "lift":
+            for r in range(int(obj["y"]) // TILE, (int(obj["y"]) + int(obj["height"])) // TILE):
+                grid[r][col:col + LIFT_COLUMNS] = ["L"] * LIFT_COLUMNS
+            continue
         if obj.get("type") == "enemy":
             row = (int(obj["y"]) + int(obj["height"])) // TILE - 1
             speed = tiled2c.properties(obj).get("speed", 1)

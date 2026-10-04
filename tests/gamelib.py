@@ -48,7 +48,8 @@ PLAYER_FORMAT = "<" + "".join(fmt for _, fmt in PLAYER_FIELDS)
 
 # Mirror of the Actor struct in src/actor/actor.h; type is the address of its ActorType.
 # test_actor_struct_size_matches fails when the C struct changes without this list.
-ACTOR_FIELDS = [("type", "H"), ("x", "H"), ("y", "B"), ("velocity_x", "b"), ("min_x", "H"), ("max_x", "H")]
+ACTOR_FIELDS = [("type", "H"), ("x", "H"), ("y", "B"), ("velocity_x", "b"), ("min_x", "H"), ("max_x", "H"),
+                ("velocity_y", "b"), ("step_y", "b"), ("wait_frames", "B"), ("min_y", "B"), ("max_y", "B")]
 ACTOR_FORMAT = "<" + "".join(fmt for _, fmt in ACTOR_FIELDS)
 ACTOR_SIZE = struct.calcsize(ACTOR_FORMAT)
 MAX_ACTORS = 8
@@ -76,6 +77,7 @@ LEVEL_1 = 0
 LEVEL_2 = 1
 LEVEL_GREYBOX_TEST = 2
 LEVEL_TEST_JUMPS = 3
+LEVEL_TEST_LIFTS = 4
 RING_COLUMNS = 32
 RING_ROWS = 16
 TILE_SIZE = 8

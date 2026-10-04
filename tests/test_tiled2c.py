@@ -68,6 +68,11 @@ def small_map() -> dict:
                        {"name": "entities", "objects": objects}]}
 
 
+def lift(col: int, top_row: int, rows: int, width: int = 24) -> dict:
+    """A lift object whose platform sweeps tile rows top_row to top_row + rows - 1."""
+    return {"id": 90 + col, "type": "lift", "x": col * 8, "y": top_row * 8, "width": width, "height": rows * 8}
+
+
 def convert(tmj: dict) -> tiled2c.Level:
     return tiled2c.convert("small", tmj, tiled2c.load_tileset(GREYBOX_TSX), firstgid=1)
 
@@ -86,6 +91,20 @@ def test_bot_speed_is_a_property_with_default_1():
     assert bot().speed == 1
     objects(tmj)[6]["properties"] = [{"name": "speed", "value": 2}]
     assert bot().speed == 2
+
+
+def test_a_lift_becomes_its_lowest_top_and_its_travel():
+    # The rectangle covers rows 4-9 of the map: the top travels from y 32 to y 72 on the
+    # map, world y 56 to 96 (the 3-row band above the map).
+    tmj = small_map()
+    objects(tmj).append(lift(13, 4, 6))
+    entity = next(e for e in convert(tmj).entities if e.kind == "lift")
+    assert (entity.x, entity.y, entity.param, entity.speed) == (104, 96, 40, 1)
+
+
+def wall_in_a_lifts_way(tmj):
+    objects(tmj).append(lift(13, 4, 6))
+    tmj["layers"][0]["data"][7 * 20 + 14] = SOLID
 
 
 def flip_first_tile(tmj):
@@ -117,6 +136,9 @@ RULE_BREAKS = {
     "off the grid": (lambda t: objects(t)[1].update(x=27), "8 px grid"),
     "patrol too short": (lambda t: objects(t)[6].update(width=8), "patrol width"),
     "bot too fast": (lambda t: objects(t)[6].update(properties=[{"name": "speed", "value": 3}]), "speed must be 1 or 2"),
+    "lift 16 px wide": (lambda t: objects(t).append(lift(13, 4, 6, width=16)), "24 px wide"),
+    "wall in a lift's way": (wall_in_a_lifts_way, "in its way"),
+    "lifts too close": (lambda t: objects(t).extend([lift(12, 4, 6), lift(16, 4, 6)]), "keep at least 16 px"),
 }
 
 

@@ -16,6 +16,7 @@ How the check works (docs/LEVEL_PIPELINE.md, section 5):
   Where a jump lands is reached too. A running start is assumed possible anywhere.
 - Gates count as open, and the player can't go back left past one (the camera lock).
   Enemies are ignored. Spikes and pits end a jump, and its pickups don't count.
+- A lift counts as a one-way top at every tile row it passes, as if it waited there.
 """
 
 from __future__ import annotations
@@ -77,9 +78,23 @@ class Exploration:
     problems: list[str] = field(default_factory=list)
 
 
+def lift_tiles(level: tiled2c.Level) -> set[tuple[int, int]]:
+    """Every tile a lift's top passes on the 8 px grid (column, screen row): the check
+    treats them all as one-way tops, as if the lift waited at each."""
+    return {(column, (lift.y - lift.param) // TILE + step)
+            for lift in level.entities if lift.kind == "lift"
+            for column in range(lift.x // TILE, (lift.x + tiled2c.LIFT_WIDTH) // TILE)
+            for step in range(lift.param // TILE + 1)}
+
+
 def make_room(level: tiled2c.Level, min_x_px: int = SPRITE_LEFT_W) -> Room:
-    """The level's collision for the physics. Gates are open (they are entities)."""
+    """The level's collision for the physics. Gates are open (they are entities); lifts
+    are one-way tops wherever they pass (lift_tiles)."""
+    lifts = lift_tiles(level)
+
     def collision(tile_x: int, tile_y: int) -> int:
+        if (tile_x, tile_y) in lifts:
+            return ONE_WAY
         if not MAP_TOP_ROW <= tile_y < MAP_TOP_ROW + tiled2c.MAP_ROWS:
             return NONE
         tile = level.tiles[(tile_y - MAP_TOP_ROW) * level.width + tile_x]
@@ -246,6 +261,9 @@ def draw(level: tiled2c.Level, result: Exploration) -> Image.Image:
         if e.kind == "enemy":   # fast bots in red
             pen.rectangle([at(e.x, e.y - 15), at(e.x + e.param, e.y + 1)],
                           outline=(240, 140, 0) if e.speed == 1 else (230, 30, 30), width=e.speed)
+        elif e.kind == "lift":    # the area its platform sweeps
+            pen.rectangle([at(e.x, e.y - e.param), at(e.x + tiled2c.LIFT_WIDTH, e.y + TILE)],
+                          outline=(0, 160, 200), width=2)
         elif e.kind == "fragment":
             color = (0, 170, 0) if (e.x // TILE, e.y // TILE) in result.touched else (220, 0, 0)
             pen.rectangle([at(e.x - 1, e.y - 1), at(e.x + TILE + 1, e.y + TILE + 1)], outline=color, width=2)

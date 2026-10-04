@@ -157,6 +157,7 @@ void main_game_loop(void)
     }
 
     input_read_player(&player, joypad_current, joypad_previous);
+    actors_move_lifts();
     player_update(&player);
 
     // Fell out of the level? Costs a life, even while invincible.
@@ -215,6 +216,7 @@ static void lose_life(void)
     game_over();
     lives = START_LIVES;
     level_reset_fragments(current_level.section);
+    music_play_level(level_index);
     restart_behind_fade(0);
 }
 

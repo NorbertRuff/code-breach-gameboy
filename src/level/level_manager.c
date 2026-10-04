@@ -9,6 +9,7 @@
 #include "../levels/level_1.h"
 #include "../levels/level_2.h"
 #include "../levels/test_jumps.h"
+#include "../levels/test_lifts.h"
 #include "../engine/banking.h"
 #include "../engine/palette.h"
 #include "../player/player.h"
@@ -118,6 +119,9 @@ void level_load(uint8_t index)
     } else if (index == LEVEL_TEST_JUMPS) {
         current_level.bank = BANK(test_jumps);
         WITH_BANK(test_jumps, copy_header(&test_jumps));
+    } else if (index == LEVEL_TEST_LIFTS) {
+        current_level.bank = BANK(test_lifts);
+        WITH_BANK(test_lifts, copy_header(&test_lifts));
     } else {
         current_level.bank = BANK(level_1);
         WITH_BANK(level_1, copy_header(&level_1));

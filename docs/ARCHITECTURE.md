@@ -36,7 +36,7 @@ tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next le
 | `src/player/` | `Player` struct and physics: `player_update`, `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad, Down and A into the player |
 | `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
-| `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot) |
+| `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `lift.c` (the lift) |
 | `src/sound/` | `sound.c` (the effect player), `effects.c` (generated: `make sounds`), `music.c` (the level's song through hUGEDriver) |
 | `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus hand-made `splashscreen.c`, `hud_digits.c`, `font.c`) |
 | `graphics/`, `levels/`, `music/`, `sounds/` | Sources: PNGs and Tiled `.tsx`, Tiled maps `.tmj`, hUGETracker songs `.uge`, FX Hammer effect packs `.sav` and the effect list `effects.txt` |
@@ -86,14 +86,24 @@ camera gets a left limit just past the gate, and a restart puts the player right
 
 ## Actors (`src/actor/`)
 
-Moving level objects (the patrol bots) are actors; the player is not. `actors_spawn`
+Moving level objects (patrol bots and lifts) are actors; the player is not. `actors_spawn`
 reads the level's entities in x order with a cursor and spawns each one that has an
 `ActorType` once it is within 16 px of the screen's right edge. A bot walks at its
 entity's `speed` (1 or 2 px per frame), kept as the signed `velocity_x`. An `ActorType`
-has `spawn`, `update`, a metasprite (pivot = body center, feet row), its tiles and a hit
-box. Actors stay packed in `actors[0..actor_count-1]`; one more than a screen behind the
+has `spawn`, `update`, a metasprite (pivot = body center, feet row), its tiles, a hit
+box and a half width (to skip actors off screen). Actors stay packed in `actors[0..actor_count-1]`; one more than a screen behind the
 camera is removed until `actors_reset(section)`. `draw_sprites` (`main.c`) rebuilds the
 sprite list every frame: the player (OAM 0–3), the actors, then `hide_sprites_range`.
+
+Lifts (`is_lift` in their type) move in `actors_move_lifts`, before `player_update`; the
+others in `actors_update`, after it; with no lift in play (`lifts_in_play`), the lift code
+returns at once. A lift moves by `velocity_y` (1 px up or down) within `min_y`..`max_y`
+(its top row), waits `wait_frames` at each end, and keeps the step it took this frame in
+`step_y` (0 while it waits). The player
+finds the lift under its body with `actors_lift_at(body_x)` (lifts never overlap in x):
+`ride_lift` adds the lift's step when the feet stood on the row above its top before the
+step, `move_y` lands on that row when the feet reach it falling, and `update_ground`
+counts it as ground. Lifts don't hurt (`actors_touch` skips them).
 
 ## Camera and screen splits
 
@@ -114,7 +124,8 @@ into rows 0–2 at level load.
 ## Music and sound (`src/sound/`)
 
 `music/*.uge` → `make music` (`tools/uge2c.py`) → banked `hUGESong_t` in `src/music/`.
-`music_play_level` starts a level's song (`hUGE_init` with its bank switched in);
+`music_play_level` starts a level's song (`hUGE_init` with its bank switched in), and
+`music_play_title`, `_game_over` and `_level_complete` the screens' songs;
 `music_step` runs once per frame from the line-23 interrupt, with the song's bank switched
 in and restored. Credit every song and effect pack in `CREDITS.md`.
 
@@ -126,7 +137,8 @@ higher-priority one plays, and sets its channels in `hUGE_mute_mask` so the musi
 them alone; `sound_step`, called by `music_step` before the song's step, writes the next
 step when its frames are up, and after the last one silences the channels and unmutes
 them. `make soundtest` builds `obj/soundtest.gb` (every effect of both packs with the same
-player) and renders each to `tests/out/sounds/*.wav` (`tools/render_sounds.py`).
+player, and every song of `music/packs/*.zip` through `uge2c.py --table`) and renders each
+to `tests/out/sounds/*.wav` (`tools/render_sounds.py`).
 
 ## Frame budget
 
@@ -142,7 +154,7 @@ status.
 - **Background tiles** (GBDK uses `0x8800` addressing, so background tiles 128–255 share
   memory with sprite tiles 128–255): the level's from 0, the HUD frame from 64, the HUD
   digits 133–144, the font 160–207.
-- **Sprite tiles:** the player 0–39, the bot 40–43, the pause label 44–53. The player is
+- **Sprite tiles:** the player 0–39, the bot 40–43, the pause label 44–53, the lift 54–55. The player is
   4 OAM entries (8×16 mode), a bot 2.
 - **ROM banks:** assets are made with `png2asset -b 255` (autobank, `BANKREF(name)`) and
   read inside `WITH_BANK(name, ...)`, one asset per `WITH_BANK`, only from bank 0 code.

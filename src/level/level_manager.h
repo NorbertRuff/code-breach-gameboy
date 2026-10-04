@@ -13,6 +13,7 @@
 #define GAME_LEVEL_COUNT   2    // the game's levels; the test rooms follow
 #define LEVEL_GREYBOX_TEST 2    // the tests' level
 #define LEVEL_TEST_JUMPS   3    // fixtures for tests/test_jump_metrics.py
+#define LEVEL_TEST_LIFTS   4    // a lift, for tests/test_lifts.py
 #define LEVEL_COUNT        4
 
 // Collision ring: the collision of the columns in the background map. 32 columns that

@@ -28,13 +28,17 @@ MAX_FRAGMENTS = 32
 TILESET_BUDGET = 190       # unique tiles per level tileset, docs/ART_PIPELINE.md
 SECTIONS = 3
 BOT_SPEEDS = (1, 2)         # px per frame, the enemy property "speed" (default 1)
+LIFT_WIDTH = 24            # px, src/actor/lift.h
+LIFT_SPEEDS = (1,)         # px per frame, the lift property "speed" (default 1)
+LIFT_MIN_GAP = 2 * TILE    # px between two lifts: a body never stands on two at once
+BODY_ROWS = 4              # tile rows of the 32 px body
 MIN_PIT_WIDTH = 3          # tiles: the 16 px body walks across a narrower pit
 FLIP_FLAGS = 0xE0000000    # Tiled stores flips and rotation in a gid's top bits
 
 COLLISION_TYPES = {"": "COLLISION_NONE", "solid": "COLLISION_SOLID",
                    "one_way": "COLLISION_ONE_WAY", "hazard": "COLLISION_HAZARD"}
 ENTITY_TYPES = {"enemy": "ENTITY_ENEMY", "fragment": "ENTITY_FRAGMENT",
-                "gate": "ENTITY_GATE", "exit": "ENTITY_EXIT"}
+                "gate": "ENTITY_GATE", "exit": "ENTITY_EXIT", "lift": "ENTITY_LIFT"}
 OBJECT_CLASSES = set(ENTITY_TYPES) | {"player_start"}
 
 
@@ -56,7 +60,7 @@ class Entity:
     x: int                             # world pixels, see level_data.h
     y: int
     param: int = 0
-    speed: int = 0                     # enemies: px per frame
+    speed: int = 0                     # enemies and lifts: px per frame
 
 
 @dataclass
@@ -150,6 +154,18 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
                 fail(f"{where}: an enemy's speed must be 1 or 2 px per frame, not {speed}")
             entities.append(Entity("enemy", left, world_y + int(obj["height"]) - 1, patrol, speed))
             continue
+        if obj_class == "lift":
+            # Rectangle: the area the 8 px platform sweeps, from its highest to its lowest place.
+            sweep_width, sweep_height = int(obj["width"]), int(obj["height"])
+            on_grid = not (left % TILE or int(obj["y"]) % TILE or sweep_height % TILE)
+            if sweep_width != LIFT_WIDTH or not on_grid or sweep_height < 2 * TILE:
+                fail(f"{where}: a lift is a rectangle {LIFT_WIDTH} px wide and at least {2 * TILE} px tall, "
+                     f"on the 8 px grid")
+            speed = properties(obj).get("speed", 1)
+            if speed not in LIFT_SPEEDS:
+                fail(f"{where}: a lift's speed must be 1 px per frame, not {speed}")
+            entities.append(Entity("lift", left, world_y + sweep_height - TILE, sweep_height - TILE, speed))
+            continue
 
         # Tile objects: x is the left edge, y the bottom edge, snapped to the tile grid.
         if not gid:
@@ -184,6 +200,7 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
         fail(f"{level.fragment_count} fragments, at most {MAX_FRAGMENTS}")
     check_quotas(level, gates, fail)
     check_checkpoints(level, fail)
+    check_lifts(level, fail)
     warn_about_patrols(level)
     if not test_room:
         warn_about_narrow_pits(level)
@@ -230,6 +247,23 @@ def check_checkpoints(level: Level, fail) -> None:
         if body & {"solid", "hazard", "outside"} or not ground & {"solid", "one_way"}:
             fail(f"gate at x {gate.x}: no room to restart right of it (2 free columns, 4 rows up "
                  f"from its bottom tile, ground below)")
+
+
+def check_lifts(level: Level, fail) -> None:
+    """A lift's columns are free of solid tiles from a body's height above its highest
+    place down to its lowest, and lifts keep LIFT_MIN_GAP px apart."""
+    lifts = [e for e in level.entities if e.kind == "lift"]
+    for lift in lifts:
+        top_row = (lift.y - lift.param) // TILE - MAP_TOP_ROW - BODY_ROWS
+        bottom_row = lift.y // TILE - MAP_TOP_ROW
+        for column in range(lift.x // TILE, (lift.x + LIFT_WIDTH) // TILE):
+            for row in range(max(top_row, 0), bottom_row + 1):
+                if level.tileset.collision[level.tiles[row * level.width + column]] == "solid":
+                    fail(f"lift at x {lift.x}: a solid tile at column {column}, row {row} is in its way "
+                         f"(or in the way of the player riding it)")
+    for a, b in zip(lifts, lifts[1:]):
+        if b.x - (a.x + LIFT_WIDTH) < LIFT_MIN_GAP:
+            fail(f"lifts at x {a.x} and {b.x}: keep at least {LIFT_MIN_GAP} px between them")
 
 
 def warn_about_patrols(level: Level) -> None:

@@ -2,6 +2,7 @@
 #include "player.h"
 #include "../graphics/programmer.h"
 #include "../sound/sound.h"
+#include "../actor/actor.h"
 #include "../engine/banking.h"
 #include "../engine/camera.h"
 #include "../engine/platform.h"
@@ -90,6 +91,43 @@ static void update_run_speed(Player* p)
     }
 }
 
+// Feet on a tile's lowest pixel row, over a floor or a one-way top? (Only those can
+// stand on the row below.)
+static uint8_t stands_on_tiles(const Player* p)
+{
+    uint8_t below = FEET_ROW(p->y) + 1;
+    return PIXEL_IN_TILE(p->y) == 7 && area_has(LEFT_COLUMN(p->x), below, RIGHT_COLUMN(p->x), below, BLOCKS_FEET);
+}
+
+// A y position's pixel row in the world, from its tile and pixel bytes (cheaper than >> 5).
+static uint8_t pixel_row(uint16_t y)
+{
+    return (TILE_OF(y) << 3) | PIXEL_IN_TILE(y);
+}
+
+// The lift under the body, or 0.
+static Actor* lift_under(const Player* p)
+{
+    if (!lifts_in_play) return 0;
+    return actors_lift_at(TO_PIXELS(p->x));
+}
+
+// Feet on the pixel row above a lift's top?
+static uint8_t stands_on_lift(const Player* p)
+{
+    Actor* lift = lift_under(p);
+    return lift && pixel_row(p->y) == lift->y - 1;
+}
+
+// Stood on a lift (and not on tiles) before it took this frame's step? Then the player
+// moves with it.
+static void ride_lift(Player* p)
+{
+    if (!lifts_in_play || !p->on_ground || stands_on_tiles(p)) return;
+    Actor* lift = lift_under(p);
+    if (lift && pixel_row(p->y) == lift->y - lift->step_y - 1) p->y += lift->step_y * SUBPIXELS;
+}
+
 // Standing on one-way tops only, with nothing solid under the feet?
 static uint8_t on_one_way_only(const Player* p)
 {
@@ -97,11 +135,12 @@ static uint8_t on_one_way_only(const Player* p)
     return p->on_ground && !area_has(LEFT_COLUMN(p->x), below, RIGHT_COLUMN(p->x), below, BLOCKS_BODY);
 }
 
-// Down + A on a one-way top: the feet step 1 px down into its row and fall. Landing only
-// checks rows the feet newly enter, so this row no longer holds them.
+// Down + A on a one-way top: the feet step DROP_STEP px down into its row and fall.
+// Landing only checks rows the feet newly enter, so this row no longer holds them, and a
+// lift going down (1 px per frame) stays behind the feet.
 static void drop_through(Player* p)
 {
-    p->y += SUBPIXELS;
+    p->y += DROP_STEP * SUBPIXELS;
     p->jump_buffer_frames = 0;
     p->coyote_frames = 0;
     p->on_ground = 0;
@@ -193,7 +232,7 @@ static uint8_t slide_past_corner(Player* p, uint8_t top, uint8_t bottom)
     return 1;
 }
 
-// Moves up or down. Lands on floors and one-way tops, stops the head at ceilings.
+// Moves up or down. Lands on floors, one-way tops and lifts, stops the head at ceilings.
 static void move_y(Player* p)
 {
     if (!p->velocity_y) return;
@@ -209,6 +248,15 @@ static void move_y(Player* p)
             y = ((uint16_t)feet << 8) - SUBPIXELS;
             p->velocity_y = 0;
         }
+        // Did the feet reach the row above a lift's top on the way? Then they stop there.
+        Actor* lift = lift_under(p);
+        if (lift) {
+            uint8_t stand_row = lift->y - 1;
+            if (pixel_row(p->y) <= stand_row && pixel_row(y) >= stand_row) {
+                y = (uint16_t)stand_row * SUBPIXELS;
+                p->velocity_y = 0;
+            }
+        }
     } else {
         // Head in a ceiling? Then it stops on the first pixel row below it.
         uint8_t head = head_row(y);
@@ -220,13 +268,10 @@ static void move_y(Player* p)
     p->y = y;
 }
 
-// Standing on a floor or a one-way top? On the ground, coyote time is full.
+// Standing on a floor, a one-way top or a lift? On the ground, coyote time is full.
 static void update_ground(Player* p)
 {
-    // Only feet on a tile's lowest pixel row can stand on the row below.
-    uint8_t below = FEET_ROW(p->y) + 1;
-    p->on_ground = p->velocity_y >= 0 && PIXEL_IN_TILE(p->y) == 7 &&
-                   area_has(LEFT_COLUMN(p->x), below, RIGHT_COLUMN(p->x), below, BLOCKS_FEET);
+    p->on_ground = p->velocity_y >= 0 && (stands_on_tiles(p) || stands_on_lift(p));
     if (p->on_ground) {
         p->velocity_y = 0;
         p->coyote_frames = COYOTE_FRAMES;
@@ -269,10 +314,11 @@ static void update_animation(Player* p)
     }
 }
 
-// One frame of player movement: run, jump, gravity, collision, pickups, animation.
-// Reads the input fields that input_read_player() set this frame.
+// One frame of player movement: riding a lift, run, jump, gravity, collision, pickups,
+// animation. Reads the input fields that input_read_player() set this frame.
 void player_update(Player* player)
 {
+    ride_lift(player);
     update_run_speed(player);
     try_jump(player);
     apply_gravity(player);

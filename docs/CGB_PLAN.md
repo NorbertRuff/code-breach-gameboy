@@ -11,8 +11,7 @@ Flags go to `makebin` through `lcc` with the `-Wm` prefix.
 | Flag | Effect | Why |
 |---|---|---|
 | `-Wm-yc` | Header byte `0x143 = 0x80`: GBC-enhanced, DMG-compatible | Not `-Wm-yC` (`0xC0`), which is GBC-only and refuses to run on DMG. |
-| `-Wm-yt0x1B` | Cartridge type MBC5 + RAM + battery | Battery save for progress. MBC5 works on DMG too, and flashcarts support it well. |
-| `-Wm-ya1` | 1 RAM bank (8 KB) | Saves need well under 1 KB. |
+| `-Wl-yt0x19` | Cartridge type MBC5, no RAM | Progress is kept in passwords (DECISIONS.md "Saves"); MBC5 works on DMG too, and flashcarts support it well. Until 2026-10-04: `0x1B` with `-Wm-ya1` (RAM + battery). |
 | `-autobank` and `-Wm-yoA` | Assign banks for data marked `-b 255`; size the ROM automatically | Stops us from hand-placing assets in banks. |
 | `-Wm-yn"APEXLAB"` | Cartridge title | 11 characters or fewer when the GBC flag is set. |
 | `-Wm-yS` | Write `obj/ApexLab.sym` from the `.noi` file | PyBoy loads it for tests (see [TESTING.md](TESTING.md)). |
@@ -120,7 +119,7 @@ Status 2026-10-03: steps 1 and 2 are done (M0). `platform_init()` also loads gra
 palettes that match the DMG shades and clears the attribute maps, so the game looks the
 same on both until step 4. Fades and flashes still only work on DMG.
 
-1. Makefile flags from section 1. Test: header byte `0x143` is `0x80`, byte `0x147` is `0x1B`.
+1. Makefile flags from section 1. Test: header byte `0x143` is `0x80`, byte `0x147` is `0x19`.
 2. `platform.c` with `is_cgb`. Test: `_is_cgb` is 0 in DMG mode and 1 in GBC mode.
 3. `palette.c`. Replace every direct `BGP_REG` / `OBP0_REG` write. A test greps `src/`
    and fails if any other file writes those registers.

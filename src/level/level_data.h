@@ -26,6 +26,8 @@
 #define ENTITY_FRAGMENT 1   // x, y: top-left of its tile
 #define ENTITY_GATE     2   // x, y: top-left of its bottom tile, param: fragment quota
 #define ENTITY_EXIT     3   // x, y: top-left of its tile
+#define ENTITY_LIFT     4   // x: left edge, y: its top row at the lowest point, param: travel
+                            // up from there in px, speed: px per frame (1)
 
 typedef struct {
     uint8_t type;

@@ -72,12 +72,24 @@ or git keeps the old one). Details of how the code does it belong in
   above), gaps up to 6; only level 5 asks for maximum jumps.
 - **Bots:** a `speed` per bot in Tiled, 1 or 2 px per frame (2026-10-04, owner). A bot can
   only be jumped with 8 free rows above its floor (one-way shelves don't count).
+- **Lifts** (level 3's mechanic, also the boss's phase 2): a 24 px one-way platform, an
+  actor that moves up and down its travel at 1 px per frame and waits 0.5 s at each end
+  (owner, 2026-10-04). Lifts move
+  before the player's update and carry a player standing on them; the player can jump up
+  through one and drop through it. In Tiled a rectangle covers the area the platform
+  sweeps; the converter checks a clear path (with room for the body) and 16 px between
+  lifts; the reachability check treats a lift as one-way tops on every row it passes.
+  Horizontal lifts and other speeds only if a level needs them.
+- **Chasers** (level 3, owner 2026-10-04): a bot that stands still until the player is
+  within about 6 tiles on its floor, then walks toward them at 1 px per frame (the player
+  runs at 1.5), only inside its range from Tiled.
 - **Level 1** (Server Room) greybox: kept as built after the owner's hardware pass
   (2026-10-04). **Level 2** (Code Testing Lab) greybox: built 2026-10-04, the low route
   needs the bridge's fragment for gate B; kept as built after the owner's hardware pass
   (2026-10-04).
 - **The game starts in level 1;** level indices list the game's levels, then the test
-  rooms (the greybox level the tests use, and `test_jumps` for the jump metrics).
+  rooms (the greybox level the tests use, `test_jumps` for the jump metrics, `test_lifts`
+  for the lift).
 
 ## Player physics
 
@@ -90,8 +102,9 @@ or git keeps the old one). Details of how the code does it belong in
   number in `player.h` is the number the player gets. A new press of A is needed to jump.
 - **Corner correction:** a ceiling corner overlapping the head by up to 4 px is slid past,
   computed from the head row (an 8-position search cost 55 lines: bug 18).
-- **Down + A drops through a one-way top** (2026-10-04, owner): the feet move 1 px into the
-  one-way row; with anything solid under the feet it's a normal jump.
+- **Down + A drops through a one-way top** (2026-10-04, owner): the feet move 3 px into the
+  one-way row (1 px let a lift going down catch them again); with anything solid under the
+  feet it's a normal jump.
 - **Collision in tile coordinates** (a position's high byte is its tile): 44 → 24 lines per
   frame.
 - **`tools/physics.py` is a frame-exact copy** of the physics for the reachability check,
@@ -150,16 +163,22 @@ or git keeps the old one). Details of how the code does it belong in
   lines per frame, up to 18; in VBlank it delayed every update.
 - **Songs:** level 1 "Tech", level 2 "Neurotic Robonaut" (owner, after the hardware pass,
   2026-10-04); only Tronimal's own songs, not the packs' remixes of other people's.
+- **Screen songs:** title "Decampment", game over "Gone Missing", level complete "Delight",
+  each after the screen's flashes; the level's song starts again after them (2026-10-04,
+  owner approved after listening).
 - **Sound effects: Tronimal's GBFX and GBFX2** (FX Hammer files, CC BY 4.0), picked in
   `sounds/effects.txt` and converted by `tools/fxhammer2c.py`; our own short C player
   (`src/sound/sound.c`) instead of VGM2GBSFX's assembly one: one effect at a time with a
   priority, its channels (CH2, CH4) muted in hUGEDriver until it ends, stepped from the
-  music's interrupt. The hand-made register effects are gone (2026-10-04). **Proposed:**
-  the player, and the picks until the owner listens (`make soundtest`).
+  music's interrupt. The hand-made register effects are gone (2026-10-04, owner approved
+  the player and the picks after listening).
 
 ## Saves
 
-- **MBC5 + RAM + battery (`0x1B`), fallback passwords.** **Open:** the save test didn't
-  persist on the EverDrive clone with MBC5, MBC1 or MBC3 (2026-10-03, 2026-10-04). Owner
-  thinks it's the clone: **Proposed** to keep battery saves (they work in emulators and
-  on real cartridges) and drop the password fallback.
+- **Passwords instead of battery saves** (2026-10-04, owner): no save test ROM kept its
+  count on the owner's EverDrive clone (MBC5, MBC1, MBC3). So the cartridge is plain MBC5
+  (`0x19`, no RAM); the save test ROMs keep MBC5 + RAM + battery as tools.
+- **Password contents** (2026-10-04, owner): 4 characters from 16 easy-to-read ones (no
+  0/O or 1/I): the next level (1-5), a 100% mark per finished level, hard mode, and a
+  checksum, so a typo is refused instead of loading the wrong game. CONTINUE on the title
+  screen opens the entry; the level complete screen shows the new password.

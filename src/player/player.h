@@ -30,6 +30,7 @@
 #define COYOTE_FRAMES      6   // a jump still works this long after walking off a ledge
 #define JUMP_BUFFER_FRAMES 5   // an A press this long before landing still jumps
 #define CORNER_CORRECTION  4   // px the head may slide sideways past a ceiling corner
+#define DROP_STEP          3   // px Down + A moves the feet down through a one-way top
 
 #define PLAYER_PALE_PALETTE 1      // GBC sprite palette while invincible
 

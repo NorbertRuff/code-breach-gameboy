@@ -7,6 +7,7 @@
 #include "../engine/screen.h"
 #include "../engine/text.h"
 #include "../level/level_manager.h"
+#include "../sound/music.h"
 #include "../utils.h"
 
 #define MESSAGE_FRAMES 300   // a message stays 5 s, unless START is pressed sooner
@@ -31,21 +32,25 @@ static void show_message(void)
     }
 }
 
-// Game over: 4 slow flashes, then "GAME OVER" until START. The section restarts after.
+// Game over: 4 slow flashes, then its song and "GAME OVER" until START. The section
+// restarts after.
 void game_over(void) BANKED
 {
     palette_flash(4, 12);
+    music_play_game_over();
     clear_play_area();
     text_print(5, 7, "GAME OVER");
     show_message();
 }
 
-// Level complete: 6 flashes at 3 per second, then the level's fragments until START.
+// Level complete: 6 flashes at 3 per second, then its song and the level's fragments
+// until START.
 void level_complete(void) BANKED
 {
     uint8_t collected = current_level.section_collected[0] + current_level.section_collected[1]
                       + current_level.section_collected[2];
     palette_flash(6, 10);
+    music_play_level_complete();
     clear_play_area();
     text_print(3, 5, "LEVEL COMPLETE");
     text_print(2, 8, "FRAGMENTS");

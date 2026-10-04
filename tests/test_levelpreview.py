@@ -18,6 +18,7 @@ import tiled2c  # noqa: E402
 
 GREYBOX = tiled2c.load_level(ROOT / "levels" / "greybox_test.tmj")
 TEST_JUMPS = tiled2c.load_level(ROOT / "levels" / "test_jumps.tmj")
+TEST_LIFTS = tiled2c.load_level(ROOT / "levels" / "test_lifts.tmj")
 FIELDS = ("x", "y", "velocity_x", "velocity_y", "jump_buffer_frames", "coyote_frames", "on_ground")
 
 # Start position, then (frames, d-pad, A down) steps, with Down held as an optional 4th
@@ -120,6 +121,16 @@ def test_check_drops_through_one_way_tops(monkeypatch):
     assert in_room(levelpreview.explore(level))
     monkeypatch.setattr(levelpreview, "JUMPS", [j for j in levelpreview.JUMPS if not j.drop])
     assert not in_room(levelpreview.explore(level))
+
+
+def test_check_rides_lifts():
+    # In test_lifts.tmj the one-way shelf (row 7 of the screen, feet y 55) is 64 px over the
+    # floor: out of a jump's reach, reached from the lift next to it.
+    on_shelf = lambda result: any(s.feet == 55 for s in result.paths)
+    assert on_shelf(levelpreview.explore(TEST_LIFTS))
+    without_lift = copy.deepcopy(TEST_LIFTS)
+    without_lift.entities = [e for e in without_lift.entities if e.kind != "lift"]
+    assert not on_shelf(levelpreview.explore(without_lift))
 
 
 def test_preview_image(tmp_path):

@@ -15,7 +15,7 @@ SUBPIXELS = 32
 SPRITE_LEFT_W, SPRITE_RIGHT_W, SPRITE_HEAD_OFFSET = 8, 7, 31
 RUN_SPEED_MAX, RUN_ACCEL, RUN_DECEL, AIR_ACCEL, AIR_DECEL = 48, 8, 6, 5, 4
 JUMP_SPEED, GRAVITY_RISE, GRAVITY_FALL, APEX_SPEED, FALL_SPEED_MAX = 96, 4, 12, 16, 112
-COYOTE_FRAMES, JUMP_BUFFER_FRAMES, CORNER_CORRECTION = 6, 5, 4
+COYOTE_FRAMES, JUMP_BUFFER_FRAMES, CORNER_CORRECTION, DROP_STEP = 6, 5, 4, 3
 
 # src/level/level_data.h and level_manager.h
 NONE, SOLID, ONE_WAY, HAZARD = 0, 1, 2, 3
@@ -124,7 +124,7 @@ def on_one_way_only(p: Body, room: Room) -> bool:
 
 
 def drop_through(p: Body) -> None:
-    p.y += SUBPIXELS
+    p.y += DROP_STEP * SUBPIXELS
     p.jump_buffer_frames = p.coyote_frames = 0
     p.on_ground = False
 

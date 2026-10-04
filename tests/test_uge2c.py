@@ -2,6 +2,7 @@
 (hUGETracker's own GBDK export is the reference)."""
 
 import struct
+import zipfile
 import sys
 from pathlib import Path
 
@@ -60,3 +61,13 @@ def test_identical_patterns_are_stored_once():
     cells = [uge2c.Cell(uge2c.NO_NOTE, 0, 0, 0)] * uge2c.ROWS
     song = uge2c.Song("t", "a", 6, False, [], [], {0: cells, 1: list(cells), 2: cells}, [[0, 1], [2, 2], [1], [0]])
     assert uge2c.unique_orders(song) == [[0, 0], [0, 0], [0], [0]]
+
+
+def test_a_zip_stands_for_each_song_in_it(tmp_path):
+    pack = tmp_path / "pack.zip"
+    with zipfile.ZipFile(pack, "w") as archive:
+        archive.write(ROOT / "music" / "tech.uge", "Some Pack/07 Tech.uge")
+        archive.writestr("Some Pack/readme.txt", "not a song")
+    [(data, name, source)] = uge2c.song_files(pack)
+    assert data == (ROOT / "music" / "tech.uge").read_bytes()
+    assert name == "song_07_tech" and source.endswith("pack.zip:Some Pack/07 Tech.uge")

@@ -117,10 +117,13 @@ does about it is in DECISIONS.md, "Saves".
 ## Sound test
 
 `make soundtest` builds `obj/soundtest.gb` with every effect of the GBFX and GBFX2 packs,
-played by the game's effect player, and writes a WAV of each to `tests/out/sounds/`.
-On the Game Boy: LEFT/RIGHT step through the effects, UP/DOWN jump 10, A plays one.
-The game's picks are in `sounds/effects.txt` (then `make sounds`).
-`tests/test_soundtest.py` checks that every effect holds its channels for its length.
+played by the game's effect player, and every song of the two music packs, and writes a
+WAV of each to `tests/out/sounds/` (songs: their first 45 s).
+On the Game Boy: SELECT switches between effects and songs, LEFT/RIGHT step, UP/DOWN
+jump 10, A plays, B stops the song. The game's effects are in `sounds/effects.txt` (then
+`make sounds`), its songs in `music/` (then `make music`).
+`tests/test_soundtest.py` checks that every effect holds its channels for its length and
+that every song plays.
 
 ## Continuous integration
 

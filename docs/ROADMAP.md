@@ -7,13 +7,18 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 ## Status (2026-10-04)
 
 - **Playable:** level 1 (Server Room, art pending) and the level 2 greybox (Code Testing
-  Lab), both kept after the owner's hardware pass, with music and the GBFX sound effects.
-  Next: the owner's effect and song picks, then M5 art or levels 3-5.
-- **Tests:** `make test` 194 tests in about 14 s; `make test-full` 286 in about 13 s.
-- **Memory:** bank 0 has 2,125 bytes free; WRAM uses 1,448 of 4,096 bytes.
-- **Frame budget** (worst update, line of the 140 allowed; average): level 1 126 (76),
-  level 2 105 (64), greybox route 119 (77). The music step costs about 9 lines, up to 18;
-  a streamed column's write 5 (was 12).
+  Lab), both kept after the owner's hardware pass, with music, the GBFX sound effects and
+  songs for the title, game over and level complete screens (owner approved the sounds).
+  The lift for level 3 is built and tested (test room), the level 3 brief drafted and
+  answered. Next: the chaser, the level 3 greybox, then M7 passwords; M5 art waits for
+  the style guide.
+- **Tests:** `make test` 209 tests in about 13 s; `make test-full` 305 in about 17 s.
+- **Memory:** bank 0 has 1,044 bytes free (the lift took about 1 KB); WRAM uses 1,489 of
+  4,096 bytes.
+- **Frame budget** (worst update, line of the 140 allowed; average): level 1 130 (78),
+  level 2 107 (66), greybox route 120 (79); the lift checks cost about 2 lines on average
+  even without lifts. The music step costs about 9 lines, up to 18; a streamed column's
+  write 5 (was 12).
 
 ## Bugs
 
@@ -24,11 +29,6 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 ## Waiting for the owner
 
-- Listen to the effects (`make soundtest`: WAVs, or `obj/soundtest.gb` on hardware) and
-  change the picks in `sounds/effects.txt` (M6).
-- Pick songs for title, game over and level complete (M6): from Tronimal's packs (not
-  downloaded yet), or another source.
-- Saves (M7): keep battery saves although the clone loses them, or passwords?
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
 - Claude Design style guide (M5); edit the story text in [STORY.md](STORY.md) (M7).
@@ -98,19 +98,20 @@ Done when level 1 looks like the final game in both modes.
       the line interrupt below the band.
 - [x] Sound effects: Tronimal GBFX/GBFX2 (`sounds/`, `make sounds`), our own player with
       a channel mute mask and priority over the music; sound test ROM and WAVs
-      (`make soundtest`). Done 2026-10-04; **(owner)** confirm the picks by ear.
-- [ ] Music per level, title, game over and ending. Levels 1 and 2 have songs (owner
-      agreed 2026-10-04); **(owner)** pick the rest by ear.
+      (`make soundtest`). Done 2026-10-04; owner approved the picks.
+- [ ] Music per level, title, game over and ending. Levels 1 and 2, title, game over and
+      level complete have songs (owner approved 2026-10-04; both packs in `music/packs/`,
+      all 18 songs in the sound test). Levels 3-5 and the ending wait for those
+      (candidate for the ending: "Closing").
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
 
 ## M7 — Saves and game flow
 
-- [ ] Saves on the EverDrive clone: the count of `savetest.gb` and the MBC1 and MBC3
-      variants never went up (owner, 2026-10-04). **(owner)** decide: battery saves anyway
-      (Proposed, DECISIONS.md "Saves") or passwords.
-- [ ] Save data in cartridge RAM: unlocked levels, best score, 100% marks, a checksum
-      for first boot.
+- [x] Saves on the EverDrive clone: no save test ROM kept its count (owner,
+      2026-10-04), so the game uses passwords (DECISIONS.md "Saves").
+- [ ] Passwords: one per level, shown at level complete, entered from the title screen
+      (contents agreed, DECISIONS.md "Saves"). The cartridge is plain MBC5 since 2026-10-04.
 - [ ] Level select, game over with continue, level complete screen with score. The level
       complete summary and a game over message exist (2026-10-04), and level complete goes
       on to the next level; the level select and a real "continue" choice wait.
@@ -125,9 +126,11 @@ One level at a time: the new mechanic, the brief, the greybox loop, the art pass
 replay test that finishes it.
 
 - [ ] Level 2, Code Testing Lab: one-way platforms, Down + A drops through, fast bots.
-      Greybox done ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7); **(owner)** play it.
-      Then the art pass.
-- [ ] Level 3, AI Research Wing: vertical movers and chasers.
+      Greybox done and kept after the owner's hardware pass ([LEVEL_DESIGN.md](LEVEL_DESIGN.md)
+      section 7). Next: the art pass (M5).
+- [ ] Level 3, AI Research Wing: vertical movers and chasers. Lifts done 2026-10-04
+      (`src/actor/lift.c`, tested in `levels/test_lifts.tmj`); brief drafted and answered
+      ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7). Next: chasers, then the greybox.
 - [ ] Level 4, Network Hub: hazards.
 - [ ] Level 5, Mainframe: the KERNEL boss (concept in GAME_DESIGN.md).
       **(owner)** Review the detailed boss design before it's built.

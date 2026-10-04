@@ -5,7 +5,7 @@ until they end (src/sound/music.c, src/sound/sound.c)."""
 import sys
 from pathlib import Path
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, PAUSED
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_COMPLETE, PAUSED, TITLE_SCREEN_STATE
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
@@ -39,15 +39,41 @@ def test_the_music_keeps_playing_while_paused(game):
     assert len(steps) >= 59
 
 
-def test_each_game_level_starts_its_own_song(game):
-    # hUGE_init gets the song's address in DE (GBDK's calling convention).
-    started = []
+def track_songs(game) -> list:
+    """From now on, add the name of each song the game starts to the returned list."""
+    names = {game.pyboy.symbol_lookup(symbol)[1]: symbol[len("_song_"):]
+             for symbol in ("_song_tech", "_song_neurotic_robonaut", "_song_decampment",
+                            "_song_gone_missing", "_song_delight")}
     registers = game.pyboy.register_file
-    game.pyboy.hook_register(None, "_hUGE_init", lambda _: started.append(registers.D << 8 | registers.E), None)
+    started = []
+    # hUGE_init gets the song's address in DE (GBDK's calling convention).
+    game.pyboy.hook_register(None, "_hUGE_init",
+                             lambda _: started.append(names[registers.D << 8 | registers.E]), None)
+    return started
+
+
+def press_start_on_screen(game) -> None:
+    """Wait on a title or message screen, then START back to the game."""
+    game.frames(200)
+    game.press("start")
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+
+
+def test_each_level_and_screen_starts_its_own_song(game):
+    # After the title, game over and level complete, a level's song starts again.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    songs = track_songs(game)
     for level in (LEVEL_1, LEVEL_2):
         game.load_level(level)
-    songs = [game.pyboy.symbol_lookup(name)[1] for name in ("_song_tech", "_song_neurotic_robonaut")]
-    assert started[-2:] == songs
+    game.set_state(TITLE_SCREEN_STATE)
+    press_start_on_screen(game)
+    game.set_lives(1)
+    game.lose_life()
+    press_start_on_screen(game)
+    game.set_state(LEVEL_COMPLETE)
+    press_start_on_screen(game)
+    assert songs == ["tech", "neurotic_robonaut", "decampment", "neurotic_robonaut",
+                     "gone_missing", "neurotic_robonaut", "delight", "tech"]
 
 
 def test_a_sound_effect_takes_its_channels_until_it_ends(game):

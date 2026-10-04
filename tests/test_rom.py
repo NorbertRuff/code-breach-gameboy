@@ -12,9 +12,10 @@ def test_header_gbc_enhanced_and_dmg_compatible(rom_bytes):
     assert rom_bytes[0x143] == 0x80
 
 
-def test_cartridge_is_mbc5_with_battery_ram(rom_bytes):
-    assert rom_bytes[0x147] == 0x1B   # MBC5 + RAM + battery
-    assert rom_bytes[0x149] == 0x02   # 8 KB cartridge RAM
+def test_cartridge_is_mbc5_without_ram(rom_bytes):
+    # Progress is kept in passwords (docs/DECISIONS.md "Saves").
+    assert rom_bytes[0x147] == 0x19   # MBC5
+    assert rom_bytes[0x149] == 0x00   # no cartridge RAM
 
 
 def test_title(rom_bytes):

@@ -32,6 +32,7 @@ sketches in this file can be redrawn after an edit in Tiled):
 | `*` | Code fragment |
 | `E` | Enemy: a run of `E`s is one patrol bot standing on the row below, the run is its patrol range |
 | `F` | Fast enemy: like `E`, at 2 px per frame instead of 1 (the bot's `speed` property in Tiled) |
+| `L` | Lift (from level 3): a block of `L`s 3 wide, from the row of its highest place to its lowest |
 | `P` | Player start |
 | `G` | Security gate (section end and checkpoint) |
 | `D` | Exit elevator |
@@ -314,6 +315,42 @@ About 9 bots, at most 3 on screen.
   slow and fast bots.
 - Still open: the collectible is called a bug report in GAME_DESIGN.md; only a new
   picture, or also a new name in the HUD?
+
+### Level 3 brief: AI Research Wing (draft)
+
+**Status: draft by Claude, 2026-10-04.** The lift is built and tested (`levels/test_lifts.tmj`,
+DECISIONS.md "Lifts"). Next: the chaser, then the greybox.
+
+Teaches: **lifts** (vertical movers) and **chasers** (bots that follow the player). Lifts
+reach heights no jump can: the level goes up, with shelves 5-9 tiles above the floor.
+Limits on fixed ground as in level 2 (climbs up to 3, gaps up to 6).
+
+**Section A, "Elevator lobby"** (about 50 tiles)
+1. A lift next to a high shelf with fragment 1, over solid floor: missing costs nothing.
+2. Two lifts in a row, out of step, with a shelf between them: wait for the second.
+3. A lift in the middle of a wide pit (gaps of 4 to it): hop on when it's high, off at
+   the other side.
+4. A bonus fragment on a shelf only the highest point of a lift reaches.
+5. **Gate A: 3 of 5.**
+
+**Section B, "Neural lab"** (about 55 tiles)
+1. The first chaser on an open floor: it walks toward the player once the player is near,
+   slower than running. A shelf to escape to.
+2. A chaser under a lift: ride up and let it wait below.
+3. A high route of lifts and shelves, and a low route past two chasers.
+4. **Gate B: 3 of 5.**
+
+**Section C, "Training core"** (about 55 tiles)
+1. Lifts over chasers: time the drop.
+2. A tall shaft of three lifts to the top of the level.
+3. The exit elevator at the top.
+
+**Totals:** about 160 tiles, 13 fragments, 3-4 chasers, 3-4 patrol bots, 8-10 lifts.
+
+**Owner's answers (2026-10-04):**
+- **Chaser:** stands still until the player is within about 6 tiles on its floor, then
+  walks toward them at 1 px per frame, only inside its range in Tiled.
+- **Lifts:** wait about half a second at each end (built). Vertical only for now.
 
 ### Level 2 greybox (2026-10-04)
 

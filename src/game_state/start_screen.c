@@ -4,6 +4,7 @@
 #include "../graphics/splashscreen.h"
 #include "../engine/banking.h"
 #include "../engine/palette.h"
+#include "../sound/music.h"
 #include "../utils.h"
 
 static uint8_t blink_frames;   // frames into the "PRESS START" blink cycle
@@ -34,6 +35,7 @@ static void blink_press_start(void)
 // Shows the title screen until START is pressed, then fades it out.
 void run_title_screen(void)
 {
+    music_play_title();
     draw_title_screen();
     while (!(joypad() & J_START)) {
         blink_press_start();

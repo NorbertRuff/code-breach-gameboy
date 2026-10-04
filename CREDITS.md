@@ -10,9 +10,13 @@ ideas, is in [docs/SOURCES.md](docs/SOURCES.md).
 |---|---|---|---|---|---|
 | Tech (Game Boy Music Pack #2, `07_tech.uge`) | Tronimal (Yogi) | https://yogi-tronimal.itch.io/game-boy-music-pack-2 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Converted to hUGEDriver C data by `tools/uge2c.py`; notes unchanged | Level 1, the test rooms |
 | Neurotic Robonaut (Game Boy Music Pack #1, `free_04_neurotic_robonaut.uge`) | Tronimal (Yogi) | https://yogi-tronimal.itch.io/game-boy-music-pack | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Converted to hUGEDriver C data by `tools/uge2c.py`; notes unchanged | Level 2 |
+| Decampment (Game Boy Music Pack #2, `01_decampment.uge`) | Tronimal (Yogi) | https://yogi-tronimal.itch.io/game-boy-music-pack-2 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Converted to hUGEDriver C data by `tools/uge2c.py`; notes unchanged | Title screen |
+| Gone Missing (Game Boy Music Pack #2, `08_gone_missing.uge`) | Tronimal (Yogi) | https://yogi-tronimal.itch.io/game-boy-music-pack-2 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Converted to hUGEDriver C data by `tools/uge2c.py`; notes unchanged | Game over |
+| Delight (Game Boy Music Pack #1, `free_06_delight.uge`) | Tronimal (Yogi) | https://yogi-tronimal.itch.io/game-boy-music-pack | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Converted to hUGEDriver C data by `tools/uge2c.py`; notes unchanged | Level complete |
 
-The source songs are in `music/` as downloaded (renamed `tech.uge` and
-`neurotic_robonaut.uge`).
+The songs the game uses are in `music/` as downloaded, without the pack's number in the
+file name (`tech.uge`, `decampment.uge`, ...). Both packs are in `music/packs/` as
+downloaded (renamed `game_boy_music_pack_1.zip` and `_2.zip`), for the sound test.
 
 ## Sound effects
 

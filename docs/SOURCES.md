@@ -13,7 +13,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Technique | Source | Used in | Status |
 |---|---|---|---|
 | Reading banked data: map the asset's bank in, read, map the old bank back (`WITH_BANK`) | GBDK docs, ROM banking (`NONBANKED` loader pattern, `SWITCH_ROM`, `CURRENT_BANK`) | `src/engine/banking.h`, `level_manager.c`, `player.c`, `start_screen.c` | In use |
-| Autobank build flags (`-autobank -Wb-ext=.rel`, `-Wm-yoA`), MBC5 + RAM + battery header (`-Wl-yt0x1B`), GBC-compatible header (`-Wm-yc`), `.sym` output (`-Wm-yS`) | GBDK docs, toolchain settings; checked by the research agent on GBDK 4.5.0 | `Makefile` | In use |
+| Autobank build flags (`-autobank -Wb-ext=.rel`, `-Wm-yoA`), MBC5 header (`-Wl-yt0x19`; `0x1B` with RAM + battery for the save test ROMs), GBC-compatible header (`-Wm-yc`), `.sym` output (`-Wm-yS`) | GBDK docs, toolchain settings; checked by the research agent on GBDK 4.5.0 | `Makefile` | In use |
 | One Makefile for PowerShell, cmd and Git Bash: force `cmd.exe` on Windows | Own finding (make picks `sh.exe` only when Git Bash is on PATH) | `Makefile` | In use |
 | Hardware detection `_cpu == CGB_TYPE`; guard VRAM bank 1 writes on DMG | GBDK docs (supported consoles), Pan Docs | `src/engine/platform.c` | In use |
 | Gray GBC palettes matching the DMG shades, attribute maps cleared at boot | Own design, from Pan Docs on CGB palettes and attributes | `src/engine/palette.c` `palette_init`, `src/engine/platform.c` | In use (until the M5 palettes) |
@@ -40,6 +40,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Spawn list sorted by X, read with a cursor, start index per section | BlackCastle `src/monster_data.c` (idea only), marioland-gbdk (idea only) | `tools/tiled2c.py`, `src/actor/actor.c` `actors_spawn`, `actors_reset` | In use |
 | Removing actors that are off screen | GB Studio engine `src/core/actor.c` (MIT): off-screen actors are deactivated (here: removed a screen behind the camera) | `src/actor/actor.c` `actors_update` | In use |
 | One table entry per actor type (update, art, hit box) instead of copied code per enemy | RESEARCH.md 2.4: BlackCastle's copied draw blocks as the counter-example | `src/actor/actor.c` `actor_types`, `src/actor/bot.c` `bot_type` | In use |
+| Moving platforms move before the player, and carry a player who stood on them by the step they took; one-way, so the player jumps up through them | Common platformer practice (own implementation; no code copied) | `src/actor/lift.c`, `actors_move_lifts`, `src/player/player.c` `ride_lift` | In use |
 | Rebuild the sprite list every frame, then `hide_sprites_range` | zelda-gbdk `objects.c` (idea only); GBDK `metasprites` example | `main.c` `draw_sprites`, `src/actor/actor.c` `actors_draw` | In use |
 | Object pools with a free list, fixed sprite ranges | cuphead_gb `bullet_pool.c` (MIT) | Projectiles, particles | Planned (M3/M8) |
 | Boss drawn with background tiles, poses in the off-screen map, switched by scrolling | cuphead_gb README and maps (MIT) | KERNEL boss | Planned (M8) |
@@ -101,6 +102,6 @@ games ships (decision 2026-10-03).
 | Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`), HUD digits and heart (hand-written in `level_manager.c`) | Project code | Placeholders until M5 |
 | Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder until M5 |
 | Placeholder font (`src/graphics/font.c`): A-Z, 0-9, punctuation, 8×8 bold | Project code, drawn in the style of the existing HUD digits | Placeholder until the M5 font |
-| Music: `music/tech.uge` ("Tech", Pack #2), `music/neurotic_robonaut.uge` ("Neurotic Robonaut", Pack #1) | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
+| Music: `music/*.uge` (Tech, Neurotic Robonaut, Decampment, Gone Missing, Delight); both packs in `music/packs/` for the sound test | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
 | hUGEDriver 6.1.3 (`lib/hUGEDriver/`) | SuperDisk, github.com/SuperDisk/hUGEDriver release, public domain | In use; credited in `CREDITS.md` |
 | Sound effects: `sounds/GBFX.sav`, `sounds/GBFX2.sav` (picks in `sounds/effects.txt`) | Tronimal, GBFX and GBFX2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |

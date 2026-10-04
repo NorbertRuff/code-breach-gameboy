@@ -57,13 +57,16 @@ EMULICIOUS := emulicious/Emulicious.jar
 # Tests use the project venv when it exists, otherwise python from PATH (as in CI).
 PYTHON ?= $(call fixpath,$(if $(wildcard $(VENV_PY)),$(VENV_PY),python))
 
-# Cartridge (docs/CGB_PLAN.md section 1):
-#   MBC5 + RAM + battery, 1 RAM bank (8 KB), ROM size picked automatically,
-#   GBC-enhanced header that still runs on DMG, cartridge title.
-CART_TYPE  := 0x1B
-CART_FLAGS := -Wl-yt$(CART_TYPE) -Wm-yoA -Wm-ya1 -Wm-yc -Wm-ynAPEXLAB
+# Cartridge (docs/CGB_PLAN.md section 1): MBC5 without RAM (progress is kept in
+# passwords, docs/DECISIONS.md "Saves"), ROM size picked automatically, GBC-enhanced
+# header that still runs on DMG, cartridge title.
+CART_TYPE  := 0x19
+CART_FLAGS := -Wl-yt$(CART_TYPE) -Wm-yoA -Wm-yc -Wm-ynAPEXLAB
 
-# Save test variants: the same cartridge with another mapper, + RAM + battery.
+# Save test ROMs: MBC5 + RAM + battery with 1 RAM bank (8 KB), and the same with an MBC1
+# or MBC3 mapper.
+SAVETEST_TYPE  := 0x1B
+SAVETEST_FLAGS := -Wl-yt$(SAVETEST_TYPE) -Wm-yoA -Wm-ya1 -Wm-yc -Wm-ynAPEXLAB
 CART_TYPE_MBC1 := 0x03
 CART_TYPE_MBC3 := 0x13
 
@@ -148,17 +151,17 @@ venv:
 	python -m venv .venv
 	$(call fixpath,$(VENV_PY)) -m pip install -r tools/requirements.txt
 
-# Standalone ROM with the same cartridge type as the game. It counts boots in
-# cartridge RAM, to check that saves survive a power cycle on the flashcart.
+# Standalone ROM with an MBC5 + RAM + battery cartridge. It counts boots in cartridge
+# RAM, to check that saves survive a power cycle on a flashcart.
 savetest: $(SAVETEST) $(SAVETEST_VARIANTS)
 
 $(SAVETEST): tools/savetest/savetest.c | $(OBJDIR)
-	$(LCC) $(LCCFLAGS) -Wm-yS $(CART_FLAGS) -o $@ $<
+	$(LCC) $(LCCFLAGS) -Wm-yS $(SAVETEST_FLAGS) -o $@ $<
 
 # MBC1 and MBC3 headers, to find out whether the flashcart keeps saves for another
 # mapper (roadmap M7). The screen names the mapper.
 $(OBJDIR)/savetest_mbc%.gb: tools/savetest/savetest.c | $(OBJDIR)
-	$(LCC) $(LCCFLAGS) -Wm-yS $(subst -Wl-yt$(CART_TYPE),-Wl-yt$(CART_TYPE_MBC$*),$(CART_FLAGS)) -DMBC=$* -o $@ $<
+	$(LCC) $(LCCFLAGS) -Wm-yS $(subst -Wl-yt$(SAVETEST_TYPE),-Wl-yt$(CART_TYPE_MBC$*),$(SAVETEST_FLAGS)) -DMBC=$* -o $@ $<
 
 # Every effect of the sound packs and every song of the music packs, played by the
 # game's players, to pick them by ear (on hardware, or as WAVs from tools/render_sounds.py).

@@ -45,14 +45,17 @@ Python and fits our collision and palette needs exactly.
 - **Layers:**
   - `tiles`: tile layer.
   - `entities`: object layer. Object classes: `player_start`, `enemy` (property `kind`;
-    int property `speed`, 1 or 2 px per frame, default 1; the object's width is the patrol range), `fragment`, `gate` (property `quota`; also
+    int property `speed`, 1 or 2 px per frame, default 1; the object's width is the patrol range), `lift`, `fragment`, `gate` (property `quota`; also
     the checkpoint), `exit` (the elevator). Each fragment belongs to the section it sits in,
     by X position between gates; a gate belongs to the section it closes. The game draws
     a gate as a column from its marker's tile up to the map's top row, solid until it
     opens; after it opens, the player restarts just right of it, feet on its bottom row. Level structure
     rules are in [LEVEL_DESIGN.md](LEVEL_DESIGN.md).
   - **Placing them:** `enemy` is a rectangle: its left and right edges are the body's
-    patrol range, its bottom edge the floor it walks on. Everything else is a tile object
+    patrol range, its bottom edge the floor it walks on. `lift` is a rectangle 24 px wide
+    on the 8 px grid, at least 16 px tall: the area its 8 px platform sweeps, from its
+    highest place (top edge) to its lowest (bottom edge); it starts at the bottom, going
+    up. Everything else is a tile object
     (Insert Tile) with the matching marker tile from the tileset, which already carries
     the class, on the 8 px grid. The player's body starts with its left edge on the
     `player_start` marker's left edge and its feet on the marker's bottom.
@@ -112,6 +115,9 @@ The converter fails the build when:
 - there are more than 32 fragments;
 - a gate asks for more fragments than its section has, or has no room to restart right
   of it (2 free columns, the body's 4 rows free of solid and hazard tiles, ground below);
+- a lift isn't 24 px wide on the grid, has a solid tile in its columns from 4 rows above
+  its highest place down to its lowest (the platform and the body riding it), or is less
+  than 16 px from another lift;
 - the tileset has more unique tiles than the budget in [ART_PIPELINE.md](ART_PIPELINE.md).
 
 It warns when an enemy's patrol range has no ground under it, and when a pit in the
