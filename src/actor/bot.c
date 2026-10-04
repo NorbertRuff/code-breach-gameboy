@@ -28,20 +28,19 @@ static void bot_spawn(Actor* bot, const LevelEntity* entity)
     bot->x = bot->min_x = entity->x + BOT_HALF_WIDTH;
     bot->max_x = entity->x + entity->param - BOT_HALF_WIDTH;
     bot->y = entity->y;
-    bot->direction = 1;
+    bot->velocity_x = entity->speed;
 }
 
-// Walks 1 px per frame and turns at the ends of the patrol.
+// Walks at its speed and turns around at the ends of the patrol.
 static void bot_update(Actor* bot)
 {
-    bot->x += bot->direction;
-    if (bot->x <= bot->min_x) {
-        bot->x = bot->min_x;
-        bot->direction = 1;
-    }
-    if (bot->x >= bot->max_x) {
+    bot->x += bot->velocity_x;
+    if (bot->velocity_x > 0 && bot->x >= bot->max_x) {
         bot->x = bot->max_x;
-        bot->direction = -1;
+        bot->velocity_x = -bot->velocity_x;
+    } else if (bot->velocity_x < 0 && bot->x <= bot->min_x) {
+        bot->x = bot->min_x;
+        bot->velocity_x = -bot->velocity_x;
     }
 }
 

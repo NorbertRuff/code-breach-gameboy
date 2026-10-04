@@ -3,7 +3,9 @@ updated and drawn through their type, removed a screen behind the camera. In
 levels/greybox_test.tmj: bot B patrols platform B (centers 72-88), bot D platform D
 (176-192), the floor bot the floor past gate A (416-448)."""
 
-from gamelib import ACTOR_SIZE, BOT_TILES, COREGAMELOOP
+import pytest
+
+from gamelib import ACTOR_SIZE, BOT_TILES, COREGAMELOOP, LEVEL_2
 
 BOT_B, BOT_D, FLOOR_BOT = 72, 176, 416      # min_x of each bot's patrol
 SPAWN_REACH = 160 + 16                      # screen width + SPAWN_AHEAD (src/actor/actor.c)
@@ -39,7 +41,7 @@ def test_a_bot_spawns_when_the_camera_comes_near(game):
     assert FLOOR_BOT not in patrol_starts(game)
     game.place_player(330, 87)                  # on the one-way shelf: the camera jumps right
     bot = next(a for a in game.actors() if a.min_x == FLOOR_BOT)
-    assert bot.direction == 1 and FLOOR_BOT < bot.x <= FLOOR_BOT + game.PLACE_FRAMES, "starts at the left end"
+    assert bot.velocity_x == 1 and FLOOR_BOT < bot.x <= FLOOR_BOT + game.PLACE_FRAMES, "starts at the left end"
 
 
 def test_bot_patrols_between_its_ends(game):
@@ -48,7 +50,7 @@ def test_bot_patrols_between_its_ends(game):
     for _ in range(40):
         game.frames(1)
         bot = next(a for a in game.actors() if a.min_x == BOT_B)
-        seen.append((bot.x, bot.direction))
+        seen.append((bot.x, bot.velocity_x))
     xs = [x for x, _ in seen]
     assert min(xs) == 72 and max(xs) == 88
     assert {d for _, d in seen} == {1, -1}
@@ -101,3 +103,17 @@ def test_sprite_list_is_rebuilt_every_frame(game):
     for _ in range(20):
         game.frames(1)
         assert len(game.visible_sprites()) == expected_sprite_count(game)
+
+
+@pytest.mark.level(LEVEL_2)
+def test_a_fast_bot_walks_2_px_per_frame(game):
+    # Level 2's first low-route bot (speed 2 in Tiled) patrols centers 600-656.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.place_player(560, 119)
+    bot = lambda: next(a for a in game.actors() if a.min_x == 600)
+    steps = []
+    for _ in range(80):
+        x = bot().x
+        game.frames(1)
+        steps.append(bot().x - x)
+    assert set(steps) == {2, -2}, f"steps per frame: {sorted(set(steps))}"

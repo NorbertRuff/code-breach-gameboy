@@ -42,6 +42,7 @@ typedef struct {
     int8_t velocity_x;           // 1/32 px per frame
     int8_t velocity_y;           // 1/32 px per frame, positive is down
     int8_t input_x;              // d-pad: -1 left, 0, 1 right
+    uint8_t down_held;           // Down is held: with a new press of A, drops through a one-way top
     uint8_t jump_held;           // A is down this frame
     uint8_t jump_buffer_frames;  // counts down after a new press of A
     uint8_t coyote_frames;       // counts down after leaving the ground

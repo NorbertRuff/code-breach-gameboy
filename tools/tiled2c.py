@@ -27,6 +27,7 @@ MIN_WIDTH, MAX_WIDTH = 20, 255
 MAX_FRAGMENTS = 32
 TILESET_BUDGET = 190       # unique tiles per level tileset, docs/ART_PIPELINE.md
 SECTIONS = 3
+BOT_SPEEDS = (1, 2)         # px per frame, the enemy property "speed" (default 1)
 MIN_PIT_WIDTH = 3          # tiles: the 16 px body walks across a narrower pit
 FLIP_FLAGS = 0xE0000000    # Tiled stores flips and rotation in a gid's top bits
 
@@ -55,6 +56,7 @@ class Entity:
     x: int                             # world pixels, see level_data.h
     y: int
     param: int = 0
+    speed: int = 0                     # enemies: px per frame
 
 
 @dataclass
@@ -143,7 +145,10 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
             patrol = int(obj["width"])
             if not 2 * TILE <= patrol <= 255:
                 fail(f"{where}: an enemy's patrol width must be 16 to 255 px, not {patrol}")
-            entities.append(Entity("enemy", left, world_y + int(obj["height"]) - 1, patrol))
+            speed = properties(obj).get("speed", 1)
+            if speed not in BOT_SPEEDS:
+                fail(f"{where}: an enemy's speed must be 1 or 2 px per frame, not {speed}")
+            entities.append(Entity("enemy", left, world_y + int(obj["height"]) - 1, patrol, speed))
             continue
 
         # Tile objects: x is the left edge, y the bottom edge, snapped to the tile grid.
@@ -259,7 +264,7 @@ def c_level(level: Level, source: str) -> tuple[str, str]:
     for row in range(MAP_ROWS):
         cells = level.tiles[row * level.width:(row + 1) * level.width]
         rows.append("    " + ",".join(str(t) for t in cells) + ",")
-    entities = [f"    {{ {ENTITY_TYPES[e.kind]}, {e.x}, {e.y}, {e.param} }},"
+    entities = [f"    {{ {ENTITY_TYPES[e.kind]}, {e.x}, {e.y}, {e.param}, {e.speed} }},"
                 for e in level.entities]
     # C has no empty arrays: a level without entities gets a null pointer.
     entity_array = f"""

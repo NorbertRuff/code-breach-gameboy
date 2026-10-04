@@ -35,7 +35,7 @@ LINES_PER_FRAME = 154
 # x and y are in 1/32 px; player() adds px and py in whole pixels.
 PLAYER_FIELDS = [
     ("x", "H"), ("y", "H"), ("velocity_x", "b"), ("velocity_y", "b"), ("input_x", "b"),
-    ("jump_held", "B"), ("jump_buffer_frames", "B"), ("coyote_frames", "B"),
+    ("down_held", "B"), ("jump_held", "B"), ("jump_buffer_frames", "B"), ("coyote_frames", "B"),
     ("on_ground", "B"), ("touched_hazard", "B"), ("touched_exit", "B"), ("direction", "B"), ("draw_frame", "B"),
     ("animation_frame_count", "B"), ("invincibility_frames", "B"),
 ]
@@ -43,7 +43,7 @@ PLAYER_FORMAT = "<" + "".join(fmt for _, fmt in PLAYER_FIELDS)
 
 # Mirror of the Actor struct in src/actor/actor.h; type is the address of its ActorType.
 # test_actor_struct_size_matches fails when the C struct changes without this list.
-ACTOR_FIELDS = [("type", "H"), ("x", "H"), ("y", "B"), ("direction", "b"), ("min_x", "H"), ("max_x", "H")]
+ACTOR_FIELDS = [("type", "H"), ("x", "H"), ("y", "B"), ("velocity_x", "b"), ("min_x", "H"), ("max_x", "H")]
 ACTOR_FORMAT = "<" + "".join(fmt for _, fmt in ACTOR_FIELDS)
 ACTOR_SIZE = struct.calcsize(ACTOR_FORMAT)
 MAX_ACTORS = 8
@@ -68,8 +68,9 @@ for _name, _fmt in PLAYER_FIELDS:
 
 # Levels and the collision ring, from src/level/level_manager.h and level_data.h.
 LEVEL_1 = 0
-LEVEL_GREYBOX_TEST = 1
-LEVEL_TEST_JUMPS = 2
+LEVEL_2 = 1
+LEVEL_GREYBOX_TEST = 2
+LEVEL_TEST_JUMPS = 3
 RING_COLUMNS = 32
 RING_ROWS = 16
 TILE_SIZE = 8
@@ -172,9 +173,14 @@ class Game:
         except ValueError:
             return False
 
+    def rom_level_index(self, level: int) -> int:
+        """A LEVEL_* index in this build's numbering: builds before level 2 had the test
+        rooms one index lower."""
+        return level - 1 if level > LEVEL_2 and not self.has_symbol("_level_2") else level
+
     def _set_level_index(self, level: int) -> None:
         _, addr = self.pyboy.symbol_lookup("_level_index")
-        self.pyboy.memory[addr] = level
+        self.pyboy.memory[addr] = self.rom_level_index(level)
 
     def _at_player_draw(self, _context) -> None:
         """The frame's update is done: apply waiting writes, then copy the struct."""
@@ -389,6 +395,12 @@ class Game:
                                      lambda _: [c(None) for c in self._update_end_callbacks], None)
         self._update_end_callbacks.append(callback)
 
+    def at_screen_ready(self, callback) -> None:
+        """Call callback(None) whenever a gameplay update reads the input. By then it has
+        written the column the last update drew (level_stream_flush), so the background
+        map and the collision ring match camera_x."""
+        self.pyboy.hook_register(None, "_input_read_player", callback, None)
+
     def track_sprites_per_line(self) -> list:
         """From now on, add to the returned list, for every gameplay update, the most
         hardware sprites on one screen line (8x16 sprites; the hardware draws at most 10
@@ -417,7 +429,7 @@ class Game:
         """Wait for gameplay, then restart in another level (LEVEL_*)."""
         self.wait_for_state(COREGAMELOOP, timeout=300)
         _, addr = self.pyboy.symbol_lookup("_level_index")
-        self.pyboy.memory[addr] = index
+        self.pyboy.memory[addr] = self.rom_level_index(index)
         self.set_state(GAMEPLAY_START)
         self.frames(1)
         self.wait_for_state(COREGAMELOOP)
@@ -547,16 +559,16 @@ class Pilot:
         self.buttons("")
         self.wait(lambda: self.game.player().on_ground and self.game.player().velocity_x == 0, "a stop")
 
-    def jump(self, hold: int, steer: int = 0) -> None:
-        """Jump right holding A for hold frames. steer: frames to hold right, or 0 to hold
-        it until the landing and keep running."""
+    def jump(self, hold: int, steer: int = 0, direction: str = "right") -> None:
+        """Jump holding A for hold frames. steer: frames to hold the direction ("right",
+        "left", or "" for straight up), or 0 to hold it until the landing and keep running."""
         self.wait(lambda: self.game.player().on_ground, "ground to jump from")
         for frame in range(self.TIMEOUT):
-            self.buttons(("right" if not steer or frame < steer else "") + (" a" if frame < hold else ""))
+            self.buttons((direction if not steer or frame < steer else "") + (" a" if frame < hold else ""))
             self.frame()
             if frame and self.game.player().on_ground:
                 break
-        self.buttons("" if steer else "right")
+        self.buttons("" if steer else direction)
         self.log(f"landed at {self.where()}")
 
     def drop_off(self) -> None:
@@ -566,6 +578,17 @@ class Pilot:
         self.buttons("")
         self.wait(lambda: self.game.player().on_ground, "a landing")
         self.log(f"dropped to {self.where()}")
+
+    def drop_through(self) -> None:
+        """Down + A on a one-way top: fall through it to the next floor."""
+        self.wait(lambda: self.game.player().on_ground, "ground to drop from")
+        self.buttons("down")
+        self.frame()
+        self.buttons("down a")
+        self.wait(lambda: not self.game.player().on_ground, "the drop")
+        self.buttons("")
+        self.wait(lambda: self.game.player().on_ground, "a landing")
+        self.log(f"dropped through to {self.where()}")
 
     def bot(self, patrol_left: int):
         """The bot whose patrol starts at x patrol_left (its Tiled rectangle's left edge)."""
@@ -577,20 +600,20 @@ class Pilot:
     def wait_for_bot(self, patrol_left: int, x_from: int, x_to: int) -> None:
         """Stand still until the bot walks right, away from the player, between two x."""
         self.stop()
-        self.wait(lambda: self.bot(patrol_left).direction == 1 and x_from <= self.bot(patrol_left).x <= x_to,
+        self.wait(lambda: self.bot(patrol_left).velocity_x > 0 and x_from <= self.bot(patrol_left).x <= x_to,
                   f"the bot from x {patrol_left}")
 
     def pass_bot(self, patrol_left: int, hold: int = 30, distance: int = 48) -> None:
         """Wait until the bot walks away, follow it, and jump over it when it turns back
         and is distance px away."""
         self.stop()
-        self.wait(lambda: self.bot(patrol_left).direction == 1 and self.bot(patrol_left).x - self.game.player().px > 32,
+        self.wait(lambda: self.bot(patrol_left).velocity_x > 0 and self.bot(patrol_left).x - self.game.player().px > 32,
                   f"the bot from x {patrol_left} to walk away")
 
         def turned_back() -> bool:
             gap = self.bot(patrol_left).x - self.game.player().px
             self.buttons("right" if gap > self.FOLLOW_GAP else "")
-            return self.bot(patrol_left).direction == -1 and gap <= distance
+            return self.bot(patrol_left).velocity_x < 0 and gap <= distance
 
         self.wait(turned_back, f"the bot from x {patrol_left} to turn back")
         self.jump(hold)

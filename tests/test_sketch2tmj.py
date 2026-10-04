@@ -44,7 +44,7 @@ SKETCH = """# A small level with every character.
 ....................
 ....................
 .....*.......*......
-.P...EEE..G..*.G..D*
+.P...EEE..G..*.GFFD*
 ###^^###############
 """
 
@@ -52,10 +52,11 @@ SKETCH = """# A small level with every character.
 def test_a_sketch_with_every_character_converts():
     level = convert(sketch2tmj.sketch_to_tmj(*sketch2tmj.read_sketch(SKETCH)))
     kinds = [e.kind for e in level.entities]
-    assert kinds.count("fragment") == 4 and kinds.count("enemy") == 1 and kinds.count("exit") == 1
+    assert kinds.count("fragment") == 4 and kinds.count("enemy") == 2 and kinds.count("exit") == 1
     assert [e.param for e in level.entities if e.kind == "gate"] == [1, 2]
-    bot = next(e for e in level.entities if e.kind == "enemy")
-    assert (bot.x, bot.param) == (5 * 8, 3 * 8)                # the run of E's is the patrol
+    bot, fast_bot = (e for e in level.entities if e.kind == "enemy")
+    assert (bot.x, bot.param, bot.speed) == (5 * 8, 3 * 8, 1)  # the run of E's is the patrol
+    assert (fast_bot.x, fast_bot.param, fast_bot.speed) == (16 * 8, 2 * 8, 2)
     assert level.tileset.collision[level.tiles[6 * 20 + 9]] == "one_way"
     assert level.tileset.collision[level.tiles[12 * 20 + 3]] == "hazard"
 

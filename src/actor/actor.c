@@ -114,7 +114,7 @@ uint8_t actors_draw(uint8_t first_sprite, int16_t camera_x)
         const ActorType* type = actor->type;
         uint8_t x = screen_x + DEVICE_SPRITE_PX_OFFSET_X;
         uint8_t y = actor->y + DEVICE_SPRITE_PX_OFFSET_Y;
-        if (actor->direction > 0) {
+        if (actor->velocity_x > 0) {
             first_sprite += move_metasprite_ex(type->metasprite, type->first_tile, 0, first_sprite, x, y);
         } else {
             first_sprite += move_metasprite_flipx(type->metasprite, type->first_tile, 0, first_sprite, x, y);

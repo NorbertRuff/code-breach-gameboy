@@ -1,5 +1,6 @@
 #include <gb/gb.h>
 #include "screen.h"
+#include "../sound/music.h"
 
 static uint8_t band_scx, level_scx;   // set during an update, for the next frame
 static uint8_t frame_level_scx;       // the level's scroll for the frame being drawn
@@ -16,13 +17,15 @@ static void on_vblank(void)
 }
 
 // At a split line, in its HBlank, so the change starts on the next line: below the band
-// the level's scroll, over the HUD no sprites.
+// the level's scroll and then the frame's music step, over the HUD no sprites. The music
+// runs here, not at VBlank, so it never delays the VBlank work or the game's update.
 static void on_split_line(void)
 {
     while (STAT_REG & STATF_BUSY);
     if (LYC_REG == BAND_LAST_LINE) {
         SCX_REG = frame_level_scx;
         LYC_REG = HUD_FIRST_LINE - 1;
+        music_step();
     } else {
         HIDE_SPRITES;
     }

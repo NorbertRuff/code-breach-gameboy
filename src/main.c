@@ -10,6 +10,7 @@
 #include "./player/player.h"
 #include "./input/input.h"
 #include "./actor/actor.h"
+#include "./sound/music.h"
 #include "./sound/sound.h"
 
 #include "./game_state/game_over.h"
@@ -145,6 +146,8 @@ static void restart_behind_fade(uint8_t invincible)
 // frame early to pause, or with a state change when the player is hit or done.
 void main_game_loop(void)
 {
+    level_stream_flush();   // while VBlank lasts
+
     // START pauses: everything stops where it is, with "PAUSE" over it.
     if (new_press(J_START)) {
         sound_play_pause();
@@ -189,6 +192,7 @@ static void start_level(void)
     palette_fade_to(PALETTE_BLACK);
     screen_show_sprites(0);
     level_load(level_index);
+    music_play_level(level_index);
     actors_load_tiles();
     pause_load_tiles();
     hud_update_lives(lives);
@@ -212,6 +216,17 @@ static void lose_life(void)
     lives = START_LIVES;
     level_reset_fragments(current_level.section);
     restart_behind_fade(0);
+}
+
+// After the exit: the next game level, with full lives. After the last level comes
+// level 1 again, until the ending exists; a test room starts over.
+static void go_to_next_level(void)
+{
+    if (level_index < GAME_LEVEL_COUNT) {
+        level_index++;
+        if (level_index == GAME_LEVEL_COUNT) level_index = LEVEL_1;
+    }
+    lives = START_LIVES;
 }
 
 // Boots, then runs one game state per frame.
@@ -252,7 +267,8 @@ void main(void)
         case LEVEL_COMPLETE:
             level_complete();
             palette_fade_out(SCREEN_FADE_FRAMES);
-            current_game_state = GAMEPLAY_START;   // the same level again, for now
+            go_to_next_level();
+            current_game_state = GAMEPLAY_START;
             break;
         case GAMEPLAY_END:
             lose_life();

@@ -14,4 +14,5 @@
 | [ART_PIPELINE.md](ART_PIPELINE.md) | Hardware art rules, Claude Design workflow, conversion script, asset list. |
 | [LEVEL_DESIGN.md](LEVEL_DESIGN.md) | How we design levels together, level structure and rules, level briefs. |
 | [LEVEL_PIPELINE.md](LEVEL_PIPELINE.md) | Level editor comparison, Tiled setup, level converter, map streaming. |
+| [../CREDITS.md](../CREDITS.md) | Everything in the game someone else made (music, driver), with license and changes. |
 | [STORY.md](STORY.md) | Draft of the game's text: boot screen, level complete, the AI's log per elevator ride, ending. |

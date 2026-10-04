@@ -73,11 +73,11 @@ Full bug list with causes: [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md).
 - **Collectibles**: 12 code fragments, placed above each surface cluster
 - **Objective**: Collect all 12 fragments to trigger level complete
 
-### Level 2: Code Testing Lab *(not started)*
+### Level 2: Code Testing Lab *(greybox, 2026-10-04: docs/LEVEL_DESIGN.md section 7)*
 - **Theme**: Computer workstations, code displays, broken terminals
 - **Enemies**: Faster patrol bots, consider vertical movers
 - **Collectibles**: Bug reports, debug tools
-- **New mechanic**: ONE_WAY platforms (jump up through, land on top)
+- **New mechanic**: ONE_WAY platforms (jump up through, land on top, Down + A drops through)
 - **Width**: Consider exceeding 256px → requires dynamic tile streaming (set_bkg_submap)
 
 ### Level 3: AI Research Wing *(planned)*

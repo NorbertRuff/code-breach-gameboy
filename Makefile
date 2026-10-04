@@ -14,6 +14,7 @@
 #   make usage      show ROM and RAM use per bank
 #   make assets     regenerate src/graphics/*.c from the PNGs in graphics/
 #   make levels     regenerate src/levels/*.c from the Tiled maps in levels/
+#   make music      regenerate src/music/*.c from the hUGETracker songs in music/
 #   make preview    draw every level to tests/out/levels/ and check it can be finished
 #   make clean      delete obj/
 #
@@ -64,12 +65,16 @@ CART_TYPE_MBC3 := 0x13
 
 # -debug: .cdb/.noi/.map for Emulicious. -Wm-yS: .sym for PyBoy.
 LCCFLAGS := -debug
+# The music driver (lib/hUGEDriver/README.md): its header for the compiler, its library
+# for the linker.
+HUGEDRIVER := lib/hUGEDriver
+
 # -MMD/-MP: write obj/*.d header dependency files.
 # EXTRA_CFLAGS: one-off defines, e.g. make EXTRA_CFLAGS=-DSKIP_INTRO_AND_START=0
 # (use with a separate OBJDIR, or run "make rebuild" afterwards).
-CFLAGS   := -Wf-MMD -Wf-Wp-MP $(EXTRA_CFLAGS)
+CFLAGS   := -Wf-MMD -Wf-Wp-MP -I$(HUGEDRIVER) $(EXTRA_CFLAGS)
 # -autobank: place data and code marked "#pragma bank 255" into ROM banks.
-LDFLAGS  := -autobank -Wb-ext=.rel -Wm-yS $(CART_FLAGS)
+LDFLAGS  := -autobank -Wb-ext=.rel -Wm-yS -Wl-l$(HUGEDRIVER)/hUGEDriver.lib $(CART_FLAGS)
 
 ifdef RELEASE
 CFLAGS += -Wf--max-allocs-per-node50000
@@ -90,7 +95,7 @@ vpath %.c $(sort $(dir $(CSOURCES)))
 SAVETEST := $(OBJDIR)/savetest.gb
 SAVETEST_VARIANTS := $(OBJDIR)/savetest_mbc1.gb $(OBJDIR)/savetest_mbc3.gb
 
-.PHONY: all rebuild run test shots goldens budget venv savetest usage assets levels preview clean
+.PHONY: all rebuild run test shots goldens budget venv savetest usage assets levels music preview clean
 
 all: $(ROM)
 
@@ -166,6 +171,10 @@ assets:
 # A level that breaks a rule (docs/LEVEL_PIPELINE.md) stops with a message.
 levels:
 	$(PYTHON) tools/tiled2c.py $(wildcard levels/*.tmj) -o src/levels
+
+# tools/uge2c.py output is committed too. Run this after changing a song in music/.
+music:
+	$(PYTHON) tools/uge2c.py $(wildcard music/*.uge) -o src/music
 
 # Full-level PNGs with column numbers, entities and jump arcs, plus the reachability
 # check (tools/levelpreview.py). Fails when something in a level can't be reached.

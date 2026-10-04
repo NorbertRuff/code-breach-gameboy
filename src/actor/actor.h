@@ -16,7 +16,7 @@ typedef struct {
     const ActorType* type;
     uint16_t x;               // body center, world pixels
     uint8_t y;                // feet row, world pixels
-    int8_t direction;         // 1 right, -1 left
+    int8_t velocity_x;        // px per frame, negative is left (and faces left)
     uint16_t min_x;           // patrol range of x
     uint16_t max_x;
 } Actor;

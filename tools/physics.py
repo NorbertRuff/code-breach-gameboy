@@ -118,7 +118,21 @@ def update_run_speed(p: Body, input_x: int) -> None:
         p.velocity_x = approach(p.velocity_x, 0, RUN_DECEL if p.on_ground else AIR_DECEL)
 
 
-def try_jump(p: Body) -> None:
+def on_one_way_only(p: Body, room: Room) -> bool:
+    below = feet_row(p.y) + 1
+    return p.on_ground and not area_has(room, left_column(p.x), below, right_column(p.x), below, BLOCKS_BODY)
+
+
+def drop_through(p: Body) -> None:
+    p.y += SUBPIXELS
+    p.jump_buffer_frames = p.coyote_frames = 0
+    p.on_ground = False
+
+
+def try_jump(p: Body, room: Room, down: bool) -> None:
+    if p.jump_buffer_frames and down and on_one_way_only(p, room):
+        drop_through(p)
+        return
     if p.jump_buffer_frames and (p.on_ground or p.coyote_frames):
         p.velocity_y = -JUMP_SPEED
         p.jump_buffer_frames = p.coyote_frames = 0
@@ -212,13 +226,13 @@ def body_tiles(p: Body) -> list[tuple[int, int]]:
             for row in range(head_row(p.y), feet_row(p.y) + 1)]
 
 
-def step(p: Body, room: Room, input_x: int, a_down: bool, a_was_down: bool) -> None:
-    """One frame: input_read_player() and player_update()."""
+def step(p: Body, room: Room, input_x: int, a_down: bool, a_was_down: bool, down: bool = False) -> None:
+    """One frame: input_read_player() and player_update(). down: the d-pad's Down."""
     p.jump_held = a_down
     if a_down and not a_was_down:
         p.jump_buffer_frames = JUMP_BUFFER_FRAMES
     update_run_speed(p, input_x)
-    try_jump(p)
+    try_jump(p, room, down)
     apply_gravity(p)
     move_x(p, room)
     move_y(p, room)

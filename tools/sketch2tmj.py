@@ -9,6 +9,7 @@ docs/LEVEL_DESIGN.md section 1:
     *  fragment     P  player start G  gate         D  exit
     E  enemy: a run of E's is one patrol bot, standing on the row below it; the run is
        its patrol range. Separate two bots' runs by another character.
+    F  a fast enemy (speed 2 px per frame), like E
 Lines starting with '#' and a space are comments; "# quota: 3 3" gives the gates' quotas
 from left to right (default 3 each). A line of only digits and spaces (a column ruler) is
 skipped. The map uses the greybox tileset; make it look right in Tiled afterwards.
@@ -32,6 +33,7 @@ BOT_HEIGHT = 16
 DEFAULT_QUOTA = 3
 TILE_CHARS = {".": "empty", "#": "solid", "=": "one_way", "^": "hazard"}
 OBJECT_CHARS = {"*": "fragment", "P": "player_start", "G": "gate", "D": "exit"}
+BOT_CHARS = {"E": 1, "F": 2}               # enemy runs by speed
 
 
 def tile_ids() -> dict[str, int]:
@@ -70,11 +72,13 @@ def sketch_to_tmj(rows: list[str], quotas: list[int]) -> dict:
         c = 0
         while c < width:
             char = row[c]
-            if char == "E":
-                run = len(row[c:]) - len(row[c:].lstrip("E"))
+            if char in BOT_CHARS:
+                run = len(row[c:]) - len(row[c:].lstrip(char))
+                properties = [{"name": "kind", "type": "string", "value": "patrol"}]
+                if BOT_CHARS[char] != 1:
+                    properties.append({"name": "speed", "type": "int", "value": BOT_CHARS[char]})
                 add_object({"type": "enemy", "x": c * TILE, "y": (r + 1) * TILE - BOT_HEIGHT,
-                            "width": run * TILE, "height": BOT_HEIGHT,
-                            "properties": [{"name": "kind", "type": "string", "value": "patrol"}]})
+                            "width": run * TILE, "height": BOT_HEIGHT, "properties": properties})
                 data += [ids["empty"] + 1] * run
                 c += run
                 continue
@@ -127,8 +131,9 @@ def tmj_to_sketch(tmj: dict) -> str:
         col = int(obj["x"]) // TILE
         if obj.get("type") == "enemy":
             row = (int(obj["y"]) + int(obj["height"])) // TILE - 1
+            speed = tiled2c.properties(obj).get("speed", 1)
             for c in range(col, col + int(obj["width"]) // TILE):
-                grid[row][c] = "E"
+                grid[row][c] = {v: k for k, v in BOT_CHARS.items()}[speed]
             continue
         kind = names[obj["gid"] - 1]
         grid[int(obj["y"]) // TILE - 1][col] = {v: k for k, v in OBJECT_CHARS.items()}[kind]

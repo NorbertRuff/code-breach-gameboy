@@ -7,6 +7,7 @@
 #include "../graphics/programmer.h"
 #include "../levels/greybox_test.h"
 #include "../levels/level_1.h"
+#include "../levels/level_2.h"
 #include "../levels/test_jumps.h"
 #include "../engine/banking.h"
 #include "../engine/palette.h"
@@ -108,7 +109,10 @@ static void draw_band(void)
 // level_stream_reset() once the camera is placed.
 void level_load(uint8_t index)
 {
-    if (index == LEVEL_GREYBOX_TEST) {
+    if (index == LEVEL_2) {
+        current_level.bank = BANK(level_2);
+        WITH_BANK(level_2, copy_header(&level_2));
+    } else if (index == LEVEL_GREYBOX_TEST) {
         current_level.bank = BANK(greybox_test);
         WITH_BANK(greybox_test, copy_header(&greybox_test));
     } else if (index == LEVEL_TEST_JUMPS) {

@@ -1,6 +1,7 @@
 # Story Text (draft)
 
-**Status: draft by Claude, 2026-10-04, for the owner to edit.** Roadmap M7, story text.
+**Status: draft by Claude, 2026-10-04.** Roadmap M7, story text. The owner keeps the twist
+(staff #042 wrote the AI); the wording may still change.
 The concept is in GAME_DESIGN.md (Story & Setting). Nothing here is in the game yet.
 
 A Game Boy text screen is 20 characters wide. Every line below fits.
@@ -48,5 +49,4 @@ LOCKDOWN LIFTED
 
 ## Questions for the owner
 
-- Is the twist (the programmer wrote the AI) welcome, or should the AI stay a stranger?
 - Corruption style: digits for letters (as above), or glitch tiles from the font?

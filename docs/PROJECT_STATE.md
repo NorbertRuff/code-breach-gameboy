@@ -52,8 +52,14 @@ This is a point-in-time audit. The live task list is [ROADMAP.md](ROADMAP.md).
   player, band and HUD palettes; golden screenshots; a random-play test, which found bugs
   21 and 22 (both fixed); MBC1 and MBC3 save test ROMs; `tools/gbconvert.py` and
   `tools/sketch2tmj.py`; three frame-time savings (worst update on level 1: line 123);
-  `printf` replaced by a text routine and a placeholder font. 241 tests pass. Bank 0 has
-  4,758 bytes free, WRAM uses 1,339 of 4,096 bytes.
+  `printf` replaced by a text routine and a placeholder font; level complete and game over
+  messages. 247 tests pass. Bank 0 has 4,684 bytes free, WRAM uses 1,339 of 4,096 bytes.
+- **2026-10-04, second session:** Down + A drops through one-way platforms (physics, its
+  Python copy and the reachability check); a speed property per bot in Tiled; level 2
+  greybox (`levels/level_2.tmj`) with replays and random play; level complete goes on to
+  the next level; music (M6): hUGEDriver, `tools/uge2c.py`, two Tronimal songs, effects
+  taking their channel from the music, `CREDITS.md`; streamed columns written in VBlank.
+  295 tests pass. Bank 0 has about 2,200 bytes free, WRAM uses 1,446 of 4,096 bytes.
 - The owner tested on hardware on 2026-10-03: it works, but graphics, logic and visuals
   have many rough parts. A review pass is in the roadmap after M1.
 

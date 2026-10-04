@@ -10,14 +10,14 @@ from pathlib import Path
 import pytest
 
 from gamelib import (COREGAMELOOP, GAMEPLAY_END, GAMEPLAY_START, HUD_DIGIT_TILE_BASE, LEVEL_1,
-                     LEVEL_COMPLETE, LEVEL_GREYBOX_TEST, LEVEL_TEST_JUMPS, MAX_ACTORS, PAUSED,
+                     LEVEL_2, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST, LEVEL_TEST_JUMPS, MAX_ACTORS, PAUSED,
                      read_symbol)
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import tiled2c  # noqa: E402
 
-LEVEL_MAPS = {LEVEL_1: "level_1", LEVEL_GREYBOX_TEST: "greybox_test", LEVEL_TEST_JUMPS: "test_jumps"}
+LEVEL_MAPS = {LEVEL_1: "level_1", LEVEL_2: "level_2", LEVEL_GREYBOX_TEST: "greybox_test", LEVEL_TEST_JUMPS: "test_jumps"}
 COLLISION = {"": 0, "solid": 1, "one_way": 2, "hazard": 3}
 MARKER_COLLISION = {"fragment": 4, "gate": 1, "exit": 5, "player_start": 0}   # level_stream.c
 
@@ -25,7 +25,7 @@ FRAMES = 1500
 STATES = {GAMEPLAY_START, COREGAMELOOP, GAMEPLAY_END, LEVEL_COMPLETE, PAUSED}
 # Button sets and how often each is picked: mostly running and jumping.
 CHOICES = [("right", 6), ("right a", 5), ("a", 2), ("left", 3), ("left a", 2), ("", 2),
-           ("start", 1), ("select", 1)]
+           ("down a", 1), ("start", 1), ("select", 1)]
 
 
 def random_inputs(seed: int):
@@ -78,8 +78,12 @@ def problems(game) -> list:
     return found
 
 
-@pytest.mark.level(LEVEL_1)
-@pytest.mark.parametrize("seed", [1, 2])
+# Two seeds in each game level.
+RUNS = [pytest.param(seed, marks=pytest.mark.level(level), id=f"{name}-seed{seed}")
+        for level, name in ((LEVEL_1, "level_1"), (LEVEL_2, "level_2")) for seed in (1, 2)]
+
+
+@pytest.mark.parametrize("seed", RUNS)
 def test_random_play_breaks_nothing(game, seed):
     game.wait_for_state(COREGAMELOOP, timeout=300)
 
@@ -131,18 +135,19 @@ def screen_mismatch(game, levels: dict):
 
 @pytest.mark.level(LEVEL_1)
 def test_random_play_keeps_the_screen_and_collision_right(game):
-    # Checked when each update ends, so a column being drawn is never half done.
+    # Checked when the screen is complete: a new column's tiles are written at the start
+    # of the next update.
     maps = {index: tiled2c.load_level(ROOT / "levels" / f"{name}.tmj") for index, name in LEVEL_MAPS.items()}
     levels = {index: (level, marker_places(level)) for index, level in maps.items()}
     game.wait_for_state(COREGAMELOOP, timeout=300)
     found = []
 
-    def at_update_end(_):
-        if not found and game.state() == COREGAMELOOP:
+    def at_screen_ready(_):
+        if not found:
             mismatch = screen_mismatch(game, levels)
             if mismatch:
                 found.append(mismatch)
 
-    game.at_update_end(at_update_end)
+    game.at_screen_ready(at_screen_ready)
     play(game, 3, FRAMES, lambda frame: None)
     assert not found, found[0]

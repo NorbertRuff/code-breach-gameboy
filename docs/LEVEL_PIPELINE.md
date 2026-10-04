@@ -45,7 +45,7 @@ Python and fits our collision and palette needs exactly.
 - **Layers:**
   - `tiles`: tile layer.
   - `entities`: object layer. Object classes: `player_start`, `enemy` (property `kind`;
-    the object's width is the patrol range), `fragment`, `gate` (property `quota`; also
+    int property `speed`, 1 or 2 px per frame, default 1; the object's width is the patrol range), `fragment`, `gate` (property `quota`; also
     the checkpoint), `exit` (the elevator). Each fragment belongs to the section it sits in,
     by X position between gates; a gate belongs to the section it closes. The game draws
     a gate as a column from its marker's tile up to the map's top row, solid until it
@@ -73,7 +73,7 @@ Runs from `make levels` and writes `src/levels/<map name>.c` and `.h`, plus
 | Output | Content |
 |---|---|
 | `<name>_map[]` | Tile index per map cell, row-major, 13 rows (screen rows 3–15) |
-| `<name>_entities[]` | `{type, x, y, param}` sorted by X, so entities spawn as the camera reaches them. A cursor walks the list. Coordinates per type are in `level_data.h`. |
+| `<name>_entities[]` | `{type, x, y, param, speed}` sorted by X, so entities spawn as the camera reaches them. A cursor walks the list. Coordinates per type are in `level_data.h`. |
 | `<name>` (`LevelData`) | Width, player start, fragment count, entity count, `section_start[]` (index of each section's first entity, so a checkpoint restart only resets the cursor), pointers to the map and entities |
 | `<tileset>_tileset_collision[]` | One collision type per tileset tile, from the `collision` property |
 | GBC attribute map | Planned for M4, with the palette module |

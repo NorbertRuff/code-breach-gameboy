@@ -90,10 +90,32 @@ static void update_run_speed(Player* p)
     }
 }
 
+// Standing on one-way tops only, with nothing solid under the feet?
+static uint8_t on_one_way_only(const Player* p)
+{
+    uint8_t below = FEET_ROW(p->y) + 1;
+    return p->on_ground && !area_has(LEFT_COLUMN(p->x), below, RIGHT_COLUMN(p->x), below, BLOCKS_BODY);
+}
+
+// Down + A on a one-way top: the feet step 1 px down into its row and fall. Landing only
+// checks rows the feet newly enter, so this row no longer holds them.
+static void drop_through(Player* p)
+{
+    p->y += SUBPIXELS;
+    p->jump_buffer_frames = 0;
+    p->coyote_frames = 0;
+    p->on_ground = 0;
+}
+
 // Starts a jump if A was pressed recently (jump buffer) and the player is on the ground
-// or has just left it (coyote time). Otherwise counts both timers down.
+// or has just left it (coyote time); with Down held on a one-way top, drops through it
+// instead. Otherwise counts both timers down.
 static void try_jump(Player* p)
 {
+    if (p->jump_buffer_frames && p->down_held && on_one_way_only(p)) {
+        drop_through(p);
+        return;
+    }
     if (p->jump_buffer_frames && (p->on_ground || p->coyote_frames)) {
         p->velocity_y = -JUMP_SPEED;
         p->jump_buffer_frames = 0;

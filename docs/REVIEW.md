@@ -44,8 +44,8 @@ to fix now and still worth it, even though a later milestone replaces that code.
 | P1 | Holding A makes the player jump again on every landing. | `input.c` starts a jump whenever A is down while on the ground, not only on a new press. | Start a jump only on a new press (`!(joypad_previous & J_A)`). M2 adds jump buffering on top. | **Quick win**, then M2 |
 | P2 | The player walks through platform A at body height. | Bug 7: horizontal collision checks one point near the feet. | Collision rewrite. Expected-failure test exists. | M2 |
 | P3 | Falling can turn upward; releasing A doesn't shorten a jump. | Bugs 5 and 6: gravity from a frame-count table. | Physics rewrite. Expected-failure test exists for 5. | M2 |
-| P4 | Level complete and game over are only flashes. No text, no score; level complete reloads the same level. | Not built yet. | Level complete and game over screens. | M7. Level complete shows the fragments since 2026-10-04; game over waits |
-| P5 | During the game-over wait, the HUD still shows the old lives count for about 1.5 s. | The HUD updates only after the level reloads. | Comes with the game-over screen. | M7 |
+| P4 | Level complete and game over are only flashes. No text, no score; level complete reloads the same level. | Not built yet. | Level complete and game over screens. | M7. Since 2026-10-04 level complete shows the fragments and game over shows a message |
+| P5 | During the game-over wait, the HUD still shows the old lives count for about 1.5 s. | The HUD updates only after the level reloads. | Comes with the game-over screen. | **Fixed** 2026-10-04: the lives digit updates when a life is lost |
 | P6 | On GBC, the screen never fades or flashes, and the level reload after game over or level complete is visible. | Fades write `BGP_REG`, which GBC ignores. | Palette module. | **Fixed** 2026-10-04 (M4, `src/engine/palette.c`) |
 
 ## Text

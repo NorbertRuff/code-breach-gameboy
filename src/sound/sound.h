@@ -5,6 +5,9 @@
 // CH2 (square):       collect, pause
 // CH4 (noise):        hit crunch
 
+// Each effect takes its channels from the music until it has faded (frames in sound.c).
+
+void sound_release_channels(void);
 void sound_play_jump(void);
 void sound_play_collect(void);
 void sound_play_gate(void);

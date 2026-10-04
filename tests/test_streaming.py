@@ -72,15 +72,20 @@ def run_right_and_back(game, each_frame) -> None:
 
 
 def test_screen_and_collision_match_the_map_while_scrolling(game):
-    cameras = []
+    # Checked when the screen is complete: a new column's tiles are written at the start
+    # of the next update.
+    cameras, found = [], []
 
-    def check(g):
-        cameras.append(g.camera_x())
-        wrong = screen_mismatches(g)
-        assert not wrong, f"camera {g.camera_x()}: cells differ from the map: {wrong[:5]}"
+    def check(_):
+        cameras.append(game.camera_x())
+        wrong = screen_mismatches(game)
+        if wrong and not found:
+            found.append(f"camera {game.camera_x()}: cells differ from the map: {wrong[:5]}")
 
     game.start_on_open_ground()
-    run_right_and_back(game, check)
+    game.at_screen_ready(check)
+    run_right_and_back(game, lambda g: None)
+    assert not found, found[0]
     assert max(cameras) > 256 - 160, "the camera never scrolled past the first background map"
     assert cameras[-1] < max(cameras), "the camera never scrolled back left"
     assert game.state() == COREGAMELOOP

@@ -1,6 +1,6 @@
 """The pause (START) and the level-select cheat (SELECT while paused)."""
 
-from gamelib import (COREGAMELOOP, GAMEPLAY_START, LEVEL_1, LEVEL_GREYBOX_TEST,
+from gamelib import (COREGAMELOOP, GAMEPLAY_START, LEVEL_1, LEVEL_2, LEVEL_GREYBOX_TEST,
                      LEVEL_TEST_JUMPS, PAUSED)
 
 PAUSE_TILES = {44, 46, 48, 50, 52}      # P, A, U, S, E (src/game_state/pause.c)
@@ -21,7 +21,7 @@ def test_start_pauses_and_everything_stops(game):
     game.frames(30)
     game.pyboy.button_release("right")
     assert (game.player().x, game.player().y) == (player.x, player.y)
-    assert [(a.x, a.direction) for a in game.actors()] == [(a.x, a.direction) for a in bots]
+    assert [(a.x, a.velocity_x) for a in game.actors()] == [(a.x, a.velocity_x) for a in bots]
 
 
 def test_start_again_resumes(game):
@@ -47,7 +47,7 @@ def test_holding_start_pauses_once(game):
 def test_select_while_paused_loads_the_next_level(game):
     # The game fixture starts in the greybox level; the levels go round in index order.
     game.start_on_open_ground()
-    for expected in (LEVEL_TEST_JUMPS, LEVEL_1, LEVEL_GREYBOX_TEST):
+    for expected in (LEVEL_TEST_JUMPS, LEVEL_1, LEVEL_2, LEVEL_GREYBOX_TEST):
         game.press("start")
         game.frames(2)
         game.press("select")

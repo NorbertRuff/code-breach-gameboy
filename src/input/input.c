@@ -14,6 +14,7 @@ void input_read_player(Player* player, uint8_t joypad_current, uint8_t joypad_pr
     else if (joypad_current & J_RIGHT) player->input_x = 1;
     else player->input_x = 0;
 
+    player->down_held = (joypad_current & J_DOWN) != 0;
     player->jump_held = (joypad_current & J_A) != 0;
 
     // A new press of A (not a held one) is remembered for a few frames: the jump buffer.

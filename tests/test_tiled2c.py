@@ -80,6 +80,14 @@ def test_small_map_is_valid():
     assert convert(small_map()).section_start == [0, 2, 4]
 
 
+def test_bot_speed_is_a_property_with_default_1():
+    tmj = small_map()
+    bot = lambda: next(e for e in convert(tmj).entities if e.kind == "enemy")
+    assert bot().speed == 1
+    objects(tmj)[6]["properties"] = [{"name": "speed", "value": 2}]
+    assert bot().speed == 2
+
+
 def flip_first_tile(tmj):
     tmj["layers"][0]["data"][0] |= 0x80000000
 
@@ -108,6 +116,7 @@ RULE_BREAKS = {
     "pit right of a gate": (lambda t: dig_pit_right_of_first_gate(t), "room to restart"),
     "off the grid": (lambda t: objects(t)[1].update(x=27), "8 px grid"),
     "patrol too short": (lambda t: objects(t)[6].update(width=8), "patrol width"),
+    "bot too fast": (lambda t: objects(t)[6].update(properties=[{"name": "speed", "value": 3}]), "speed must be 1 or 2"),
 }
 
 

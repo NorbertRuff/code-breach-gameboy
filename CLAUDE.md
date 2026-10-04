@@ -25,7 +25,7 @@ If `gbdk/` is missing, the build cannot run. Say so instead of guessing.
 
 The owner has the project open in CLion (code reading and commits). When the Makefile changes, CLion runs `make clean` before reloading the project, so `obj/` can vanish. That's expected: run `make` before using `obj/` files, and before handing over a ROM to flash.
 
-Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds the per-frame code and must keep `_HOME` below `0x4000`; as of 2026-10-04 it has 4,758 bytes free. SDCC's code is bulky (M3 step 3 alone took about 1.3 KB), so code that isn't per-frame moves to a ROM bank (see ROM banking below).
+Every build prints ROM and RAM use per bank (`romusage -g -R`; the build fails if a bank overflows). Bank 0 holds the per-frame code and must keep `_HOME` below `0x4000`; as of 2026-10-04 (after hUGEDriver) it has about 2,200 bytes free. SDCC's code is bulky (M3 step 3 alone took about 1.3 KB), so code that isn't per-frame moves to a ROM bank (see ROM banking below).
 
 ## Build Commands
 
@@ -34,14 +34,16 @@ make            # build obj/ApexLab.gb (incremental; header changes are tracked)
 make rebuild    # clean, then build
 make run        # build, then open the ROM in Emulicious (Java)
 make test       # build, then run the PyBoy tests in DMG and GBC mode
-make shots      # build, then scripted playthroughs (greybox level, level 1): screenshots, contact sheets and the level map in tests/out/shots/
+make shots      # build, then scripted playthroughs (greybox level, levels 1 and 2): screenshots, contact sheets and the level map in tests/out/shots/
 make goldens    # build, then rewrite the golden screenshots in tests/golden/ (after an intended visual change; look at them)
 make budget     # build, then print the screen lines each part of a gameplay update takes (tools/frame_budget.py)
 make venv       # create .venv with the test tools (once)
 make savetest   # build obj/savetest.gb, the cartridge RAM persistence test, plus MBC1/MBC3 variants
+                # (make OBJDIR=flashcart savetest: the same into flashcart/, kept through make clean)
 make usage      # ROM and RAM use per bank, with areas
 make assets     # regenerate src/graphics/*.c from graphics/*.png (and draw the greybox tileset and band)
 make levels     # regenerate src/levels/*.c from the Tiled maps in levels/*.tmj
+make music      # regenerate src/music/*.c from the hUGETracker songs in music/ (tools/uge2c.py)
 make preview    # draw every level to tests/out/levels/ and check everything can be reached
 make clean      # delete obj/
 ```
@@ -49,6 +51,8 @@ make clean      # delete obj/
 `RELEASE=1` adds size-optimizing compilation (slower). The cartridge is MBC5 + RAM + battery with a GBC-enhanced header (`-Wm-yc`); flags are in the Makefile and `docs/CGB_PLAN.md`. The build writes `obj/ApexLab.sym`, which the tests use to read globals by name.
 
 **Tests** (`tests/`, details in `docs/TESTING.md`): run `make test` after every change. A fixed bug gets a regression test in `tests/test_regressions.py` that fails on the old code (check it with `APEXLAB_OBJ`, see `docs/TESTING.md`). An open bug can be written as a test marked `xfail` in `tests/test_known_bugs.py`; fixing the bug makes that test pass, which fails the run until the test moves to `test_regressions.py`. For a one-off build variant use `make OBJDIR=<scratch folder> EXTRA_CFLAGS=-D...`, never the normal `obj/`. Failing tests save screenshots to `tests/out/`; look at them.
+
+**Music:** `music/*.uge` (hUGETracker version 6, e.g. from GB Studio) → `make music` → banked `hUGESong_t` data in `src/music/`. `music_play_level` in `src/sound/music.c` picks a level's song; `music_step` runs once per frame from the line interrupt below the band (`screen.c`), switching to the song's bank. A sound effect calls `take_channel` so the driver leaves its channel alone until it fades. Credit every song in `CREDITS.md`.
 
 **Level pipeline** (`docs/LEVEL_PIPELINE.md`): maps are made in Tiled and saved as `levels/*.tmj` (13 rows tall = screen rows 3–15). `make levels` runs `tools/tiled2c.py`, which checks the rules and writes banked `LevelData` (`src/level/level_data.h`) to `src/levels/`. Commit the `.tmj` and the generated files together; `tests/test_tiled2c.py` fails when they are out of date.
 
@@ -80,9 +84,9 @@ code explains itself and stays short:
 The main loop is a state machine with these states (defined in `src/utils.h`):
 - `INTRO_CREDITS_STATE` → `TITLE_SCREEN_STATE` → `GAMEPLAY_START` → `COREGAMELOOP` → `GAMEPLAY_END` / `LEVEL_COMPLETE`
 - `COREGAMELOOP` ↔ `PAUSED` on START ("PAUSE" in sprites over the parallax band). While paused, SELECT loads the next level (`LEVEL_SELECT_CHEAT`).
-- `GAMEPLAY_END` (a life lost) restarts the current section behind a fade (`restart_behind_fade`), and on game over first refills the lives and puts the section's fragments back. `LEVEL_COMPLETE` (the exit reached) shows the fragment summary (`level_complete` in `game_over.c`), then reloads the level for now.
+- `GAMEPLAY_END` (a life lost) restarts the current section behind a fade (`restart_behind_fade`), and on game over first shows "GAME OVER" (`game_over` in `game_over.c`), then refills the lives and puts the section's fragments back. `LEVEL_COMPLETE` (the exit reached) shows the fragment summary (`level_complete` in `game_over.c`), then loads the next game level with full lives (`go_to_next_level`: level 1 again after the last; a test room restarts).
 
-The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in `main.c` `joypad_current`, `joypad_previous`, `current_game_state`, `lives`, `lag_frames`, `Player player`; in `actor.c` `actors[]` and `actor_count`; in `level_manager.c` `Level current_level` and `level_index` (the level `GAMEPLAY_START` loads: `LEVEL_1`, but the tests start in `LEVEL_GREYBOX_TEST`); in `camera.c` `camera_x`.
+The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in `main.c` `joypad_current`, `joypad_previous`, `current_game_state`, `lives`, `lag_frames`, `Player player`; in `actor.c` `actors[]` and `actor_count`; in `level_manager.c` `Level current_level` and `level_index` (the level `GAMEPLAY_START` loads: the game's levels `LEVEL_1`, `LEVEL_2` come first (`GAME_LEVEL_COUNT`), then the test rooms; the game starts in `LEVEL_1`, the tests in `LEVEL_GREYBOX_TEST`); in `camera.c` `camera_x`.
 
 ### Module Breakdown
 
@@ -94,7 +98,10 @@ The per-frame gameplay code is `main_game_loop()` in `main.c`. Global state: in 
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad and A into the player's input fields |
 | `src/level/` | `level_data.h` (the ROM level format), `level_manager.c` (`level_load`, the `Level` state, HUD drawing), `level_stream.c` (collision ring, column streaming, fragments, gates and the exit drawn into columns), `section.c` (quotas, opening gates, checkpoints) |
 | `src/actor/` | `actor.c`: actors spawned from the level's entity list, the type table, update, hit test, drawing; `bot.c`: the patrol bot type |
-| `src/sound/` | Sound effects written straight to the APU registers |
+| `src/sound/` | `sound.c`: sound effects written straight to the APU registers, each taking its channel from the music until it fades; `music.c`: the level's song through hUGEDriver (`music_play_level`, `music_step`) |
+| `src/music/` | Generated song data from `make music` (`tools/uge2c.py`), all banked |
+| `music/` | Source songs (hUGETracker `.uge`, credited in `CREDITS.md`) |
+| `lib/hUGEDriver/` | The music driver: header and GBDK library from the 6.1.3 release (public domain), linked by the Makefile |
 | `src/graphics/` | Generated asset files from `make assets` (plus the hand-made `splashscreen.c`, `hud_digits.c` and `font.c`), all banked |
 | `src/levels/` | Generated level data and tileset collision tables from `make levels`, all banked |
 | `graphics/` | Source PNG files for the asset pipeline; `graphics/tilesets/` also holds the Tiled `.tsx` files |
@@ -108,6 +115,7 @@ Physics uses integer arithmetic (no floats — Game Boy has no FPU). Values and 
 - Positions `x`, `y` are `uint16_t` in 1/32 px (`TO_PIXELS(pos)` = `pos >> 5`, tile = `pos >> 8`). `x` is the body's horizontal center, `y` its lowest row; the body box is 16×32 px (`SPRITE_LEFT_W`, `SPRITE_RIGHT_W`, `SPRITE_HEAD_OFFSET`).
 - Velocities are `int8_t` in 1/32 px per frame. Running accelerates toward `input_x * RUN_SPEED_MAX`, weaker in the air.
 - Jump: `JUMP_SPEED` up, light gravity while rising with A held, strong gravity when falling or after A is released (jump cut), half gravity near the top (apex hang). `coyote_frames` and `jump_buffer_frames` are one-byte countdowns.
+- Drop through: Down + A on one-way tops only (nothing solid under the feet) moves the feet 1 px down into the one-way row and the player falls (`drop_through`); otherwise Down + A jumps.
 - Collision is checked per axis against the tiles the box enters: walls over the full body height, floors and one-way tops only when the feet enter a new tile row going down, ceilings with up to `CORNER_CORRECTION` px of sideways slide. Moves stay under 8 px per frame, so no tile is skipped.
 - Collision works in tile coordinates: a position's tile is its high byte (`LEFT_COLUMN`, `RIGHT_COLUMN`, `FEET_ROW`, `head_row`), and `column_has` walks one collision ring column with a pointer.
 - **`tools/physics.py` is a frame-exact copy of this file** for the level preview. Change both together; `tests/test_levelpreview.py` compares them frame by frame.
@@ -115,21 +123,21 @@ Physics uses integer arithmetic (no floats — Game Boy has no FPU). Values and 
 
 ### Level Collision and Streaming (`src/level/`)
 
-Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn at screen rows 3–15. `collision_ring[32 * 16]` in WRAM holds the collision of the 32 background-map columns, indexed `RING_INDEX(tile_x, tile_y)` with `tile_y` in screen rows; `level_stream_update(camera_x)` draws each column that enters the view (both directions) and fills its ring column. Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE`, `COLLISION_EXIT` (SOLID blocks, ONE_WAY blocks from above, HAZARD costs a life, COLLECTIBLE is a fragment, EXIT completes the level). `LEVEL_COLLISION_AT(level, tile_x, tile_y)` (a macro, pass plain variables) returns a tile's type; outside the level or in a HUD row it is `COLLISION_NONE`. Collected fragments are a bitset, so they stay gone when their column is drawn again.
+Levels come from Tiled (`levels/*.tmj` → `src/levels/*.c`), 13 map rows drawn at screen rows 3–15. `collision_ring[32 * 16]` in WRAM holds the collision of the 32 background-map columns, indexed `RING_INDEX(tile_x, tile_y)` with `tile_y` in screen rows; `level_stream_update(camera_x)` draws each column that enters the view (both directions): its ring column at once, its tiles at the next update's start (`level_stream_flush`, first thing in `main_game_loop`, still in VBlank). Tile types: `COLLISION_NONE`, `COLLISION_SOLID`, `COLLISION_ONE_WAY`, `COLLISION_HAZARD`, `COLLISION_COLLECTIBLE`, `COLLISION_EXIT` (SOLID blocks, ONE_WAY blocks from above, HAZARD costs a life, COLLECTIBLE is a fragment, EXIT completes the level). `LEVEL_COLLISION_AT(level, tile_x, tile_y)` (a macro, pass plain variables) returns a tile's type; outside the level or in a HUD row it is `COLLISION_NONE`. Collected fragments are a bitset, so they stay gone when their column is drawn again.
 
 Fragments, gates and the exit are tile objects in Tiled, so `draw_column` puts their marker tiles over the map (a closed gate fills its column from its bottom row up to row 3), and the marker tiles get their object's collision. `current_level` holds the play state: `gates[]` (column, bottom row, quota, rows opened), `section` (0 = A), fragments per section and collected per section. `section.c` opens the current section's gate when the player walks into it with the quota: one row every 2 frames, the next section starts, the camera gets a left limit just past the gate, and a restart puts the player just right of it.
 
 ### Actors (`src/actor/`)
 
-Moving level objects (the patrol bots) are actors; the player is not. `actors_spawn(camera_x)` reads the level's entities in x order with a cursor and spawns each one whose type has an `ActorType` once it is within 16 px of the screen's right edge. Each `ActorType` has `spawn`, `update`, a metasprite (pivot = the actor's body center and feet row), its sprite tiles and a hit box. Actors stay packed in `actors[0..actor_count-1]`; one more than a screen behind the camera is removed and comes back only with `actors_reset(section)` (level start, losing a life). The sprite list is rebuilt every frame in `draw_sprites` (`main.c`): the player first (OAM 0–3), then the actors, then `hide_sprites_range`.
+Moving level objects (the patrol bots) are actors; the player is not. `actors_spawn(camera_x)` reads the level's entities in x order with a cursor and spawns each one whose type has an `ActorType` once it is within 16 px of the screen's right edge. A bot walks at its entity's `speed` (Tiled property, 1 or 2 px per frame), kept as the signed `velocity_x`. Each `ActorType` has `spawn`, `update`, a metasprite (pivot = the actor's body center and feet row), its sprite tiles and a hit box. Actors stay packed in `actors[0..actor_count-1]`; one more than a screen behind the camera is removed and comes back only with `actors_reset(section)` (level start, losing a life). The sprite list is rebuilt every frame in `draw_sprites` (`main.c`): the player first (OAM 0–3), then the actors, then `hide_sprites_range`.
 
 ### Camera
 
 `camera_update()` (`src/engine/camera.c`) keeps the focus (player x + a look-ahead that eases to 24 px in the running direction) within 8 px of screen x 80, clamped to the level and to `camera_left_limit`; `camera_reset()` snaps it for a level start or respawn, followed by `level_stream_reset()`. `camera_lock_left(x)` sets a new left limit (an opened gate) that takes force once the camera gets there; the player can't go left of it either. Teleport the player (tests) only forward past an opened gate: columns behind the limit aren't drawn. `move_bkg()` applies `camera_x`; the player and enemies are drawn at `world_x - camera_x`. Levels are up to 255 tiles wide.
 
-**Screen splits** (`src/engine/screen.c`, started at boot): the VBlank handler sets `SCX` for the parallax band (half the camera) and turns sprites on; a line interrupt at line 23 sets the level's `SCX` (the camera), and one at line 127 turns sprites off over the HUD, each after waiting for HBlank. Never write `SCX` or `HIDE_SPRITES`/`SHOW_SPRITES` directly: use `screen_scroll(camera_x)` (applied at the next VBlank) and `screen_show_sprites(show)`. The band is drawn once into rows 0–2 at level load.
+**Screen splits** (`src/engine/screen.c`, started at boot): the VBlank handler sets `SCX` for the parallax band (half the camera) and turns sprites on; a line interrupt at line 23 sets the level's `SCX` (the camera) and then runs the frame's music step (about 9 lines, up to 18), and one at line 127 turns sprites off over the HUD, each after waiting for HBlank. Never write `SCX` or `HIDE_SPRITES`/`SHOW_SPRITES` directly: use `screen_scroll(camera_x)` (applied at the next VBlank) and `screen_show_sprites(show)`. The band is drawn once into rows 0–2 at level load.
 
-**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 4 an update ends near line 71, a fragment pickup near 87, one that draws a column near 104; the worst on the route (a pickup in a column update) at 124. On 2026-10-04 three savings (DECISIONS.md) brought the average to about 67 and the worst on both the greybox route and level 1's replay (`tests/test_level_1.py`) to 123. `make budget` shows where the lines go; `.venv/Scripts/python.exe tools/frame_budget.py --route level1` profiles level 1.
+**Frame budget:** each gameplay update must end before the next VBlank. The ROM counts lag frames in `lag_frames` (`main.c`); `tests/test_frame_budget.py` plays a route through the greybox level and allows an update to end at most 140 lines after VBlank starts, of 154 (`game.track_frame_lines()`). As of M3 step 4 an update ends near line 71, a fragment pickup near 87, one that draws a column near 104; the worst on the route (a pickup in a column update) at 124. On 2026-10-04 three savings (DECISIONS.md) brought the average to about 67 and the worst on both the greybox route and level 1's replay (`tests/test_level_1.py`) to 123. `make budget` shows where the lines go; `.venv/Scripts/python.exe tools/frame_budget.py --route level1` (or `level2`) profiles a level's replay. With music (M6) and the column write moved to the start of the next update (`level_stream_flush`, while VBlank lasts), on 2026-10-04: level 1 average 77, worst 126; greybox route 78 and 118; level 2 65 and 105.
 
 ## Development Feature Flags (`src/utils.h`)
 

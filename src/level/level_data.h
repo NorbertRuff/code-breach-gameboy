@@ -21,7 +21,8 @@
 #define FIRST_TOUCHED_TYPE COLLISION_HAZARD
 
 // Entity types. x and y are world pixels (screen rows, so y includes the band).
-#define ENTITY_ENEMY    0   // x: left end of the patrol, y: feet row, param: patrol width in px
+#define ENTITY_ENEMY    0   // x: left end of the patrol, y: feet row, param: patrol width in px,
+                            // speed: px per frame (1 or 2)
 #define ENTITY_FRAGMENT 1   // x, y: top-left of its tile
 #define ENTITY_GATE     2   // x, y: top-left of its bottom tile, param: fragment quota
 #define ENTITY_EXIT     3   // x, y: top-left of its tile
@@ -31,6 +32,7 @@ typedef struct {
     uint16_t x;
     uint8_t y;
     uint8_t param;
+    uint8_t speed;
 } LevelEntity;
 
 #define LEVEL_SECTIONS 3

@@ -7,6 +7,7 @@
 #define VISIBLE_COLUMNS 21      // 20 screen columns, plus one while scrolled between tiles
 #define MAX_FRAGMENTS 32
 #define NO_EXIT 0xFF            // exit_column of a test room
+#define NO_COLUMN 0xFF          // pending_column when no column waits
 
 uint8_t collision_ring[RING_COLUMNS * RING_ROWS];
 uint8_t ring_column_touched[RING_COLUMNS];
@@ -20,6 +21,7 @@ static uint8_t fragments_collected[MAX_FRAGMENTS / 8];   // one bit per fragment
 static uint8_t fragment_columns[256 / 8];           // one bit per level column with a fragment
 static uint8_t first_drawn_column;                  // leftmost column of the drawn window
 static uint8_t column_tiles[LEVEL_MAP_ROWS];
+static uint8_t pending_column = NO_COLUMN;          // map column whose column_tiles wait
 
 // Lists the level's fragments, gates and exit in WRAM, so drawing a column needs no
 // entity search, and counts each section's fragments. The entities are sorted by x, so
@@ -64,6 +66,7 @@ void level_stream_start(void)
     current_level.gate_count = 0;
     current_level.exit_column = NO_EXIT;
     current_level.section = 0;
+    pending_column = NO_COLUMN;
 
     WITH_BANK(greybox_tileset, memcpy(tile_collision, greybox_tileset_collision, sizeof(greybox_tileset_collision)));
     // Marker tiles only appear where the game draws an object: give them its collision.
@@ -113,10 +116,22 @@ static void add_objects(uint8_t column)
     }
 }
 
-// Draws one level column into the background map and its collision into the ring.
+// Writes the column the last update drew into the background map. Called first in an
+// update, so the write (about 11 lines) doesn't add to the update that found the column,
+// and lands before the frame that scrolls it into view is drawn.
+void level_stream_flush(void)
+{
+    if (pending_column == NO_COLUMN) return;
+    set_bkg_tiles(pending_column, LEVEL_MAP_TOP_ROW, 1, LEVEL_MAP_ROWS, column_tiles);
+    pending_column = NO_COLUMN;
+}
+
+// Draws one level column: its collision into the ring at once, its tiles into the
+// background map at the next level_stream_flush().
 static void draw_column(uint8_t column)
 {
     if (column >= current_level.width) return;
+    level_stream_flush();   // a second column in one update: write the first one now
     WITH_ROM_BANK(current_level.bank, read_column(column));
     add_objects(column);
 
@@ -129,7 +144,7 @@ static void draw_column(uint8_t column)
     }
     // A pickup leaves the flag set: a column scanned for nothing costs a little, no more.
     ring_column_touched[column & (RING_COLUMNS - 1)] = touched;
-    set_bkg_tiles(column & (RING_COLUMNS - 1), LEVEL_MAP_TOP_ROW, 1, LEVEL_MAP_ROWS, column_tiles);
+    pending_column = column & (RING_COLUMNS - 1);
 }
 
 // Draws every column the camera shows: for a level start, a restart or any big jump.
@@ -139,6 +154,7 @@ void level_stream_reset(int16_t camera_x)
     for (uint8_t i = 0; i < VISIBLE_COLUMNS; i++) {
         draw_column(first_drawn_column + i);
     }
+    level_stream_flush();
 }
 
 // Draws the columns that came into view since the last frame, on either side.
@@ -170,6 +186,8 @@ static void restore_map_cell(uint8_t tile_x, uint8_t tile_y)
     WITH_ROM_BANK(current_level.bank, map_tile = *map_cell);
     collision_ring[RING_INDEX(tile_x, tile_y)] = tile_collision[map_tile];
     set_bkg_tiles(tile_x & (RING_COLUMNS - 1), tile_y, 1, 1, &map_tile);
+    // In the column still waiting to be written? Change it there too.
+    if (pending_column == (tile_x & (RING_COLUMNS - 1))) column_tiles[tile_y - LEVEL_MAP_TOP_ROW] = map_tile;
 }
 
 // Picks up the fragment at a tile: it stays collected even when its column is drawn
@@ -180,6 +198,7 @@ void level_collect_fragment(uint8_t tile_x, uint8_t tile_y)
         if (fragment_column[i] == tile_x && fragment_row[i] == tile_y) {
             fragments_collected[i >> 3] |= 1 << (i & 7);
             current_level.section_collected[fragment_section[i]]++;
+            break;
         }
     }
     restore_map_cell(tile_x, tile_y);

@@ -11,7 +11,8 @@ How the check works (docs/LEVEL_PIPELINE.md, section 5):
 - A surface is a run of x positions where the body can stand on one tile row.
 - From the start, it tries jumps from every reached surface with the game's own physics
   (tools/physics.py): tapped, medium and full jumps, left, right or straight up, from
-  standing or at full speed, steering at once or late, and walking off the edges.
+  standing or at full speed, steering at once or late, walking off the edges, and
+  dropping through one-way tops (Down + A).
   Where a jump lands is reached too. A running start is assumed possible anywhere.
 - Gates count as open, and the player can't go back left past one (the camera lock).
   Enemies are ignored. Spikes and pits end a jump, and its pickups don't count.
@@ -59,12 +60,13 @@ class Jump:
     direction: int         # d-pad: -1, 0 or 1
     running: bool          # starts at full speed
     steer_after: int = 0   # frames before the d-pad is pressed
+    drop: bool = False     # Down + A on the first frame: drops through a one-way top
 
 
 JUMPS = [Jump(hold, d, run, steer)
          for hold in (1, 8, 60) for d in (-1, 0, 1) for run in (False, True)
          for steer in ((0, 12) if hold == 60 and d else (0,))
-         if d or not run] + [Jump(0, d, True) for d in (-1, 1)]
+         if d or not run] + [Jump(0, d, True) for d in (-1, 1)] +         [Jump(1, d, False, steer, drop=True) for d in (-1, 0, 1) for steer in ((0, 12) if d else (0,))]
 
 
 @dataclass
@@ -138,7 +140,8 @@ def simulate(room: Room, x: int, feet: int, jump: Jump):
     a_was_down, airborne = False, False
     for frame in range(MAX_JUMP_FRAMES):
         a_down = frame < jump.hold
-        step(body, room, jump.direction if frame >= jump.steer_after else 0, a_down, a_was_down)
+        step(body, room, jump.direction if frame >= jump.steer_after else 0, a_down, a_was_down,
+             jump.drop and frame == 0)
         a_was_down = a_down
         path.append((body.px, body.py))
         touched.update(body_tiles(body))
@@ -150,10 +153,17 @@ def simulate(room: Room, x: int, feet: int, jump: Jump):
     return path, None, touched
 
 
-def start_points(surface: Surface, jump: Jump) -> list[int]:
+def can_drop(room: Room, x: int, feet: int) -> bool:
+    """Is nothing under the feet solid, so Down + A drops through (on_one_way_only)?"""
+    below = tile_of(feet + 1)
+    return not area_has(room, tile_of(x - SPRITE_LEFT_W), below, tile_of(x + SPRITE_RIGHT_W), below, BLOCKS_BODY)
+
+
+def start_points(room: Room, surface: Surface, jump: Jump) -> list[int]:
     if jump.hold == 0:                       # walking off an edge
         return [surface.x1 if jump.direction > 0 else surface.x0]
-    return sorted({surface.x0, surface.x1, *range(surface.x0, surface.x1, SAMPLE_STEP)})
+    points = sorted({surface.x0, surface.x1, *range(surface.x0, surface.x1, SAMPLE_STEP)})
+    return [x for x in points if can_drop(room, x, surface.feet)] if jump.drop else points
 
 
 def explore(level: tiled2c.Level, start_at: tuple[int, int] | None = None) -> Exploration:
@@ -168,8 +178,9 @@ def explore(level: tiled2c.Level, start_at: tuple[int, int] | None = None) -> Ex
     while queue:
         surface = queue.pop(0)
         for jump in JUMPS:
-            for x in start_points(surface, jump):
-                path, landed, touched = simulate(rooms[surface.section], x, surface.feet, jump)
+            room = rooms[surface.section]
+            for x in start_points(room, surface, jump):
+                path, landed, touched = simulate(room, x, surface.feet, jump)
                 if landed is None:
                     continue
                 result.touched |= touched
@@ -232,8 +243,9 @@ def draw(level: tiled2c.Level, result: Exploration) -> Image.Image:
         y = surface.row * TILE
         pen.line([at(surface.x0 - SPRITE_LEFT_W, y), at(surface.x1 + SPRITE_RIGHT_W + 1, y)], fill=color, width=2)
     for e in level.entities:
-        if e.kind == "enemy":
-            pen.rectangle([at(e.x, e.y - 15), at(e.x + e.param, e.y + 1)], outline=(240, 140, 0))
+        if e.kind == "enemy":   # fast bots in red
+            pen.rectangle([at(e.x, e.y - 15), at(e.x + e.param, e.y + 1)],
+                          outline=(240, 140, 0) if e.speed == 1 else (230, 30, 30), width=e.speed)
         elif e.kind == "fragment":
             color = (0, 170, 0) if (e.x // TILE, e.y // TILE) in result.touched else (220, 0, 0)
             pen.rectangle([at(e.x - 1, e.y - 1), at(e.x + TILE + 1, e.y + TILE + 1)], outline=color, width=2)

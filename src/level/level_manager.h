@@ -9,9 +9,11 @@
 
 // Levels level_load() knows, by index: the game's levels first, then the test rooms.
 #define LEVEL_1            0    // Server Room
-#define LEVEL_GREYBOX_TEST 1    // the tests' level
-#define LEVEL_TEST_JUMPS   2    // fixtures for tests/test_jump_metrics.py
-#define LEVEL_COUNT        3
+#define LEVEL_2            1    // Code Testing Lab
+#define GAME_LEVEL_COUNT   2    // the game's levels; the test rooms follow
+#define LEVEL_GREYBOX_TEST 2    // the tests' level
+#define LEVEL_TEST_JUMPS   3    // fixtures for tests/test_jump_metrics.py
+#define LEVEL_COUNT        4
 
 // Collision ring: the collision of the columns in the background map. 32 columns that
 // wrap like the map, 16 screen rows each (the HUD rows are left out).
@@ -73,6 +75,7 @@ void level_read_entity(uint8_t index, LevelEntity* entity);
 void level_stream_start(void);
 void level_stream_reset(int16_t camera_x);
 void level_stream_update(int16_t camera_x);
+void level_stream_flush(void);
 void level_collect_fragment(uint8_t tile_x, uint8_t tile_y);
 void level_reset_fragments(uint8_t section);
 uint8_t level_open_gate_row(Gate* gate);

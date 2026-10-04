@@ -1,0 +1,9 @@
+#ifndef MUSIC_H
+#define MUSIC_H
+
+#include <stdint.h>
+
+void music_step(void);
+void music_play_level(uint8_t level);
+
+#endif // MUSIC_H

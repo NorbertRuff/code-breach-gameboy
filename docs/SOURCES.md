@@ -43,8 +43,11 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Rebuild the sprite list every frame, then `hide_sprites_range` | zelda-gbdk `objects.c` (idea only); GBDK `metasprites` example | `main.c` `draw_sprites`, `src/actor/actor.c` `actors_draw` | In use |
 | Object pools with a free list, fixed sprite ranges | cuphead_gb `bullet_pool.c` (MIT) | Projectiles, particles | Planned (M3/M8) |
 | Boss drawn with background tiles, poses in the off-screen map, switched by scrolling | cuphead_gb README and maps (MIT) | KERNEL boss | Planned (M8) |
-| Sound effects over music: channel mute mask and priority | untoxa/VGM2GBSFX (MIT); used the same way in GB Studio and CrossZGB | Audio | Planned (M6) |
-| hUGEDriver music from the VBlank handler, `NONBANKED` wrapper for banked songs | Larold's hUGEDriver tutorial; hUGEDriver `gbdk_example` | Audio | Planned (M6) |
+| Sound effects over music: channel mute mask and priority | untoxa/VGM2GBSFX (MIT); used the same way in GB Studio and CrossZGB | Audio | Planned (M6, VGM2GBSFX effects) |
+| A sound effect mutes its channel in the driver (`hUGE_mute_channel`) until it has faded, then hands it back | hUGEDriver `include/hUGEDriver.h` and `gbdk_example` (public domain); RESEARCH.md 2.7 | `src/sound/sound.c` `take_channel`, `sound_release_channels` | In use |
+| hUGEDriver: `hUGE_init` with the song's bank switched in, `hUGE_dosound` once per frame from an interrupt, with the song's bank switched in | Larold's hUGEDriver tutorial; hUGEDriver `gbdk_example` (public domain) | `src/sound/music.c` (called from the band split in `src/engine/screen.c`) | In use |
+| `.uge` file format (version 6) and its conversion to hUGEDriver C data | hUGETracker `src/song.pas`, `src/hugedatatypes.pas`, `src/instruments.pas`, `src/codegen.pas` `RenderSongToGBDKC` (public domain), ported to Python | `tools/uge2c.py` | In use |
+| Writing a streamed column's tiles at the start of the next update, while VBlank lasts | Own finding (`make budget`: GBDK's `set_bkg_tiles` waits for HBlank outside VBlank) | `src/level/level_stream.c` `level_stream_flush` | In use |
 | Save header: magic value, version, size, checksum | CrossZGB `SRAM.c` (MIT); Larold's saving tutorial | Saves | Planned (M7); test ROM in use |
 | Counting lag frames with the VBlank counter: every VBlank during an update is a frame without one | GBDK docs, `sys_time` in `gb/gb.h` | `src/main.c` `lag_frames` | In use |
 | Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT), camera locks; Itay Keren, "Scroll Back" | `src/engine/camera.c` | In use |
@@ -99,5 +102,6 @@ games ships (decision 2026-10-03).
 | Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder until M5 |
 | Placeholder font (`src/graphics/font.c`): A-Z, 0-9, punctuation, 8×8 bold | Project code, drawn in the style of the existing HUD digits | Placeholder until the M5 font |
 | Sound effects in `src/sound/sound.c` | Project code (register values) | In use |
-| Music | Tronimal, Game Boy Music Packs #1 and #2, CC BY 4.0 | Planned (M6); credit required |
+| Music: `music/tech.uge` ("Tech", Pack #2), `music/neurotic_robonaut.uge` ("Neurotic Robonaut", Pack #1) | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
+| hUGEDriver 6.1.3 (`lib/hUGEDriver/`) | SuperDisk, github.com/SuperDisk/hUGEDriver release, public domain | In use; credited in `CREDITS.md` |
 | Sound effect packs | Tronimal GBFX / GBFX2, CC-BY | Planned (M6); credit required |

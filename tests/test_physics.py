@@ -2,7 +2,8 @@
 
 Places in levels/greybox_test.tmj used here (columns x 8 px, screen rows y 8 px; the
 floor is row 15): platform C is row 6, x 112-143; platform D is row 10, x 168-199;
-x = 156 is open floor with nothing above it; a one-way shelf is row 11, x 320-351; spikes
+x = 156 is open floor with nothing above it; a one-way shelf is row 11, x 320-351 (feet
+y 87 on it); spikes
 sit on the floor at x 368-383.
 """
 
@@ -99,6 +100,39 @@ def test_one_way_platform_lets_the_player_up_and_holds_them(game):
     game.jump_rise(60)
     player = game.player()
     assert player.on_ground and player.py == 11 * 8 - 1, f"not standing on the one-way row: y = {player.py}"
+
+
+def stand_on_the_shelf(game) -> None:
+    game.start_on_open_ground()
+    game.place_player(336, 87)
+    game.frames(2)
+    assert game.player().on_ground
+
+
+def test_down_and_a_drops_through_a_one_way_platform(game):
+    stand_on_the_shelf(game)
+    game.pyboy.button_press("down")
+    game.press("a")
+    game.frames(40)
+    player = game.player()
+    assert player.on_ground and player.py == 119, f"did not drop to the floor: y = {player.py}"
+
+
+def test_down_alone_or_a_alone_stays_on_the_shelf(game):
+    stand_on_the_shelf(game)
+    game.hold("down", 30)
+    assert game.player().on_ground and game.player().py == 87, "Down alone left the shelf"
+    game.press("a")
+    assert jumped_within(game, 4), "A alone on the shelf did not jump"
+    game.frames(60)
+    assert game.player().on_ground and game.player().py == 87, "a jump from the shelf did not land on it"
+
+
+def test_down_and_a_on_solid_ground_jumps(game):
+    game.start_on_open_ground()
+    game.pyboy.button_press("down")
+    game.press("a")
+    assert jumped_within(game, 4), "Down + A on solid ground did not jump"
 
 
 def test_hazard_tile_costs_a_life(game):

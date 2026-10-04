@@ -20,12 +20,14 @@ GREYBOX = tiled2c.load_level(ROOT / "levels" / "greybox_test.tmj")
 TEST_JUMPS = tiled2c.load_level(ROOT / "levels" / "test_jumps.tmj")
 FIELDS = ("x", "y", "velocity_x", "velocity_y", "jump_buffer_frames", "coyote_frames", "on_ground")
 
-# Start position, then (frames, d-pad, A down) steps. Places in greybox_test.tmj.
+# Start position, then (frames, d-pad, A down) steps, with Down held as an optional 4th
+# value. Places in greybox_test.tmj.
 SCRIPTS = {
     "run, jump and land": (156, 119, [(10, 1, False), (25, 1, True), (30, 1, False), (20, 0, False)]),
     "slide past platform D's corner": (164, 119, [(40, 0, True), (30, 0, False)]),
     "up through the one-way shelf": (336, 119, [(60, 0, True), (20, -1, False), (10, 1, True)]),
     "into both sides of platform A": (60, 119, [(20, -1, False), (30, -1, True), (40, -1, False), (20, 1, False)]),
+    "down through the one-way shelf": (336, 119, [(60, 0, True), (5, 0, False, True), (10, 1, True, True), (30, 0, False)]),
 }
 
 
@@ -42,13 +44,14 @@ def test_physics_copy_matches_the_rom(game, name):
                         coyote_frames=start.coyote_frames, on_ground=bool(start.on_ground))
     room = levelpreview.make_room(GREYBOX)
     rom, copied, a_was_down = [], [], False
-    for frames, dpad, a_down in script:
-        for button, down in (("left", dpad < 0), ("right", dpad > 0), ("a", a_down)):
-            (game.pyboy.button_press if down else game.pyboy.button_release)(button)
+    for frames, dpad, a_down, *down in script:
+        down = bool(down and down[0])
+        for button, pressed in (("left", dpad < 0), ("right", dpad > 0), ("a", a_down), ("down", down)):
+            (game.pyboy.button_press if pressed else game.pyboy.button_release)(button)
         for _ in range(frames):
             game.frames(1)
             rom.append(game.player())
-            physics.step(body, room, dpad, a_down, a_was_down)
+            physics.step(body, room, dpad, a_down, a_was_down, down)
             a_was_down = a_down
             copied.append({f: int(getattr(body, f)) for f in FIELDS})
     for frame, (state, expected) in enumerate(zip(copied, rom[1:])):
@@ -77,6 +80,14 @@ def test_greybox_level_can_be_finished():
     assert len(result.paths) == len(result.surfaces)
 
 
+@pytest.mark.parametrize("name", ["level_1", "level_2"])
+def test_game_levels_pass_the_check(name):
+    level = tiled2c.load_level(ROOT / "levels" / f"{name}.tmj")
+    result = levelpreview.explore(level)
+    assert not result.problems
+    assert len(result.paths) == len(result.surfaces)
+
+
 def test_check_reports_what_cant_be_reached():
     # Widen the pit after gate A to 14 tiles and remove the one-way shelf above it (a
     # running jump reaches the shelf, and the far side from there): nothing past it can
@@ -90,6 +101,22 @@ def test_check_reports_what_cant_be_reached():
     assert "exit at column 62" in problems
     assert "fragment at column 41" in problems
     assert "gate at column 50 asks for 1 fragments, only 0" in problems
+
+
+def test_check_drops_through_one_way_tops(monkeypatch):
+    # A closed room on the floor at columns 29-32: solid walls 4 tiles high at columns 28
+    # and 33, and a one-way lid between their tops. Its floor can only be reached by
+    # dropping through the lid (Down + A).
+    level = copy.deepcopy(GREYBOX)
+    solid, one_way = 1, 2
+    for row in (8, 9, 10, 11):
+        level.tiles[row * level.width + 28] = level.tiles[row * level.width + 33] = solid
+    for col in range(29, 33):
+        level.tiles[8 * level.width + col] = one_way
+    in_room = lambda result: any(s.feet == FLOOR_Y and 240 <= s.x0 <= 256 for s in result.paths)
+    assert in_room(levelpreview.explore(level))
+    monkeypatch.setattr(levelpreview, "JUMPS", [j for j in levelpreview.JUMPS if not j.drop])
+    assert not in_room(levelpreview.explore(level))
 
 
 def test_preview_image(tmp_path):

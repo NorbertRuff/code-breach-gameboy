@@ -120,4 +120,4 @@ def test_level_complete_shows_the_fragments_until_start(game):
     text = "FRAGMENTS 11/14"
     assert [game.bkg_tile(2 + i, 8) for i in range(len(text))] == font_tiles(text)
     game.press("start")
-    game.wait_for_state(COREGAMELOOP, timeout=200)      # the level starts again
+    game.wait_for_state(COREGAMELOOP, timeout=200)      # level 2 starts

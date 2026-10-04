@@ -31,6 +31,7 @@ sketches in this file can be redrawn after an edit in Tiled):
 | `^` | Hazard (from level 4) |
 | `*` | Code fragment |
 | `E` | Enemy: a run of `E`s is one patrol bot standing on the row below, the run is its patrol range |
+| `F` | Fast enemy: like `E`, at 2 px per frame instead of 1 (the bot's `speed` property in Tiled) |
 | `P` | Player start |
 | `G` | Security gate (section end and checkpoint) |
 | `D` | Exit elevator |
@@ -98,6 +99,7 @@ over the far ledge.
 | Run speed | 1.5 px per frame, about 11 tiles per second. Full speed after 6 frames, stops in 8 |
 | Coyote time / jump buffer | A jump works up to 6 frames after leaving a ledge / an A press up to 5 frames before landing still jumps |
 | Ceiling corners | A corner that overlaps the body by up to 4 px is slid past instead of bumped |
+| Drop through | Down + A on a one-way top falls through it (from level 2). With anything solid under the feet, Down + A jumps as usual |
 
 What follows from these numbers:
 
@@ -136,8 +138,9 @@ Names to use in briefs and feedback.
 
 ## 6. Level 1 brief: Server Room
 
-**Status: section plan accepted on 2026-10-02. Greybox drafted on 2026-10-04**
-(`levels/level_1.tmj`, below); waiting for the owner pass (step 4 in section 1).
+**Status: section plan accepted on 2026-10-02. Greybox built on 2026-10-04**
+(`levels/level_1.tmj`, below). Owner pass on DMG and GBC the same day: "it is good",
+kept as is. Next: the art pass (M5).
 
 Checked against the jump metrics (section 4) on 2026-10-03. On the main path, steps are
 at most 2 tiles and gaps at most 5; the longest jump in section C is a 5-tile gap. Two
@@ -254,10 +257,8 @@ Fragments: A 4 (gate 3 of 4), B 6 (gate 3 of 6), C 4 (bonus): 14, one more than 
 so each route of B has 2. 8 bots. An expert run takes about 25 seconds; the replay's
 worst frame ends at line 123 of the 140 allowed.
 
-Questions for the owner pass:
-- Is the high route in B worth its climb (3-tile jumps, above the level 1 limit of 2)?
-- Are the bot steps in C too hard for a first level?
-- Where to cut 14+ tiles.
+Owner pass (2026-10-04, after playing it on hardware): keep the high route's 3-tile jumps
+(it's optional), keep the bot steps in C, keep the 174 tiles.
 
 ## 7. Levels 2–5
 
@@ -266,8 +267,8 @@ GAME_DESIGN.md and [LEVEL_PIPELINE.md](LEVEL_PIPELINE.md) section 5.
 
 ### Level 2 brief: Code Testing Lab (draft)
 
-**Status: draft by Claude, 2026-10-04, for the owner to react to.** Nothing is built.
-Level 1's greybox pass comes first.
+**Status: draft by Claude, 2026-10-04. Greybox built the same day** (`levels/level_2.tmj`,
+below), after the owner's answers. Next: the owner plays it.
 
 Teaches: **one-way platforms**: jump up through them from below, land on top, walk under
 them. They also fix level 1's problem with split routes: a high route of one-way shelves
@@ -306,11 +307,85 @@ reaches it.
 **Totals:** about 145 tiles. 13 fragments (A 4, B 5, C 4): 6 needed for the gates, 7 bonus.
 About 9 bots, at most 3 on screen.
 
-**Questions for the owner:**
-- **Down + A to drop through a one-way platform?** Many platformers have it, and it lets
-  a level send the player back down. Without it, descending needs a gap in the shelf or
-  its end. It changes the physics (`player.c` and `tools/physics.py` together).
-- **Faster bots:** 1.5 px per frame (the player's run speed, so they can't be outrun, only
-  jumped), or a speed property per bot in Tiled?
-- The collectible is called a bug report in GAME_DESIGN.md: only a new picture, or also a
-  new name in the HUD?
+**Owner's answers (2026-10-04):**
+- **Down + A drops through a one-way platform.** A physics change in `player.c` and
+  `tools/physics.py` together, before the level 2 greybox.
+- **Bots get a speed property per bot in Tiled** (1 or 2 px per frame), so a level can mix
+  slow and fast bots.
+- Still open: the collectible is called a bug report in GAME_DESIGN.md; only a new
+  picture, or also a new name in the HUD?
+
+### Level 2 greybox (2026-10-04)
+
+`levels/level_2.tmj`, 170 tiles wide (sketch below: `tools/sketch2tmj.py --from-tmj
+levels/level_2.tmj`; `F` is a fast bot). `make preview` reaches every surface and all 13
+fragments. `tests/test_level_2.py` plays it from the start to the exit without losing a
+life, once through section B's high route (9 fragments) and once through its low route (8).
+
+Columns 0–123 (sections A and B):
+
+```
+0         1         2         3         4         5         6         7         8         9         0         1         2
+...............*............................................................................................................
+............................................................................................................................
+.............................................................................*..............*................*..............
+..............====..................*............................====.......................................................
+.......................................................................*...====............====.............................
+...................................................................................====.....................................
+.........*....====....................................................====..................................................
+...................................................*........................................................................
+............................................................................................................................
+.......====...====....#====#..................==========.........====..............................===...===...===...===....
+......................#....#.......====.....................................................................................
+.P....................#.*..#.................EEEEEEEEEEEEEE..G............FFFFFFFFF..*..FFFFFFFFFF.........................G
+###############################...........############################################################..............########
+```
+
+Columns 124–169 (section C):
+
+```
+      3         4         5         6
+..............................................
+..............................................
+................*.............................
+..........FFFFFFFFFFF.....................D...
+........=====================......###########
+...................................###########
+......................*............###########
+..............FFFFFFFFFF..*........###########
+....=====================..........###########
+...................................###########
+...................................###########
+........FFFFFFFFFFF................###########
+#########################..........###########
+```
+
+What changed from the brief, and why:
+- **A3, the room under a lid (new):** a fragment on the floor between two 3-tile walls with
+  a one-way lid between their tops. The only way in is Down + A on the lid; the way out is
+  a jump up through it. It teaches the drop where missing costs nothing. Section A has 5
+  fragments, gate A asks for 3.
+- **A4, the pit is 11 tiles wide, not Gap-4,** with the one-way shelf in its middle (gaps of
+  4 and 3 to it). A Gap-4 can be jumped without the shelf; a running jump clears up to 10
+  with coyote time (section 4). The bonus fragment sits 7 rows above that shelf: a held
+  jump from it, not from the bookcase.
+- **A2, the bookcase's fragment is at row 0,** 3 rows above the top shelf. The body is 4
+  tiles tall: a fragment just above the top shelf is touched from the middle one.
+- **B1, the zig-zag:** 3 shelves to row 3, a fragment on the middle one. The low route drops
+  back to the floor through it.
+- **B3, the bridge's holes are 3 tiles wide,** not 2: the body walks across 2-tile holes.
+  Its bonus fragment hangs over the second hole (a held jump across it).
+- **B quota:** the high route has 4 fragments (zig-zag, 2 on the shelves, the bridge's
+  bonus), the low route 3 (zig-zag, 1 between the bots, the bridge's bonus). Gate B asks
+  for 3, so the low route needs the bridge's fragment. Owner, 2026-10-04: keep it so.
+- **C1, the tiers are 4 rows apart** (floor, rows 8 and 4 of the map), not 3: with 3, a bot
+  on the tier above touches the head of a player standing on the tier below. Going up a
+  tier takes the full held jump (4 tiles), as the brief's 3–4 allows.
+- **C, the floor bot starts 9 tiles past gate B:** the first draft put the checkpoint next
+  to a fast bot.
+- **C2, the Gap-6 is from tier 3's end onto the exit block.** C has 3 bonus fragments, not 4.
+- **Bots: 6** (1 slow in A, 5 fast in B and C), fewer than the brief's 9; at most 3 on
+  screen. **Width: 170 tiles** (A 62, B 62, C 46), over the brief's 145, like level 1.
+
+Fragments: A 5 (gate 3 of 5), B 5 (gate 3 of 5), C 3 (bonus): 13. The replay's worst frame
+ends at line 115 of the 140 allowed (average 61; `tools/frame_budget.py --route level2`).

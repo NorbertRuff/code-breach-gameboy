@@ -127,10 +127,10 @@ Done when level 1 is playable start to finish in greybox, and a replay test fini
       see where the frame time goes.
 - [x] Every update within the frame budget: fix bug 19. The route's worst update ends at
       line 133 of 154.
-- [ ] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
-      Greybox, preview and replay test done 2026-10-04 (`levels/level_1.tmj`,
-      `tests/test_level_1.py`, LEVEL_DESIGN.md section 6). Open: **(owner)** pass in
-      Tiled and Emulicious, then tuning.
+- [x] Level 1 through the design loop (brief → greybox → preview → owner pass → tune).
+      Greybox, preview and replay tests done 2026-10-04 (`levels/level_1.tmj`,
+      `tests/test_level_1.py`, LEVEL_DESIGN.md section 6). Owner pass on DMG and GBC the
+      same day: good, kept as is.
 - [x] Style pass (CLAUDE.md, Code Style) on the files M2 and M3 didn't rewrite:
       `main.c`, `utils.c`, `sound.c`, `src/game_state/` (`src/enemy/` was replaced by
       `src/actor/` in step 2). Done 2026-10-04; the build has no warnings.
@@ -176,12 +176,16 @@ Done when level 1 looks like the final game in both modes.
 
 - [x] **(owner)** Decide where the music comes from: Tronimal's Game Boy Music Packs #1
       and #2 (CC BY 4.0), decided 2026-10-02.
-- [ ] hUGEDriver: driver in the build, songs in banked ROM, called from the VBlank handler
-      through a `NONBANKED` wrapper.
+- [x] hUGEDriver: driver in the build, songs in banked ROM, one step per frame from an
+      interrupt. Done 2026-10-04: hUGEDriver 6.1.3 (`lib/hUGEDriver/`), `tools/uge2c.py`
+      and `make music`, the step in the line interrupt below the band (DECISIONS.md),
+      `tests/test_music.py`. Frame budget: level 1's worst update 126 of 140.
 - [ ] Sound effects: Tronimal GBFX/GBFX2 converted with untoxa's VGM2GBSFX, played with
       a channel mute mask and priority over the music.
-- [ ] Music per level, title, game over and ending.
-- [ ] `CREDITS.md` with every CC-BY item (title, author, link, license, changes).
+- [ ] Music per level, title, game over and ending. Levels 1 and 2 have songs (Proposed);
+      **(owner)** pick the rest by ear from the Tronimal packs.
+- [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes). Started
+      2026-10-04 with the two songs and hUGEDriver; add each new item with it.
 
 ## M7 — Saves and game flow
 
@@ -193,8 +197,8 @@ Done when level 1 looks like the final game in both modes.
 - [ ] Save data in cartridge RAM: unlocked levels, best score, 100% marks, a checksum
       for first boot.
 - [ ] Level select, game over with continue, level complete screen with score. The level
-      complete summary exists (2026-10-04: fragments, 100%, START); level select and game
-      over wait.
+      complete summary and a game over message exist (2026-10-04), and level complete goes
+      on to the next level; the level select and a real "continue" choice wait.
 - [ ] Story text: 3-line boot screen, one AI log line per elevator ride, "PATCH n/5"
       progress.
       Text drafted 2026-10-04 in [STORY.md](STORY.md); **(owner)** edit it.
@@ -206,7 +210,12 @@ Done when level 1 looks like the final game in both modes.
 One level at a time: the new mechanic, the brief, the greybox loop, the art pass, and a
 replay test that finishes it.
 
-- [ ] Level 2, Code Testing Lab: one-way platforms.
+- [ ] Level 2, Code Testing Lab: one-way platforms. Brief drafted 2026-10-04
+      (LEVEL_DESIGN.md section 7); decided: Down + A drops through, a speed property
+      per bot. Both built 2026-10-04 (physics, `tools/physics.py`, the reachability check,
+      `speed` in Tiled). Greybox built the same day (`levels/level_2.tmj`), with replays,
+      random play and the frame budget; level complete goes on to the next level.
+      **(owner)** Play it on DMG and GBC.
 - [ ] Level 3, AI Research Wing: vertical movers and chasers.
 - [ ] Level 4, Network Hub: hazards.
 - [ ] Level 5, Mainframe: the KERNEL boss (concept in GAME_DESIGN.md).

@@ -38,22 +38,25 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 | `tests/test_rom.py` | Header bytes, checksums, ROM size, bank 0 layout from the linker map |
 | `tests/test_boot.py` | Hardware detection, reaching gameplay, walking, jumping, screen drawn |
 | `tests/test_regressions.py` | One test per fixed bug |
-| `tests/test_physics.py` | Jump heights, coyote time, jump buffer, ceiling corners, one-way platforms, hazards, never overlapping solid tiles |
+| `tests/test_physics.py` | Jump heights, coyote time, jump buffer, ceiling corners, one-way platforms, Down + A drops through them (and jumps on solid ground), hazards, never overlapping solid tiles |
 | `tests/test_tiled2c.py` | The level converter: committed output up to date, the test level's contents, the level data in the ROM, and every rule check |
 | `tests/test_jump_metrics.py` | The jump metrics in LEVEL_DESIGN.md section 4: climb heights and gap widths, measured in the test room `levels/test_jumps.tmj` |
-| `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, passes the greybox level and reports a broken one |
+| `tests/test_levelpreview.py` | `tools/physics.py` matches the ROM frame by frame; the reachability check agrees with the jump metrics, drops through one-way tops, passes the greybox level and both game levels, and reports a broken one |
 | `tests/test_streaming.py` | Screen and collision ring match the map while scrolling both ways, collected fragments stay gone, respawn redraws, camera look-ahead and speed |
-| `tests/test_actors.py` | Actors: bots in reach spawn at the start, a bot spawns as the camera nears, patrols, removal a screen behind until a restart, hits and invincibility, the sprite list every frame |
+| `tests/test_actors.py` | Actors: bots in reach spawn at the start, a bot spawns as the camera nears, patrols, a fast bot's 2 px per frame (level 2), removal a screen behind until a restart, hits and invincibility, the sprite list every frame |
 | `tests/test_screen.py` | The screen splits: band and level scroll per screen line, the band drawn once and kept by streaming, no sprite over the HUD, the band palette light to dark |
-| `tests/test_sections.py` | Gates as solid columns, closed below the quota, opening on touch, the opened gate as checkpoint, the camera and player lock, lives and game over per section, the exit |
+| `tests/test_sections.py` | The game over message (and the band and HUD kept), gates as solid columns, closed below the quota, opening on touch, the opened gate as checkpoint, the camera and player lock, lives and game over per section, the exit |
 | `tests/test_frame_budget.py` | A route that finishes the greybox level (both gates, the exit): no lag frames, every update within `FRAME_LINE_LIMIT` lines; the ROM's lag counter counts right |
+| `tests/test_level_2.py` | The same replays for level 2 (`Pilot.drop_through()` for Down + A, `jump(direction=...)` for straight or left jumps); level complete goes on to the next level with full lives (level 1 after level 2, a test room restarts) |
 | `tests/test_level_1.py` | The level complete summary shows the fragments and START goes on. `Pilot` replays finish level 1 without losing a life, through section B's high and low routes, from two start times, with no lag frames, every update within `FRAME_LINE_LIMIT`, and at most 10 sprites on any screen line (`game.track_sprites_per_line()`) |
 | `tests/test_pause.py` | START pauses (nothing moves, the label shows) and resumes; SELECT while paused cycles the levels |
 | `tests/test_palette.py` | Only `src/engine/palette.c` writes palettes (a source scan); losing a life fades out and back in through the same steps on DMG and GBC; the invincible player blinks on DMG and is pale on GBC; the band and HUD use their own GBC palettes |
 | `tests/test_golden.py` | Key screens (level 1 start, the rack stair, the pause, the invincible player) match `tests/golden/<screen>_<mode>.png` pixel for pixel; a mismatch saves the new picture and a mask of the changed pixels to `tests/out/`. `make goldens` rewrites them after an intended change |
 | `tests/test_gbconvert.py` | The art converter on generated pictures: upscale and the given size, snapping, palette per tile, flipped sprite tiles, tile budget, every rule break, previews |
 | `tests/test_sketch2tmj.py` | Level sketches: level 1 and the greybox level survive the trip to a sketch and back; a sketch with every legend character converts; errors |
-| `tests/test_fuzz.py` | Random play from level 1 with fixed seeds, pause and level-select included: after every frame a valid state, no lag frame, the body in no solid tile, at most 10 sprites on a line, the camera inside the level, the HUD count right; and, when each update ends, every screen column matching the map (markers only where the level has that object) and the collision ring matching the tiles. For a bigger scan, loop over more seeds with `play`, `problems` and `screen_mismatch` |
+| `tests/test_music.py` | One music step per frame, at the band split (line 23); the music keeps playing while paused; each game level starts its own song (`hUGE_init`'s argument); a jump takes CH1 from the music and hands it back after 4 frames (`hUGE_mute_mask`) |
+| `tests/test_uge2c.py` | `tools/uge2c.py`: the committed `src/music/` files are current; every song in `music/` reads to its last byte; other `.uge` versions are refused; note names, instrument bytes and duplicate patterns match hUGETracker's export |
+| `tests/test_fuzz.py` | Random play from level 1 and level 2 with fixed seeds (Down + A included), pause and level-select included: after every frame a valid state, no lag frame, the body in no solid tile, at most 10 sprites on a line, the camera inside the level, the HUD count right; and, when each update ends, every screen column matching the map (markers only where the level has that object) and the collision ring matching the tiles. For a bigger scan, loop over more seeds with `play`, `problems` and `screen_mismatch` |
 | `tests/test_text.py` | Screen text in the game's font: the intro credits (reached from play, since the test build skips the intro) are the right font tiles in the right places |
 | `tests/test_known_bugs.py` | Open bugs, as expected failures |
 | `tests/test_savetest.py` | Cartridge RAM survives power cycles, for `obj/savetest.gb` (MBC5) and the MBC1 and MBC3 variants; each header names its mapper |
@@ -96,10 +99,15 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
 - **Levels.** The game starts in level 1, but `Game` writes `level_index` when `main()`
   starts, so tests play `levels/greybox_test.tmj`. Builds from before level 1 (an old
   commit under `tools/test_against.py`) number the levels otherwise and start in the
-  greybox level anyway, so `Game` leaves them alone. `@pytest.mark.level(LEVEL_1)` on a
+  greybox level anyway, so `Game` leaves them alone; builds from before level 2 had the
+  test rooms one index lower, and `game.rom_level_index()` maps them. `@pytest.mark.level(LEVEL_1)` on a
   test starts it in another level. `game.load_level(LEVEL_TEST_JUMPS)`
   restarts in the test room with the jump metric fixtures. Test geometry lives in Tiled
   levels: writing collision from a test doesn't last once columns stream.
+- **When the screen is complete.** A new column's tiles are written at the start of the
+  next update (`level_stream_flush`). Checks of the screen against the map run from
+  `game.at_screen_ready(callback)` (a hook on `input_read_player`, right after that write),
+  not after `frames()`.
 - `game.actors()` reads the actors in play through `ACTOR_FIELDS` (checked like the
   Player mirror, with `actor_struct_size`); `bot` says whether one is a patrol bot.
   `game.visible_sprites()` lists the OAM entries that are switched on.
@@ -184,8 +192,12 @@ Pillow, NumPy. `make test` uses `.venv` when it exists, otherwise `python` from 
    directly. Some EverDrive clones only write the save to the SD card on one of them.
 4. Press A to clear the save when done.
 
-If the count never goes up, try the same with `obj/savetest_mbc1.gb` and
-`obj/savetest_mbc3.gb` (built by `make savetest` too): the same test with an MBC1 or MBC3
+For the flashcart, build the save test ROMs outside `obj/`, so CLion's `make clean`
+keeps them: `make OBJDIR=flashcart savetest` writes `flashcart/savetest.gb`,
+`savetest_mbc1.gb` and `savetest_mbc3.gb` (the folder is gitignored).
+
+If the count never goes up, try the same with `savetest_mbc1.gb` and
+`savetest_mbc3.gb` (built by `make savetest` too): the same test with an MBC1 or MBC3
 header, named on the second line of the screen. Some clones keep saves only for some
 mappers. If no variant keeps the count, battery saves don't work on this cartridge, and
 the game falls back to passwords (docs/DECISIONS.md).
