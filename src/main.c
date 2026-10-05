@@ -201,8 +201,7 @@ void main(void)
             current_game_state = GAMEPLAY_START;
             break;
         case GAMEPLAY_END:
-            lose_life();
-            current_game_state = COREGAMELOOP;
+            current_game_state = lose_life();
             break;
         }
 

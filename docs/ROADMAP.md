@@ -4,16 +4,16 @@ From the current prototype to the full 5-level game, playable in color on GBC an
 4 shades on DMG. Claude writes the code; the owner runs git, reviews, and plays it in
 Emulicious and on hardware. Items marked **(owner)** need the owner.
 
-## Status (2026-10-04)
+## Status (2026-10-05)
 
-- **Playable:** level 1 (Server Room, art pending) and the level 2 greybox (Code Testing
-  Lab), both kept after the owner's hardware pass, and the new level 3 greybox (AI
-  Research Wing) with lifts and chasers; music, the GBFX sound effects and songs for the
-  title, game over and level complete screens (owner approved the sounds).
-  Next: the owner's level 3 pass, then M7 passwords; M5 art waits for the style guide.
-- **Tests:** `make test` 218 tests in about 15 s; `make test-full` 321 in about 18 s.
-- **Memory:** bank 0 has 1,253 bytes free (palette fades and the level flow moved to ROM
-  banks; lifts and chasers added); WRAM uses 1,492 of 4,096 bytes.
+- **Playable:** levels 1-3 (level 1 art pending; levels 2 and 3 greyboxes, kept after the
+  owner's passes), music and sound effects; passwords with the title menu, the password
+  screen, the level select and the game over menu (M7, new: owner check pending).
+  Next: the owner's check of the menus and passwords; then M7 story text (owner edits
+  STORY.md) or level 4; M5 art waits for the style guide.
+- **Tests:** `make test` 223 tests in about 20 s; `make test-full` 328 in about 23 s.
+- **Memory:** bank 0 has 1,238 bytes free (the menus and passwords are in ROM banks);
+  WRAM uses 1,496 of 4,096 bytes.
 - **Frame budget** (worst update, line of the 140 allowed; average): level 1 125 (79),
   level 2 108 (66), level 3 131 (91), greybox route 121 (80). Lifts cost about 10 lines on
   average where they are; the music step about 9, up to 18; a streamed column's write 5.
@@ -30,6 +30,10 @@ A fixed bug leaves this list; its regression test keeps the number.
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
 - Claude Design style guide (M5); edit the story text in [STORY.md](STORY.md) (M7).
+- Try the M7 menus in Emulicious and on hardware: the title menu, a password from a level
+  complete screen typed back in (`python tools/password.py` lists them), the level select,
+  game over CONTINUE and QUIT. Agree or change the **Proposed** menu decisions
+  (DECISIONS.md "Saves").
 
 The physics and level loading (M2) came before color (M4) and art (M5) on purpose: level
 layouts depend on the jump, and levels are designed with plain blocks first.
@@ -108,14 +112,16 @@ Done when level 1 looks like the final game in both modes.
 
 - [x] Saves on the EverDrive clone: no save test ROM kept its count (owner,
       2026-10-04), so the game uses passwords (DECISIONS.md "Saves").
-- [ ] Passwords: one per level, shown at level complete, entered from the title screen
-      (contents agreed, DECISIONS.md "Saves"). The cartridge is plain MBC5 since 2026-10-04.
-- [ ] Level select, game over with continue, level complete screen with score. The level
-      complete summary and a game over message exist (2026-10-04), and level complete goes
-      on to the next level; the level select and a real "continue" choice wait.
+- [x] Passwords: one per level, shown at level complete (and game over), entered from
+      CONTINUE on the title screen (2026-10-05, `src/game_state/progress.c`,
+      `tools/password.py`, `tests/test_passwords.py`). **(owner)** Check them.
+- [x] Level select after a password, game over with CONTINUE / QUIT, level complete with
+      the fragments and the password (2026-10-05). A score beyond the fragment count isn't
+      designed; add one only if wanted.
 - [ ] Story text: 3-line boot screen, one AI log line per elevator ride, "PATCH n/5"
       progress. Drafted in [STORY.md](STORY.md); **(owner)** edit it.
-- [ ] Hard mode, unlocked after clearing the game.
+- [ ] Hard mode, unlocked after clearing the game. The password's flag and the quotas
+      work (2026-10-05); the unlock waits for the ending.
 - [ ] Ending and the in-game credits screen.
 
 ## M8 — Levels 2 to 5

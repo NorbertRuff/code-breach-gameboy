@@ -45,11 +45,23 @@ def greybox_invincible(game):
     game.frames(10)
 
 
+def title_menu_after_quit(game):
+    # The title over a screen the game used: no HUD, band palette or level palette left.
+    game.load_level(LEVEL_1)
+    game.set_lives(1)
+    game.lose_life()
+    game.answer_game_over(quit=True)
+    game.frames(250)
+    game.tap("start")
+    game.frames(5)
+
+
 SCREENS = {
     "level_1_start": level_1_start,
     "level_1_rack_stair": level_1_rack_stair,
     "greybox_paused": greybox_paused,
     "greybox_invincible": greybox_invincible,
+    "title_menu_after_quit": title_menu_after_quit,
 }
 
 

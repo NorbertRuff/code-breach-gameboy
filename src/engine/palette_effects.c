@@ -56,6 +56,14 @@ void palette_use_bkg(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t palette
     VBK_REG = VBK_TILES;
 }
 
+// The screens without art palettes (title, menus): background palette 0 back to the
+// grays, and every cell of the screen on it.
+void palette_use_grays(void) BANKED
+{
+    palette_set_bkg(LEVEL_PALETTE, 1, grays);
+    palette_use_bkg(0, 0, DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, LEVEL_PALETTE);
+}
+
 // GBC: the same for window map cells (the HUD).
 void palette_use_win(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t palette) BANKED
 {

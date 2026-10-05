@@ -71,6 +71,10 @@ Pillow, NumPy). `make test` uses `.venv` when it exists, otherwise `python` from
 - **Rendered frames:** `game.tick(render=True)`; then `pyboy.screen.tilemap_position_list`
   gives the scroll per line. A frame shows the scroll and sprites of the update before it.
   PyBoy's first rendered frame after unrendered ones starts the window one line early.
+- **Menus and screen text:** `game.text(x, y, length)` reads the font's characters from
+  the background map; `game.wait_for_text(x, y, text)` waits until a menu shows it and
+  reads buttons (after the fade-in); `game.tap("down start")` presses buttons in turn;
+  `game.answer_game_over(quit=False)`. Passwords come from `tools/password.py`.
 - **Readers:** `game.collision(x, y)`, `game.bkg_tile(x, y)` (at a level column),
   `game.window_tile(col, row)`, `game.camera_x()`, `game.reg("WY")`, `game.actors()`,
   `game.visible_sprites()`, `game.level()`. Palettes on both systems:

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // Screen text in the game's font, one background tile per character.
-#define FONT_FIRST_TILE 160   // background tiles 160-207, after the level's and the HUD's
+#define FONT_FIRST_TILE 160   // background tiles 160-208, after the level's and the HUD's
 #define TEXT_SPACE_TILE FONT_FIRST_TILE
 
 void text_load_font(void);

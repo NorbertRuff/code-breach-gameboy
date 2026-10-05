@@ -28,6 +28,7 @@ def test_hud_window_stays_at_bottom_after_game_over(game):
         game.lose_life()
         game.wait_for_state(COREGAMELOOP)
     game.lose_life()                      # third hit: game over, then the section restarts
+    game.answer_game_over()
     for _ in range(1200):                 # game over flash, fade, restart
         game.frames(1)
         if game.lives() == 3 and game.state() == COREGAMELOOP:
@@ -220,6 +221,8 @@ def test_flashes_are_slow_and_restore_palettes(game, event):
     for _ in range(600):
         game.frames(1)
         black.append(game.background_is_black())
+        if game.text_shown(5, 8, "> CONTINUE"):
+            game.answer_game_over()
         if game.state() == COREGAMELOOP and game.u8("_palette_fade_step") == 0:
             break
     else:

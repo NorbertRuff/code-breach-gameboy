@@ -3,13 +3,18 @@ the exit elevator without losing a life, within the frame budget and the sprites
 limit. Level 1's test (test_level_1.py) explains the Pilot moves and the x values.
 """
 
+import sys
+from pathlib import Path
+
 import pytest
 
 from gamelib import (COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST,
                      LINES_PER_FRAME, Pilot)
 from test_frame_budget import FRAME_LINE_LIMIT
 from test_level_1 import SPRITES_PER_LINE
-from test_text import font_tiles
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+import password  # noqa: E402
 
 
 def section_a(pilot: Pilot) -> None:
@@ -121,18 +126,22 @@ def test_level_2_can_be_finished(game, route, start_delay):
     assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
 
 
-@pytest.mark.parametrize("level, next_level", [(LEVEL_1, LEVEL_2), (LEVEL_2, LEVEL_3), (LEVEL_3, LEVEL_1),
-                                               (LEVEL_GREYBOX_TEST, LEVEL_GREYBOX_TEST)])
-def test_level_complete_goes_on_to_the_next_level_with_full_lives(game, level, next_level):
-    # The summary shows the level's fragments; START goes on. After the last level comes
-    # level 1 again (no ending yet); a test room starts over.
+# The furthest level a password holds after finishing each level (0 = level 1): the next
+# one, but never past the last level of this build; a test room doesn't count.
+@pytest.mark.parametrize("level, next_level, furthest", [(LEVEL_1, LEVEL_2, 1), (LEVEL_2, LEVEL_3, 2),
+                                                         (LEVEL_3, LEVEL_1, 2),
+                                                         (LEVEL_GREYBOX_TEST, LEVEL_GREYBOX_TEST, 0)])
+def test_level_complete_goes_on_to_the_next_level_with_full_lives(game, level, next_level, furthest):
+    # The summary shows the level's fragments and the new password (tools/password.py
+    # makes the same); START goes on. After the last level comes level 1 again (no ending
+    # yet); a test room starts over.
     game.load_level(level)
     game.set_lives(1)
     total = game.level().fragment_count
     game.set_state(LEVEL_COMPLETE)
     game.frames(200)                                    # the flashes, then the summary
-    text = f"FRAGMENTS 00/{total:02d}"
-    assert [game.bkg_tile(2 + i, 8) for i in range(len(text))] == font_tiles(text)
+    assert game.text(2, 7, 15) == f"FRAGMENTS 00/{total:02d}"
+    assert game.text(3, 11, 13) == f"PASSWORD {password.make(furthest)}"
     game.press("start")
     game.wait_for_state(COREGAMELOOP, timeout=200)
     assert game.u8("_level_index") == next_level and game.lives() == 3

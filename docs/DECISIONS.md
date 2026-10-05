@@ -44,10 +44,10 @@ or git keeps the old one). Details of how the code does it belong in
 - **Each level ends at a lab elevator** (the exit tile completes the level).
 - **HUD:** lives, and the current section's fragments against its quota (`02/03`); in the
   last section, against all its (bonus) fragments.
-- **Game over** shows "GAME OVER" in the play area, then START (or 5 s) restarts the
-  section. **Level complete** shows the level's fragments ("100%" when all), then START
-  (or 5 s) goes on to the next level; after the last level, level 1 again until the ending
-  exists. Layout and text may change in M7.
+- **Game over** shows "GAME OVER" in the play area with CONTINUE (restarts the section)
+  and QUIT (Saves: Menus). **Level complete** shows the level's fragments ("100%" when
+  all) and the password, then START (or 5 s) goes on to the next level; after the last
+  level, level 1 again until the ending exists.
 - **Pause:** START freezes the game with "PAUSE" in the band; the music keeps playing.
   SELECT while paused loads the next level (cheat, `LEVEL_SELECT_CHEAT`; M9 decides if it
   ships). A real menu waits for M7. **Proposed.**
@@ -186,3 +186,17 @@ or git keeps the old one). Details of how the code does it belong in
   0/O or 1/I): the next level (1-5), a 100% mark per finished level, hard mode, and a
   checksum, so a typo is refused instead of loading the wrong game. CONTINUE on the title
   screen opens the entry; the level complete screen shows the new password.
+- **Password format** (2026-10-05): letters `BCDFGHJKLMNPRTWX` (consonants only, so no
+  words); one progress byte (furthest level, marks of levels 1-4, the boss level has none,
+  hard mode) and a check byte that is a one-to-one mix of it, so every single wrong letter
+  is refused (`tools/password.py`). The furthest level never passes the build's last
+  level, so the password after the last level works in the same build.
+- **Hard mode in the password means playing in hard mode** (2026-10-05): every gate of
+  every level asks for all of its section's fragments. Unlocking it (a password with the
+  flag after the ending) waits for the ending. **Proposed.**
+- **Menus** (2026-10-05): the title shows NEW GAME / CONTINUE after START; CONTINUE asks
+  for the password, then a level select (levels up to the furthest, with 100% marks,
+  starting on the furthest; skipped when only level 1 is open). Game over shows CONTINUE /
+  QUIT and the password, and waits for a choice (no 5 s timeout any more); QUIT goes to
+  the title. Menu sounds reuse the approved effects: pause beep to pick or type, gate to
+  accept a password, buzz to refuse one. **Proposed.**

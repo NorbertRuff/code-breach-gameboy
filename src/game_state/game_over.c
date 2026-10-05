@@ -3,6 +3,8 @@
 
 #include <gb/gb.h>
 #include "game_over.h"
+#include "menu.h"
+#include "progress.h"
 #include "../engine/palette.h"
 #include "../engine/screen.h"
 #include "../engine/text.h"
@@ -11,6 +13,7 @@
 #include "../utils.h"
 
 #define MESSAGE_FRAMES 300   // a message stays 5 s, unless START is pressed sooner
+#define CONTINUE 0           // the game over choices: CONTINUE, then QUIT
 
 // Blanks the play area (the band and the HUD stay) for a message, behind a dark screen.
 static void clear_play_area(void)
@@ -32,31 +35,37 @@ static void show_message(void)
     }
 }
 
-// Game over: 4 slow flashes, then its song and "GAME OVER" until START. The section
-// restarts after.
-void game_over(void) BANKED
+// Game over: 4 slow flashes, then its song, "GAME OVER", the password, and a choice:
+// CONTINUE (returns 1: the section restarts) or QUIT (returns 0: to the title).
+uint8_t game_over(void) BANKED
 {
     palette_flash(4, 12);
     music_play_game_over();
     clear_play_area();
-    text_print(5, 7, "GAME OVER");
-    show_message();
+    text_print(5, 5, "GAME OVER");
+    text_print(7, 8, "CONTINUE");
+    text_print(7, 10, "QUIT");
+    menu_print_password(3, 13);
+    return menu_choose(5, 8, 2, CONTINUE) == CONTINUE;
 }
 
-// Level complete: 6 flashes at 3 per second, then its song and the level's fragments
-// until START.
+// Level complete: notes it in the progress; 6 flashes at 3 per second, then its song,
+// the level's fragments and the new password until START.
 void level_complete(void) BANKED
 {
     uint8_t collected = current_level.section_collected[0] + current_level.section_collected[1]
                       + current_level.section_collected[2];
+    uint8_t perfect = collected == current_level.fragment_count;
+    progress_finish_level(level_index, perfect);
     palette_flash(6, 10);
     music_play_level_complete();
     clear_play_area();
     text_print(3, 5, "LEVEL COMPLETE");
-    text_print(2, 8, "FRAGMENTS");
-    text_print_two_digits(12, 8, collected);
-    text_print(14, 8, "/");
-    text_print_two_digits(15, 8, current_level.fragment_count);
-    if (collected == current_level.fragment_count) text_print(8, 10, "100%");
+    text_print(2, 7, "FRAGMENTS");
+    text_print_two_digits(12, 7, collected);
+    text_print(14, 7, "/");
+    text_print_two_digits(15, 7, current_level.fragment_count);
+    if (perfect) text_print(8, 9, "100%");
+    menu_print_password(3, 11);
     show_message();
 }

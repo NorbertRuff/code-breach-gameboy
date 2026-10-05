@@ -52,10 +52,12 @@ def track_songs(game) -> list:
     return started
 
 
-def press_start_on_screen(game) -> None:
-    """Wait on a title or message screen, then START back to the game."""
-    game.frames(200)
-    game.press("start")
+def press_start_on_screen(game, presses: int = 1) -> None:
+    """Wait on a title or message screen, then START back to the game (twice on the
+    title: PRESS START, then NEW GAME)."""
+    for _ in range(presses):
+        game.frames(200)
+        game.hold("start", 3)
     game.wait_for_state(COREGAMELOOP, timeout=300)
 
 
@@ -66,14 +68,15 @@ def test_each_level_and_screen_starts_its_own_song(game):
     for level in (LEVEL_1, LEVEL_2, LEVEL_3):
         game.load_level(level)
     game.set_state(TITLE_SCREEN_STATE)
-    press_start_on_screen(game)
+    press_start_on_screen(game, presses=2)              # a new game: level 1
     game.set_lives(1)
     game.lose_life()
-    press_start_on_screen(game)
+    game.answer_game_over()
+    game.wait_for_state(COREGAMELOOP, timeout=300)
     game.set_state(LEVEL_COMPLETE)
     press_start_on_screen(game)
-    assert songs == ["tech", "neurotic_robonaut", "observing_jupiter", "decampment", "observing_jupiter",
-                     "gone_missing", "observing_jupiter", "delight", "tech"]
+    assert songs == ["tech", "neurotic_robonaut", "observing_jupiter", "decampment", "tech",
+                     "gone_missing", "tech", "delight", "neurotic_robonaut"]
 
 
 def test_a_sound_effect_takes_its_channels_until_it_ends(game):

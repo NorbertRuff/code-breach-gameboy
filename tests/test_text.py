@@ -1,11 +1,8 @@
 """Screen text in the game's font (src/engine/text.c): the intro credits are written with
 it (the test build skips the intro, so the test sends the game back to it from play).
-The level complete summary is checked in test_level_1.py."""
+The level complete summary is checked in test_level_2.py."""
 
-from gamelib import COREGAMELOOP, INTRO_CREDITS_STATE
-
-FONT_FIRST_TILE = 160                                       # src/engine/text.h
-FONT_CHARS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?()/:-#%"   # src/graphics/font.h
+from gamelib import COREGAMELOOP, FONT_CHARS, FONT_FIRST_TILE, INTRO_CREDITS_STATE
 
 
 def font_tiles(text: str) -> list:

@@ -5,6 +5,7 @@
 #include "game_flow.h"
 #include "game_over.h"
 #include "pause.h"
+#include "progress.h"
 #include "../engine/camera.h"
 #include "../engine/palette.h"
 #include "../engine/screen.h"
@@ -12,6 +13,7 @@
 #include "../level/section.h"
 #include "../actor/actor.h"
 #include "../sound/music.h"
+#include "../utils.h"
 
 #define RESPAWN_INVINCIBILITY_FRAMES 90   // 1.5 s at 60 fps
 
@@ -47,12 +49,21 @@ static void restart_behind_fade(uint8_t invincible)
     screen_show_sprites(1);
 }
 
+// Hard mode: every gate asks for all of its section's fragments.
+static void use_hard_mode_quotas(void)
+{
+    for (uint8_t i = 0; i < current_level.gate_count; i++) {
+        current_level.gates[i].quota = current_level.section_fragments[i];
+    }
+}
+
 // Builds the level behind a black screen, then fades in.
 void start_level(void) BANKED
 {
     palette_fade_to(PALETTE_BLACK);
     screen_show_sprites(0);
     level_load(level_index);
+    if (hard_mode) use_hard_mode_quotas();
     music_play_level(level_index);
     actors_load_tiles();
     pause_load_tiles();
@@ -63,21 +74,26 @@ void start_level(void) BANKED
     screen_show_sprites(1);
 }
 
-// Takes a life and restarts the section. On game over the lives refill and the
-// section's fragments come back.
-void lose_life(void) BANKED
+// Takes a life and restarts the section. On game over the player continues (the lives
+// refill and the section's fragments come back) or quits to the title. Returns the next
+// game state.
+uint8_t lose_life(void) BANKED
 {
     lives--;
     hud_update_lives(lives);
     if (lives) {
         restart_behind_fade(1);
-        return;
+        return COREGAMELOOP;
     }
-    game_over();
+    if (!game_over()) {
+        palette_fade_out(SCREEN_FADE_FRAMES);
+        return TITLE_SCREEN_STATE;
+    }
     lives = START_LIVES;
     level_reset_fragments(current_level.section);
     music_play_level(level_index);
     restart_behind_fade(0);
+    return COREGAMELOOP;
 }
 
 // After the exit: the next game level, with full lives. After the last level comes

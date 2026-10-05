@@ -11,7 +11,7 @@
 #define RESTART_FADE_FRAMES 4   // per fade step: about half a second out and in
 
 void start_level(void) BANKED;
-void lose_life(void) BANKED;
+uint8_t lose_life(void) BANKED;
 void go_to_next_level(void) BANKED;
 
 // From main.c.

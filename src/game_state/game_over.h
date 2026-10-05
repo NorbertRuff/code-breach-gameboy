@@ -3,7 +3,7 @@
 
 #include <gb/gb.h>
 
-void game_over(void) BANKED;
+uint8_t game_over(void) BANKED;
 void level_complete(void) BANKED;
 
 #endif /* GAME_OVER_H_ */

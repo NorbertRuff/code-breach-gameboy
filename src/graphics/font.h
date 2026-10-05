@@ -6,8 +6,8 @@
 #include <gbdk/platform.h>
 
 // The characters, in tile order: the font's tile n shows FONT_CHARS[n].
-#define FONT_CHARS " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?()/:-#%"
-#define font_TILE_COUNT 48
+#define FONT_CHARS " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?()/:-#%>"
+#define font_TILE_COUNT 49
 
 BANKREF_EXTERN(font)
 extern const uint8_t font_tiles[font_TILE_COUNT * 16];

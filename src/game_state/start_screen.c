@@ -1,6 +1,8 @@
 #include <gb/gb.h>
 
 #include "start_screen.h"
+#include "menu.h"
+#include "title_menu.h"
 #include "../graphics/splashscreen.h"
 #include "../engine/banking.h"
 #include "../engine/palette.h"
@@ -9,9 +11,10 @@
 
 static uint8_t blink_frames;   // frames into the "PRESS START" blink cycle
 
-// Draws the title screen and fades it in.
+// Draws the title screen on a blank screen and fades it in.
 static void draw_title_screen(void)
 {
+    menu_open_screen();
     WITH_BANK(splashscreen, {
         set_bkg_data(0, splashscreen_tileset_size, splashscreen_tileset);
         set_bkg_tiles(splashscreen_tileset_X, splashscreen_tileset_Y, splashscreen_tileset_width, splashscreen_tileset_height, splashscreen_tilemap);
@@ -32,14 +35,14 @@ static void blink_press_start(void)
     }
 }
 
-// Shows the title screen until START is pressed, then fades it out.
+// Shows the title screen until START is pressed, then its menu; the title again after
+// backing out of the password screen. Returns with the level to start chosen.
 void run_title_screen(void)
 {
     music_play_title();
-    draw_title_screen();
-    while (!(joypad() & J_START)) {
-        blink_press_start();
-        wait_vbl_done();
-    }
-    palette_fade_out(10);
+    do {
+        draw_title_screen();
+        menu_start_input();
+        while (!(menu_wait_press() & J_START)) blink_press_start();
+    } while (!title_menu());
 }

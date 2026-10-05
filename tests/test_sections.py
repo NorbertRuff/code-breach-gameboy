@@ -5,7 +5,6 @@ quota of 1 and their bottom tile on row 14; the exit at column 62."""
 from gamelib import (COLLISION_NONE, COLLISION_SOLID, COREGAMELOOP, HUD_DIGIT_TILE_BASE,
                      HUD_SLASH_TILE, LEVEL_COMPLETE, LEVEL_SIZE, SPRITE_RIGHT_W)
 from test_streaming import MARKER_TILE
-from test_text import font_tiles
 
 GATE_A, GATE_BOTTOM_ROW, MAP_TOP_ROW = 33, 14, 3
 GATE_A_X = GATE_A * 8
@@ -113,7 +112,7 @@ def test_closed_gate_buzzes_once_per_touch(game):
 
 def test_game_over_shows_a_message_then_restarts_the_section(game):
     # Game over in section B after picking up one of its fragments: "GAME OVER" in the play
-    # area (the band and the HUD stay), then START restarts section B at its checkpoint,
+    # area (the band and the HUD stay), then CONTINUE restarts section B at its checkpoint,
     # with full lives and only section B's fragments back.
     pick_up_and_run_into_gate_a(game)
     game.place_player(330, 87)                          # on the one-way shelf: column 41's fragment
@@ -122,10 +121,10 @@ def test_game_over_shows_a_message_then_restarts_the_section(game):
     game.set_lives(1)
     game.lose_life()
     game.frames(200)                                    # the flashes, then the message
-    assert [game.bkg_tile(5 + i, 7) for i in range(9)] == font_tiles("GAME OVER")
+    assert game.text(5, 5, 9) == "GAME OVER"
     assert game.window_tile(1, 0) == HUD_DIGIT_TILE_BASE    # the HUD shows 0 lives
     assert [game.bkg_tile(col, row) for row in range(3) for col in range(32)] == band
-    game.press("start")
+    game.answer_game_over()
     game.wait_for_state(COREGAMELOOP, timeout=200)
     level, player = game.level(), game.player()
     assert level.section == 1 and level.section_collected[:2] == [1, 0], "only section B's fragments reset"

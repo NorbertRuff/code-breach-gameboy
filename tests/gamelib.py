@@ -90,6 +90,11 @@ COLLISION_HAZARD = 3
 # The patrol bot's two 8x16 sprites use these sprite tiles (src/actor/bot.c).
 BOT_TILES = (40, 42)
 
+# Screen text: the font's first tile (src/engine/text.h) and its characters in tile order
+# (src/graphics/font.h).
+FONT_FIRST_TILE = 160
+FONT_CHARS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?()/:-#%>"
+
 # HUD tiles, from src/level/level_manager.h.
 HUD_DIGIT_TILE_BASE = 133
 HUD_SLASH_TILE = 143
@@ -369,6 +374,12 @@ class Game:
         base = 0x9C00 if self.reg("LCDC") & 0x08 else 0x9800
         return self.pyboy.memory[base + tile_y * 32 + tile_x % 32]
 
+    def text(self, tile_x: int, tile_y: int, length: int) -> str:
+        """The text in the game's font from a background map tile, one character per tile
+        ("~" for a tile that isn't one)."""
+        tiles = [self.bkg_tile(tile_x + i, tile_y) - FONT_FIRST_TILE for i in range(length)]
+        return "".join(FONT_CHARS[t] if 0 <= t < len(FONT_CHARS) else "~" for t in tiles)
+
     def camera_x(self) -> int:
         return int.from_bytes(read_symbol(self.pyboy, "_camera_x", 2), "little", signed=True)
 
@@ -508,6 +519,30 @@ class Game:
             if self.lives() != lives:
                 return
         raise AssertionError("falling out never cost a life")
+
+    def text_shown(self, tile_x: int, tile_y: int, text: str) -> bool:
+        """Is text at a background map tile, with the screen faded in?"""
+        return self.text(tile_x, tile_y, len(text)) == text and self.u8("_palette_fade_step") == 0
+
+    def wait_for_text(self, tile_x: int, tile_y: int, text: str, timeout: int = 600) -> None:
+        """Wait until a menu screen shows text and takes input."""
+        for _ in range(timeout):
+            if self.text_shown(tile_x, tile_y, text):
+                self.frames(12)           # the fade-in's last step: then the menu reads buttons
+                return
+            self.frames(1)
+        raise AssertionError(f"{text!r} never showed at ({tile_x}, {tile_y})")
+
+    def tap(self, buttons: str) -> None:
+        """Press each space-separated button in turn, like a player in a menu."""
+        for button in buttons.split():
+            self.play_route([(3, button), (3, "")])
+
+    def answer_game_over(self, quit: bool = False) -> None:
+        """Wait for the game over menu (src/game_state/game_over.c), then pick CONTINUE,
+        or QUIT with quit=True."""
+        self.wait_for_text(5, 8, "> CONTINUE")
+        self.tap("down start" if quit else "start")
 
     # --- pictures ---------------------------------------------------------------
 
