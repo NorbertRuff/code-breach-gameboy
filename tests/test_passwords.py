@@ -12,7 +12,6 @@ from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, TITLE_SCREEN_STATE
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 import password  # noqa: E402
 
-GAME_LEVELS = 4     # src/level/level_manager.h: GAME_LEVEL_COUNT
 LCDC_WINDOW_ON = 0x20
 
 
@@ -42,13 +41,12 @@ def type_password(game, text: str, cursor: int = 0) -> int:
 
 
 def test_password_holds_the_progress_and_refuses_typos():
-    # Every progress a password can hold comes back from it, and a single wrong letter
-    # never gives another valid password. A build refuses levels it doesn't have.
+    # Every progress a password can hold comes back from it (marks only on the levels
+    # before the furthest), and a single wrong letter never gives another valid password.
     for level in range(password.LEVELS):
-        for perfect in range(1 << min(level + 1, password.MARKED_LEVELS)):
+        for perfect in range(1 << min(level, password.MARKED_LEVELS)):
             text = password.make(level, perfect)
             assert password.read(text) == (level, perfect)
-            assert (password.read(text, GAME_LEVELS) is None) == (level >= GAME_LEVELS)
             for i in range(4):
                 for letter in password.LETTERS.replace(text[i], ""):
                     assert password.read(text[:i] + letter + text[i + 1:]) is None

@@ -3,12 +3,14 @@
 #include "sound.h"
 #include "../engine/banking.h"
 #include "../level/level_manager.h"
+#include "../music/song_closing.h"
 #include "../music/song_decampment.h"
 #include "../music/song_delight.h"
 #include "../music/song_gone_missing.h"
 #include "../music/song_neurotic_robonaut.h"
 #include "../music/song_observing_jupiter.h"
 #include "../music/song_tech.h"
+#include "../music/song_terminate.h"
 #include "../music/song_whirlwind.h"
 
 static uint8_t song_bank;   // the playing song's ROM bank; 0 while none plays
@@ -37,6 +39,7 @@ void music_play_level(uint8_t level)
     if (level == LEVEL_2) play_song(&song_neurotic_robonaut, BANK(song_neurotic_robonaut));
     else if (level == LEVEL_3) play_song(&song_observing_jupiter, BANK(song_observing_jupiter));
     else if (level == LEVEL_4) play_song(&song_whirlwind, BANK(song_whirlwind));
+    else if (level == LEVEL_5) play_song(&song_terminate, BANK(song_terminate));
     else play_song(&song_tech, BANK(song_tech));
 }
 
@@ -56,4 +59,10 @@ void music_play_game_over(void)
 void music_play_level_complete(void)
 {
     play_song(&song_delight, BANK(song_delight));
+}
+
+// The ending's song.
+void music_play_ending(void)
+{
+    play_song(&song_closing, BANK(song_closing));
 }

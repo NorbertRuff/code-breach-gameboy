@@ -6,7 +6,7 @@ update, part by part.
 Run with "make budget" (DMG mode, greybox route), or:
     tools/frame_budget.py --mode cgb --route level1 --rom <file.gb>
 The level1 to level4 routes are the replays that finish those levels
-(tests/test_level_1.py to tests/test_level_4.py).
+(tests/test_level_1.py to tests/test_level_4.py), level5 beats KERNEL (tests/test_boss.py).
 
 Each part runs until the next part in PARTS starts. A part that an update skips (the HUD
 count without a pickup) adds its time to the part before it.
@@ -21,12 +21,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_GREYBOX_TEST, LINES_PER_FRAME, Game, Pilot, boot  # noqa: E402
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_GREYBOX_TEST, LINES_PER_FRAME, Game, Pilot, boot  # noqa: E402
 from test_frame_budget import FRAME_LINE_LIMIT, GREYBOX_ROUTE  # noqa: E402
 from test_level_1 import play_level_1  # noqa: E402
 from test_level_2 import play_level_2  # noqa: E402
 from test_level_3 import play_level_3  # noqa: E402
 from test_level_4 import play_level_4  # noqa: E402
+from test_boss import KernelPilot, beat_kernel  # noqa: E402
 
 # Route name: the level it plays and how.
 ROUTES = {
@@ -35,12 +36,14 @@ ROUTES = {
     "level2": (LEVEL_2, lambda game: play_level_2(Pilot(game))),
     "level3": (LEVEL_3, lambda game: play_level_3(Pilot(game))),
     "level4": (LEVEL_4, lambda game: play_level_4(Pilot(game))),
+    "level5": (LEVEL_5, lambda game: beat_kernel(KernelPilot(game))),
 }
 
 # C functions in the order an update calls them, and a label for each. The first starts
 # the update; the last is the game waiting for the next VBlank.
 PARTS = [
     ("main_game_loop", "input"),
+    ("kernel_update", "KERNEL (level 5)"),
     ("update_run_speed", "player: run speed"),
     ("try_jump", "player: jump"),
     ("apply_gravity", "player: gravity"),
@@ -82,7 +85,7 @@ def record_updates(rom: Path, mode: str, route: str) -> tuple[list, int]:
     level, play = ROUTES[route]
     pyboy = boot(rom, mode)
     game = Game(pyboy, mode, ROOT / "tests" / "out", "frame_budget", level)
-    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.wait_for_state(COREGAMELOOP, timeout=600)     # the boss level types its log first
     updates, current = [], {}
 
     def at_part(label):

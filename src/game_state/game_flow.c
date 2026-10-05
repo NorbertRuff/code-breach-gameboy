@@ -4,6 +4,7 @@
 #include <gb/gb.h>
 #include "game_flow.h"
 #include "game_over.h"
+#include "kernel.h"
 #include "pause.h"
 #include "story.h"
 #include "../engine/camera.h"
@@ -32,6 +33,7 @@ static void restart_section(void)
     level_stream_reset(camera_x);
     screen_scroll(camera_x);
     actors_spawn(camera_x);
+    if (level_index == LEVEL_BOSS) kernel_restart();
     redraw_hud_count();
 }
 
@@ -55,6 +57,7 @@ void start_level(void) BANKED
     palette_fade_to(PALETTE_BLACK);
     screen_show_sprites(0);
     level_load(level_index);
+    if (level_index == LEVEL_BOSS) kernel_start();
     music_play_level(level_index);
     actors_load_tiles();
     pause_load_tiles();
@@ -63,6 +66,7 @@ void start_level(void) BANKED
     draw_sprites(0);
     palette_fade_in(SCREEN_FADE_FRAMES);
     screen_show_sprites(1);
+    if (level_index == LEVEL_BOSS) kernel_intro();
 }
 
 // Takes a life and restarts the section. On game over the player continues (the lives
@@ -88,14 +92,10 @@ uint8_t lose_life(void) BANKED
 }
 
 // After the exit: the elevator ride with its log line, then the next game level, with
-// full lives. After the last level comes level 1 again, until the ending exists; a test
-// room starts over.
+// full lives; a test room starts over. The boss level has no exit: the ending follows it.
 void go_to_next_level(void) BANKED
 {
     story_elevator_log(level_index);
-    if (level_index < GAME_LEVEL_COUNT) {
-        level_index++;
-        if (level_index == GAME_LEVEL_COUNT) level_index = LEVEL_1;
-    }
+    if (level_index < GAME_LEVEL_COUNT) level_index++;
     lives = START_LIVES;
 }

@@ -7,8 +7,10 @@
 #include "../level/level_data.h"
 
 // Actors are the level's moving objects (patrol bots, chasers and lifts), spawned from
-// its entity list as the camera reaches them. The player is not an actor.
+// its entity list as the camera reaches them, and KERNEL's packets and lift, which the
+// boss adds itself (src/game_state/kernel.c). The player is not an actor.
 #define MAX_ACTORS 8          // 2 or 3 hardware sprites each, after the player's 4
+#define ACTOR_GONE 0x8000     // an x behind any camera: actors_update removes the actor
 
 typedef struct ActorType ActorType;
 

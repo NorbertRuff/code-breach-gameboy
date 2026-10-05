@@ -21,6 +21,8 @@
 #define GAMEPLAY_END 4
 #define LEVEL_COMPLETE 5
 #define PAUSED 6
+#define BOSS_HIT 7          // an upload done at KERNEL's terminal (src/game_state/kernel.c)
+#define ENDING 8
 
 void wait_frames(uint16_t frames);
 

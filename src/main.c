@@ -15,10 +15,12 @@
 
 #include "./game_state/game_flow.h"
 #include "./game_state/game_over.h"
+#include "./game_state/kernel.h"
 #include "./game_state/intro_credits.h"
 #include "./game_state/pause.h"
 #include "./game_state/prepare_gameboy.h"
 #include "./game_state/start_screen.h"
+#include "./game_state/story.h"
 
 // Buttons held this frame and the last one (J_* bits).
 uint8_t joypad_current = 0;
@@ -127,6 +129,12 @@ void main_game_loop(void)
         return;
     }
 
+    // KERNEL's arena: its attacks and terminals (tile writes: while VBlank lasts).
+    if (level_index == LEVEL_BOSS && kernel_update()) {
+        current_game_state = BOSS_HIT;
+        return;
+    }
+
     input_read_player(&player, joypad_current, joypad_previous);
     actors_move_lifts();
     player_update(&player);
@@ -202,6 +210,13 @@ void main(void)
             break;
         case GAMEPLAY_END:
             current_game_state = lose_life();
+            break;
+        case BOSS_HIT:
+            current_game_state = kernel_hit();
+            break;
+        case ENDING:
+            story_ending();
+            current_game_state = TITLE_SCREEN_STATE;
             break;
         }
 

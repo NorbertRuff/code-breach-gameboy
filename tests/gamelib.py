@@ -19,6 +19,8 @@ COREGAMELOOP = 3
 GAMEPLAY_END = 4
 LEVEL_COMPLETE = 5
 PAUSED = 6
+BOSS_HIT = 7
+ENDING = 8
 
 # Sound effect numbers, from src/sound/effects.h (made from sounds/effects.txt).
 EFFECTS = {name.lower(): int(number) for name, number in re.findall(
@@ -77,9 +79,10 @@ LEVEL_1 = 0
 LEVEL_2 = 1
 LEVEL_3 = 2
 LEVEL_4 = 3
-LEVEL_GREYBOX_TEST = 4
-LEVEL_TEST_JUMPS = 5
-LEVEL_TEST_MOVERS = 6
+LEVEL_5 = 4
+LEVEL_GREYBOX_TEST = 5
+LEVEL_TEST_JUMPS = 6
+LEVEL_TEST_MOVERS = 7
 RING_COLUMNS = 32
 RING_ROWS = 16
 TILE_SIZE = 8
@@ -189,8 +192,8 @@ class Game:
 
     def rom_level_index(self, level: int) -> int:
         """A LEVEL_* index in this build's numbering: each game level a build doesn't
-        have yet (2, 3 or 4) puts its test rooms one index lower."""
-        missing = sum(not self.has_symbol(f"_level_{n}") for n in (2, 3, 4))
+        have yet (2 to 5) puts its test rooms one index lower."""
+        missing = sum(not self.has_symbol(f"_level_{n}") for n in (2, 3, 4, 5))
         return level - missing if level >= LEVEL_GREYBOX_TEST else level
 
     def _set_level_index(self, level: int) -> None:
@@ -287,19 +290,20 @@ class Game:
         return p
 
     def actors(self) -> list:
-        """The actors in play, in array order. Each has the Actor fields, plus bot, chaser and
-        lift: is it one."""
+        """The actors in play, in array order. Each has the Actor fields, plus bot, chaser,
+        lift and packet: is it one."""
         count = self.u8("_actor_count")
         if not count:
             return []                           # PyBoy refuses an empty memory slice
         raw = read_symbol(self.pyboy, "_actors", ACTOR_SIZE * count)
         types = {name: self.pyboy.symbol_lookup(f"_{name}_type")[1] if self.has_symbol(f"_{name}_type") else None
-                 for name in ("bot", "chaser", "lift")}
+                 for name in ("bot", "chaser", "lift", "packet")}
         actors = []
         for i in range(count):
             values = struct.unpack_from(ACTOR_FORMAT, raw, i * ACTOR_SIZE)
             actor = SimpleNamespace(**{name: v for (name, _), v in zip(ACTOR_FIELDS, values)})
-            actor.bot, actor.chaser, actor.lift = (actor.type == types[name] for name in ("bot", "chaser", "lift"))
+            actor.bot, actor.chaser, actor.lift, actor.packet = (actor.type == types[name]
+                                                                 for name in ("bot", "chaser", "lift", "packet"))
             actors.append(actor)
         return actors
 

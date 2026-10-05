@@ -110,8 +110,9 @@ Levels can be at most 255 tiles wide: map widths are `uint8_t`, as in GBDK's
 The converter fails the build when:
 
 - the map isn't 13 tiles tall, or is narrower than 20;
-- there isn't exactly one `player_start` and one `exit`;
-- a level other than the boss level doesn't have exactly two `gate`s;
+- there isn't exactly one `player_start`, or (but in the boss arena, map property `boss`)
+  exactly one `exit`;
+- a level other than the boss arena doesn't have exactly two `gate`s;
 - there are more than 32 fragments;
 - a gate asks for more fragments than its section has, or has no room to restart right
   of it (2 free columns, the body's 4 rows free of solid and hazard tiles, ground below);

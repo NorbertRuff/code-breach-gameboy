@@ -17,6 +17,11 @@ States are defined in `src/utils.h`:
   (`restart_behind_fade`) and returns the next state. On game over, `game_over` in
   `game_over.c` asks CONTINUE (the lives refill, the section's fragments come back) or
   QUIT (`TITLE_SCREEN_STATE`).
+- In level 5 (`LEVEL_BOSS`), `main_game_loop` first calls `kernel_update`; a finished
+  upload goes to `BOSS_HIT` (`kernel_hit`: hit-stop, shake, flashes, the next phase), the
+  third to `ENDING` (`story_ending`, then the title). The uploads are kept as the arena's
+  collected fragments, so the HUD shows them, a lost life keeps them and a game over clears
+  them.
 - `LEVEL_COMPLETE` (the exit reached) notes the level in the progress, shows the patch,
   the fragment summary and the password (`level_complete`), then the elevator ride's log
   and the next game level with full lives (`go_to_next_level`: level 1 again after the
@@ -37,12 +42,12 @@ tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next le
 
 | Directory | Purpose |
 |---|---|
-| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, and the password; `tools/password.py` is a copy), `game_flow` (level start, section restart, losing a life), `game_over` (also `level_complete`), `story` (the boot screen and the elevator logs, typed), `pause` (the label); all banked but `start_screen` |
+| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, and the password; `tools/password.py` is a copy), `game_flow` (level start, section restart, losing a life), `game_over` (also `level_complete`), `story` (the boot screen, the AI logs, the ending and credits), `kernel` (the boss: face, terminals, packet volleys, the lift, the corrupted floor; `start_level` and `restart_section` call it in level 5), `pause` (the label); all banked but `start_screen` |
 | `src/engine/` | `platform.c` (`is_cgb`), `palette.c` and `palette_effects.c` (every palette write; loads in bank 0, fades and flashes banked), `text.c` (screen text in the game's font), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK`), `camera.c`, `screen.c` (line interrupts) |
 | `src/player/` | `Player` struct and physics: `player_update`, `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad, Down and A into the player |
 | `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, which finds a level's header and bank in two tables by index; `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
-| `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `chaser.c` (the chaser), `lift.c` (the lift) |
+| `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `chaser.c` (the chaser), `lift.c` (the lift), `packet.c` (KERNEL's packet: kernel.c adds it to `actors[]`, and its x set to `ACTOR_GONE` removes it) |
 | `src/sound/` | `sound.c` (the effect player), `effects.c` (generated: `make sounds`), `music.c` (the level's song through hUGEDriver) |
 | `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus hand-made `splashscreen.c`, `hud_digits.c`, `font.c`) |
 | `graphics/`, `levels/`, `music/`, `sounds/` | Sources: PNGs and Tiled `.tsx`, Tiled maps `.tmj`, hUGETracker songs `.uge`, FX Hammer effect packs `.sav` and the effect list `effects.txt` |
@@ -161,9 +166,10 @@ status.
 ## Memory map
 
 - **Background tiles** (GBDK uses `0x8800` addressing, so background tiles 128–255 share
-  memory with sprite tiles 128–255): the level's from 0, the HUD frame from 64, the HUD
-  digits 133–144, the font 160–208.
-- **Sprite tiles:** the player 0–39, the bot 40–43, the pause label 44–53, the lift 54–55. The player is
+  memory with sprite tiles 128–255): the level's from 0, the HUD frame from 64, KERNEL's
+  from 78 (level 5), the HUD digits 133–144, the font 160–208.
+- **Sprite tiles:** the player 0–39, the bot 40–43, the pause label 44–53, the lift 54–55,
+  KERNEL's packet 56–59. The player is
   4 OAM entries (8×16 mode), a bot 2.
 - **ROM banks:** assets are made with `png2asset -b 255` (autobank, `BANKREF(name)`) and
   read inside `WITH_BANK(name, ...)`, one asset per `WITH_BANK`, only from bank 0 code.

@@ -12,11 +12,12 @@
 #define LEVEL_2            1    // Code Testing Lab
 #define LEVEL_3            2    // AI Research Wing
 #define LEVEL_4            3    // Network Hub
-#define GAME_LEVEL_COUNT   4    // the game's levels; the test rooms follow
-#define LEVEL_GREYBOX_TEST 4    // the tests' level
-#define LEVEL_TEST_JUMPS   5    // fixtures for tests/test_jump_metrics.py
-#define LEVEL_TEST_MOVERS  6    // a lift and a chaser, for tests/test_movers.py
-#define LEVEL_COUNT        7
+#define LEVEL_5            4    // Mainframe: the KERNEL boss (src/game_state/kernel.c)
+#define GAME_LEVEL_COUNT   5    // the game's levels; the test rooms follow
+#define LEVEL_GREYBOX_TEST 5    // the tests' level
+#define LEVEL_TEST_JUMPS   6    // fixtures for tests/test_jump_metrics.py
+#define LEVEL_TEST_MOVERS  7    // a lift and a chaser, for tests/test_movers.py
+#define LEVEL_COUNT        8
 
 // Collision ring: the collision of the columns in the background map. 32 columns that
 // wrap like the map, 16 screen rows each (the HUD rows are left out).

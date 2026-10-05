@@ -6,10 +6,9 @@
 
 // The progress byte a password holds.
 #define LEVEL_BITS    0x07   // bits 0-2: the furthest level
-#define PERFECT_SHIFT 3      // bits 3-6: the 100% marks of levels 1-4
+#define PERFECT_SHIFT 3      // bits 3-6: the 100% marks of levels 1-4 (the boss level has none)
 #define PERFECT_BITS  0x0F
 #define UNUSED_BIT    0x80   // bit 7: always 0
-#define MARKED_LEVELS 4      // the boss level (5) has no mark
 
 uint8_t furthest_level;
 uint8_t perfect_levels;
@@ -23,15 +22,13 @@ void progress_reset(void) BANKED
     perfect_levels = 0;
 }
 
-// Notes a finished game level (test rooms don't count): the next level becomes playable,
-// up to the last one this build has, and all of its fragments earn its 100% mark.
+// Notes a finished game level, 1-4 (test rooms don't count): the next level becomes
+// playable, and all of its fragments earn its 100% mark.
 void progress_finish_level(uint8_t level, uint8_t perfect) BANKED
 {
     if (level >= GAME_LEVEL_COUNT) return;
-    if (perfect && level < MARKED_LEVELS) perfect_levels |= 1 << level;
-    uint8_t next = level + 1;
-    if (next == GAME_LEVEL_COUNT) next = level;
-    if (next > furthest_level) furthest_level = next;
+    if (perfect) perfect_levels |= 1 << level;
+    if (level + 1 > furthest_level) furthest_level = level + 1;
 }
 
 // The check byte of a progress byte. Each progress byte gets a different one, so a
@@ -57,7 +54,7 @@ void password_make(char* text) BANKED
 }
 
 // Takes a typed password (4 letter values, 0-15) as the progress if it is one: its check
-// byte matches, bit 7 is clear, its level is in this build, and only finished levels
+// byte matches, bit 7 is clear, its level is a game level, and only levels before it
 // have marks. Returns 1 if taken.
 uint8_t password_check(const uint8_t* typed) BANKED
 {
@@ -66,7 +63,7 @@ uint8_t password_check(const uint8_t* typed) BANKED
     uint8_t level = progress & LEVEL_BITS;
     uint8_t perfect = (progress >> PERFECT_SHIFT) & PERFECT_BITS;
     if (check != check_byte(progress) || (progress & UNUSED_BIT) || level >= GAME_LEVEL_COUNT
-        || (perfect >> (level + 1))) return 0;
+        || (perfect >> level)) return 0;
     furthest_level = level;
     perfect_levels = perfect;
     return 1;

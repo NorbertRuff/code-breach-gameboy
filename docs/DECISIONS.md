@@ -57,6 +57,14 @@ or git keeps the old one). Details of how the code does it belong in
 - **Story screens** (2026-10-05): the boot screen (after NEW GAME) and the elevator log
   (after level complete) type their lines on a blank screen, a character every 4 frames,
   then wait for START or 5 s. Log 5 shows before the boss level. **Proposed.**
+- **Boss design approved** (2026-10-05, owner): 3 terminals and uploads (hold Up), one
+  earlier idea per phase (packets, the lift, the corrupted floor), no spawned bots or purge
+  sweep, a whole-screen shake, game over restarts phase 1, song "Terminate"
+  (LEVEL_DESIGN.md section 7). While building it (2026-10-05, **Proposed**): a terminal
+  lights once the phase's first volley has fallen, and phase 2's extra packets stay left
+  of the lift (LEVEL_DESIGN.md, "Level 5 build notes").
+- **Ending** (2026-10-05, **Proposed**): "LOCKDOWN LIFTED" typed as the screen fades to
+  light, song "Closing", then a credits screen until START, then the title.
 - **Boss:** "KERNEL" on one screen, drawn with background tiles (details in M8, reviewed by
   the owner first).
 - **Fades** between screens and on level load (owner likes them).

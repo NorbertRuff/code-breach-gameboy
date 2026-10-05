@@ -10,6 +10,7 @@
 #include "../levels/level_2.h"
 #include "../levels/level_3.h"
 #include "../levels/level_4.h"
+#include "../levels/level_5.h"
 #include "../levels/test_jumps.h"
 #include "../levels/test_movers.h"
 #include "../engine/banking.h"
@@ -112,11 +113,11 @@ static void draw_band(void)
 // address of its BANKREF symbol (what BANK() reads), kept as a pointer so the table is
 // a constant.
 static const void* const level_banks[LEVEL_COUNT] = {
-    &__bank_level_1, &__bank_level_2, &__bank_level_3, &__bank_level_4,
+    &__bank_level_1, &__bank_level_2, &__bank_level_3, &__bank_level_4, &__bank_level_5,
     &__bank_greybox_test, &__bank_test_jumps, &__bank_test_movers
 };
 static const LevelData* const level_headers[LEVEL_COUNT] = {
-    &level_1, &level_2, &level_3, &level_4, &greybox_test, &test_jumps, &test_movers
+    &level_1, &level_2, &level_3, &level_4, &level_5, &greybox_test, &test_jumps, &test_movers
 };
 
 // Sets up a level behind a dark screen: header, tiles, HUD. The columns are drawn by

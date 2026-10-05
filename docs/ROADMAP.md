@@ -6,17 +6,18 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 
 ## Status (2026-10-05)
 
-- **Playable:** levels 1-4 (level 1 art pending; levels 2 and 3 greyboxes, kept after the
-  owner's passes; the level 4 greybox is new), music and sound effects; passwords with the
-  title menu, the password screen, the level select and the game over menu; the story text
-  (boot screen, "PATCH n/5", the AI log per elevator ride). The M7 menus and story and
-  level 4 wait for the owner's check. Next: the owner reviews the boss design, then
-  level 5 is built; M5 art waits for the style guide.
-- **Tests:** `make test` 227 tests in about 14 s; `make test-full` 336 in about 19 s.
-- **Memory:** bank 0 has 1,365 bytes free (`level_load` reads tables instead of a chain
-  of ifs); WRAM uses 1,495 of 4,096 bytes.
+- **Playable from start to end:** levels 1-4 (level 1 art pending; levels 2 and 3
+  greyboxes, kept after the owner's passes; level 4's greybox new) and level 5, the KERNEL
+  boss (greybox, placeholder face), then the ending and the credits; music and sound
+  effects; passwords, the title menu, the level select and the game over menu; the story
+  text. New since the owner's last check: the M7 menus and story, level 4, level 5 and the
+  ending. Next: the owner's playthrough; M5 art waits for the style guide.
+- **Tests:** `make test` 232 tests in about 16 s; `make test-full` 346 in about 21 s.
+- **Memory:** bank 0 has 1,074 bytes free (KERNEL's packet actor and the boss and ending
+  states are in it); WRAM uses 1,504 of 4,096 bytes.
 - **Frame budget** (worst update, line of the 140 allowed; average): level 1 125 (79),
-  level 2 108 (66), level 3 131 (91), level 4 107 (69), greybox route 121 (80). Lifts cost about 10 lines on
+  level 2 108 (66), level 3 131 (91), level 4 107 (69), level 5 111 (72), greybox route
+  121 (80). KERNEL's own update about 8 lines, up to 25 when it writes tiles. Lifts cost about 10 lines on
   average where they are; the music step about 9, up to 18; a streamed column's write 5.
 
 ## Bugs
@@ -37,6 +38,9 @@ A fixed bug leaves this list; its regression test keeps the number.
   change the **Proposed** menu and story-screen decisions (DECISIONS.md).
 - Play the level 4 greybox and its song ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7,
   "Level 4 brief": the open points).
+- Play level 5 and the ending: the boss's feel and timings, its song "Terminate" and the
+  ending's "Closing", the credits' text ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7,
+  "Level 5 build notes": what changed from the design).
 
 The physics and level loading (M2) came before color (M4) and art (M5) on purpose: level
 layouts depend on the jump, and levels are designed with plain blocks first.
@@ -107,8 +111,8 @@ Done when level 1 looks like the final game in both modes.
 - [ ] Music per level, title, game over and ending. Levels 1 and 2, title, game over and
       level complete have songs (owner approved 2026-10-04; both packs in `music/packs/`,
       all 18 songs in the sound test); level 3 too (owner: keep). Level 4 plays
-      "Whirlwind" (2026-10-05, **(owner)** listen). Level 5 and the ending wait for those
-      (candidates: "Terminate" for the boss, "Closing" for the ending).
+      "Whirlwind", level 5 "Terminate", the ending "Closing" (2026-10-05, **(owner)**
+      listen).
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
 
@@ -125,7 +129,8 @@ Done when level 1 looks like the final game in both modes.
 - [x] Story text: 3-line boot screen on a new game, "PATCH n/5 COMPILED" on level
       complete, the AI log on the elevator ride after levels 1-3 (2026-10-05,
       `src/game_state/story.c`). Log 4 comes with level 4, log 5 with the boss level (M8).
-- [ ] Ending and the in-game credits screen.
+- [x] Ending and the in-game credits screen (2026-10-05, `story_ending` in
+      `src/game_state/story.c`): "LOCKDOWN LIFTED", then the credits, then the title.
 
 ## M8 — Levels 2 to 5
 
@@ -142,9 +147,9 @@ replay test that finishes it.
 - [ ] Level 4, Network Hub: hazards. Greybox built 2026-10-05 (`levels/level_4.tmj`,
       [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7) with a replay test; **(owner)** play it.
       Then the art pass.
-- [ ] Level 5, Mainframe: the KERNEL boss. Design drafted 2026-10-05
-      ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7, "Level 5 design");
-      **(owner)** review it and answer its questions before it's built.
+- [ ] Level 5, Mainframe: the KERNEL boss. Built 2026-10-05 from the approved design
+      (`levels/level_5.tmj`, `src/game_state/kernel.c`, `tests/test_boss.py`);
+      **(owner)** play it. Then the art pass (the face, the packet, the terminals).
 
 ## M9 — Polish and release
 

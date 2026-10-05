@@ -591,11 +591,11 @@ Fragments: A 5 (gate 3 of 5), B 5 (gate 3 of 5), C 3 (bonus): 13. **Actors:** 2 
 (1 fast), 1 chaser, 1 lift. The replay's worst frame ends at line 107 of the 140 allowed
 (average 69; `tools/frame_budget.py --route level4`).
 
-### Level 5 design: Mainframe, the KERNEL boss (draft for the owner's review)
+### Level 5 design: Mainframe, the KERNEL boss
 
-**Status: draft by Claude, 2026-10-05, from the concept in GAME_DESIGN.md and RESEARCH.md
-section 3. Nothing is built.** The owner reviews it first (roadmap M8); the questions are
-at the end.
+**Status: by Claude, 2026-10-05, from the concept in GAME_DESIGN.md and RESEARCH.md
+section 3; approved by the owner the same day, with every proposal below (the answers to
+the questions at the end). Built the same day: the build notes below say what changed.**
 
 **The fight in one line:** KERNEL can't be hit, so the player uploads the patch at three
 kill-switch terminals that light up one at a time, while KERNEL attacks. Each phase adds
@@ -666,15 +666,21 @@ The password after level 4 already opens level 5.
 
 **Hardware budget:**
 - **Sprites:** the player 4, at most 3 packets (2 each), the lift 3: at most 13 of 40.
-  Per screen line: a volley's packets start 8 frames apart, so at most 2 share a line:
-  the player 2 + packets 4 + the lift 3 = 9 of 10.
+  Per screen line: a volley's packets start 8 frames apart at 2 px per frame, so they
+  are 16 px apart and never share a line: the player 2 + a packet 2 + the lift 3 = 7 of
+  10. (KERNEL as sprites would need 42, more than the 40 there are: hence background.)
 - **Frame budget:** no streaming saves the camera's 21 lines; the boss update (one
   volley's actors, one floor segment's tiles) should stay under about 15 lines, so the
   worst update should end well under level 3's 131.
 - **Bank 0:** the boss code goes to a ROM bank; bank 0 gets only the call from the game
   loop (about 30 bytes).
-- **Tiles:** face 42, terminals 3, corrupted floor 2, the warning marker 1; the packet's 4
-  sprite tiles.
+- **Tiles:** about 80 background tiles (face 42 plus a few swaps per phase, terminals,
+  corrupted floor, marker, the greybox and band tiles) of about 190 free; they don't fit
+  in the 64 slots before the HUD frame, so the face goes after it (a memory map change).
+  The packet's 4 sprite tiles.
+- **Screen shake** is horizontal only (`SCX`); a vertical one would move the band and HUD
+  splits. The map columns just outside the arena are drawn too, so a shake shows no
+  garbage at the edges.
 
 **What it reuses and what's new:**
 - Reused: the lift actor, hazard tiles (the corrupted floor is the same as level 4's
@@ -693,10 +699,27 @@ The password after level 4 already opens level 5.
 - **A screen split that moves only the face:** the whole screen shakes instead, with the
   same `SCX` the camera uses; no new line interrupt.
 
-**Questions for the owner:**
+**Questions for the owner** (2026-10-05: all as proposed):
 1. Is the fight right at 3 uploads, one per phase, with the hit feedback above?
 2. Hold Up for half a second at a terminal, or a single press?
 3. Cut the spawned bots and the purge sweep, as proposed?
 4. Shake the whole screen instead of moving only the face?
 5. Game over restarts the fight from phase 1: or keep the uploads done?
 6. The song: "Terminate" (Tronimal, pack 1), after listening (`make soundtest`).
+
+### Level 5 build notes (2026-10-05)
+
+Built from the design above: `levels/level_5.tmj` (the arena's floor and shelves, map
+property `boss`), `src/game_state/kernel.c` (the face, the terminals, the lift, the volley
+and floor tables), `src/actor/packet.c`. `tests/test_boss.py` beats it without losing a
+life (and checks the warnings, the uploads and the lives); the worst frame ends at line
+111 of 140. What changed while building it, and why:
+- **A terminal lights 2.5 s into its phase,** once the first volley has fallen, not right
+  away: with the terminal lit at once, phase 1 was over before KERNEL had attacked.
+- **Phase 2's extra packets fall left of the lift** (lanes 0-5): with lanes 6 and 7 in the
+  table, packets landed on the lift almost every volley, and boarding it was luck. Over
+  the lift and the shelf only the packet aimed at the player falls.
+- **A waiting packet blinks over the band,** above the highest head (the shelf and the
+  lift's top), so it can't hurt before it falls; it falls about 48 frames to the floor.
+- **The map columns right of the arena are drawn** (empty, with floor), so the shake shows
+  no old tiles at the edges.

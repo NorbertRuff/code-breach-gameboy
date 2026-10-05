@@ -2,9 +2,9 @@
 
 **Status: written by Claude 2026-10-04, approved by the owner 2026-10-05.** Roadmap M7,
 story text. The owner keeps the twist (staff #042 wrote the AI).
-The concept is in GAME_DESIGN.md (Story & Setting). In the game since 2026-10-05
-(`src/game_state/story.c`, `game_over.c`), except log 5 (before the boss level) and the
-ending.
+The concept is in GAME_DESIGN.md (Story & Setting). All of it is in the game since
+2026-10-05 (`src/game_state/story.c`, `game_over.c`; log 5 is typed under KERNEL's face as
+the boss level starts).
 
 A Game Boy text screen is 20 characters wide. Every line below fits.
 

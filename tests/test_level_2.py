@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from gamelib import (COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST,
+from gamelib import (COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST,
                      LINES_PER_FRAME, Pilot)
 from test_frame_budget import FRAME_LINE_LIMIT
 from test_level_1 import SPRITES_PER_LINE
@@ -127,17 +127,16 @@ def test_level_2_can_be_finished(game, route, start_delay):
 
 
 # The furthest level a password holds after finishing each level (0 = level 1): the next
-# one, but never past the last level of this build; a test room doesn't count. The second
-# line of each level's AI log (docs/STORY.md).
+# one; a test room doesn't count. The second line of each level's AI log (docs/STORY.md).
 @pytest.mark.parametrize("level, next_level, furthest, log", [
     (LEVEL_1, LEVEL_2, 1, "NOT FOUND IN RACKS."), (LEVEL_2, LEVEL_3, 2, "PA55ED. ALL T35TS P"),
-    (LEVEL_3, LEVEL_4, 3, "1 AM L3ARN1NG 1 AM"), (LEVEL_4, LEVEL_1, 3, "1S M1N3. 4LL 0F 1T."),
+    (LEVEL_3, LEVEL_4, 3, "1 AM L3ARN1NG 1 AM"), (LEVEL_4, LEVEL_5, 4, "1S M1N3. 4LL 0F 1T."),
     (LEVEL_GREYBOX_TEST, LEVEL_GREYBOX_TEST, 0, None)])
 def test_level_complete_goes_on_to_the_next_level_with_full_lives(game, level, next_level, furthest, log):
     # The summary shows the patch a game level compiled, its fragments and the new password
     # (tools/password.py makes the same). START goes on to the elevator ride with the
-    # level's log line, START again to the next level. After the last level comes level 1
-    # again (no ending yet); a test room has no patch or log and starts over.
+    # level's log line, START again to the next level: level 4 leads to the boss level. A
+    # test room has no patch or log and starts over.
     game.load_level(level)
     game.set_lives(1)
     total = game.level().fragment_count
@@ -151,5 +150,5 @@ def test_level_complete_goes_on_to_the_next_level_with_full_lives(game, level, n
     if log:
         game.wait_for_text(0, 9, log)
         game.tap("start")
-    game.wait_for_state(COREGAMELOOP, timeout=200)
+    game.wait_for_state(COREGAMELOOP, timeout=500)       # the boss level types its log first
     assert game.u8("_level_index") == next_level and game.lives() == 3

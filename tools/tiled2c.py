@@ -191,13 +191,15 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
 
     if len(starts) != 1:
         fail(f"needs exactly one player_start, found {len(starts)}")
-    # Test rooms for the PyBoy tests (map property test = true) need no exit or gates.
+    # Test rooms for the PyBoy tests (map property test = true) need no exit or gates, the
+    # boss arena (boss = true) neither: the fight ends the level.
     test_room = properties(tmj).get("test", False)
+    boss = properties(tmj).get("boss", False)
     exits = sum(e.kind == "exit" for e in entities)
-    if exits != 1 and not test_room:
-        fail(f"needs exactly one exit, found {exits}")
+    if exits != 1 and not (test_room or boss):
+        fail(f"needs exactly one exit (or the map property boss = true), found {exits}")
     gates = sorted(e.x for e in entities if e.kind == "gate")
-    if len(gates) != SECTIONS - 1 and not (test_room or properties(tmj).get("boss", False)):
+    if len(gates) != SECTIONS - 1 and not (test_room or boss):
         fail(f"needs exactly {SECTIONS - 1} gates (or the map property boss = true), found {len(gates)}")
 
     entities.sort(key=lambda e: (e.x, e.y))

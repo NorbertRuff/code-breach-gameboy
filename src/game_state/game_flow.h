@@ -16,6 +16,7 @@ void go_to_next_level(void) BANKED;
 
 // From main.c.
 extern Player player;
+extern uint8_t joypad_current;
 extern uint8_t lives;
 void draw_sprites(uint8_t with_pause_label);
 void redraw_hud_count(void);

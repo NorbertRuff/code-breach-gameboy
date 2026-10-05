@@ -114,7 +114,10 @@ def marker_places(level) -> dict:
 
 def screen_mismatch(game, levels: dict):
     """The first screen cell whose tile isn't the map's (or a marker where the level has
-    that object) or whose collision isn't its tile's, or None."""
+    that object) or whose collision isn't its tile's, or None. Levels missing from levels
+    aren't checked."""
+    if game.u8("_level_index") not in levels:
+        return None                         # KERNEL's arena: the boss draws over its map
     level, places = levels[game.u8("_level_index")]
     marker_class = level.tileset.classes
     first = game.camera_x() >> 3

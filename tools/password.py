@@ -12,7 +12,7 @@ half, the progress's high half.
 import sys
 
 LETTERS = "BCDFGHJKLMNPRTWX"
-LEVELS = 5           # the finished game's levels; a build accepts only the levels it has
+LEVELS = 5
 MARKED_LEVELS = 4    # the boss level has no 100% mark
 UNUSED_BIT = 0x80
 
@@ -29,14 +29,14 @@ def make(level: int, perfect: int = 0) -> str:
     return "".join(LETTERS[n] for n in (check >> 4, progress & 0x0F, check & 0x0F, progress >> 4))
 
 
-def read(text: str, levels: int = LEVELS):
-    """(level, perfect) of a password, or None if a build with `levels` levels refuses it."""
+def read(text: str):
+    """(level, perfect) of a password, or None if the game refuses it."""
     if len(text) != 4 or any(c not in LETTERS for c in text.upper()):
         return None
     values = [LETTERS.index(c) for c in text.upper()]
     check, progress = (values[0] << 4) | values[2], (values[3] << 4) | values[1]
     level, perfect = progress & 0x07, (progress >> 3) & 0x0F
-    if check != check_byte(progress) or progress & UNUSED_BIT or level >= levels or perfect >> (level + 1):
+    if check != check_byte(progress) or progress & UNUSED_BIT or level >= LEVELS or perfect >> level:
         return None
     return level, perfect
 
