@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 // What the player has done, kept in a 4-letter password (DECISIONS.md "Saves"): the
-// furthest level they may play, a 100% mark per finished level, and hard mode.
+// furthest level they may play and a 100% mark per finished level.
 // progress.c, a ROM bank.
 
 #define PASSWORD_LENGTH 4
@@ -14,7 +14,6 @@
 
 extern uint8_t furthest_level;   // the highest level index the player may pick
 extern uint8_t perfect_levels;   // bit n: level n finished with all of its fragments
-extern uint8_t hard_mode;        // 1: every gate asks for all of its section's fragments
 
 void progress_reset(void) BANKED;
 void progress_finish_level(uint8_t level, uint8_t perfect) BANKED;

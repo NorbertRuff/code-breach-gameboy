@@ -10,14 +10,14 @@ from pathlib import Path
 import pytest
 
 from gamelib import (COREGAMELOOP, GAMEPLAY_END, GAMEPLAY_START, HUD_DIGIT_TILE_BASE, LEVEL_1,
-                     LEVEL_2, LEVEL_3, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST, LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, MAX_ACTORS, PAUSED,
+                     LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST, LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, MAX_ACTORS, PAUSED,
                      read_symbol)
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import tiled2c  # noqa: E402
 
-LEVEL_MAPS = {LEVEL_1: "level_1", LEVEL_2: "level_2", LEVEL_3: "level_3", LEVEL_GREYBOX_TEST: "greybox_test", LEVEL_TEST_JUMPS: "test_jumps",
+LEVEL_MAPS = {LEVEL_1: "level_1", LEVEL_2: "level_2", LEVEL_3: "level_3", LEVEL_4: "level_4", LEVEL_GREYBOX_TEST: "greybox_test", LEVEL_TEST_JUMPS: "test_jumps",
               LEVEL_TEST_MOVERS: "test_movers"}
 COLLISION = {"": 0, "solid": 1, "one_way": 2, "hazard": 3}
 MARKER_COLLISION = {"fragment": 4, "gate": 1, "exit": 5, "player_start": 0}   # level_stream.c

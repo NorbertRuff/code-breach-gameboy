@@ -11,11 +11,12 @@
 #define LEVEL_1            0    // Server Room
 #define LEVEL_2            1    // Code Testing Lab
 #define LEVEL_3            2    // AI Research Wing
-#define GAME_LEVEL_COUNT   3    // the game's levels; the test rooms follow
-#define LEVEL_GREYBOX_TEST 3    // the tests' level
-#define LEVEL_TEST_JUMPS   4    // fixtures for tests/test_jump_metrics.py
-#define LEVEL_TEST_MOVERS  5    // a lift and a chaser, for tests/test_movers.py
-#define LEVEL_COUNT        6
+#define LEVEL_4            3    // Network Hub
+#define GAME_LEVEL_COUNT   4    // the game's levels; the test rooms follow
+#define LEVEL_GREYBOX_TEST 4    // the tests' level
+#define LEVEL_TEST_JUMPS   5    // fixtures for tests/test_jump_metrics.py
+#define LEVEL_TEST_MOVERS  6    // a lift and a chaser, for tests/test_movers.py
+#define LEVEL_COUNT        7
 
 // Collision ring: the collision of the columns in the background map. 32 columns that
 // wrap like the map, 16 screen rows each (the HUD rows are left out).

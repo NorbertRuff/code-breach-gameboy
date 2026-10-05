@@ -5,6 +5,7 @@
 #include "game_flow.h"
 #include "menu.h"
 #include "progress.h"
+#include "story.h"
 #include "../engine/palette.h"
 #include "../engine/text.h"
 #include "../graphics/splashscreen.h"
@@ -123,7 +124,7 @@ static uint8_t enter_password(void)
 }
 
 // The level select after a password: every level up to the furthest one, with its 100%
-// mark, and HARD MODE when on. Starts on the furthest level and sets the one picked.
+// mark. Starts on the furthest level and sets the one picked.
 // With only level 1 open, there is nothing to pick.
 static void choose_level(void)
 {
@@ -138,13 +139,12 @@ static void choose_level(void)
         text_print(LEVEL_LIST_X, row, name);
         if (perfect_levels & (1 << level)) text_print(LEVEL_MARK_X, row, "100%");
     }
-    if (hard_mode) text_print(5, 16, "HARD MODE");
     level_index = menu_choose(LEVEL_LIST_X - 2, LEVEL_LIST_TOP, furthest_level + 1, furthest_level);
     palette_fade_out(SCREEN_FADE_FRAMES);
 }
 
-// Over the title screen: NEW GAME starts level 1 from nothing; CONTINUE asks for a
-// password, then a level. Sets the level to start, with full lives, and returns 1 with
+// Over the title screen: NEW GAME shows the boot screen and starts level 1 from nothing;
+// CONTINUE asks for a password, then a level. Sets the level to start, with full lives, and returns 1 with
 // the screen faded out; returns 0 to show the title again (B on the password screen).
 uint8_t title_menu(void) BANKED
 {
@@ -155,6 +155,7 @@ uint8_t title_menu(void) BANKED
     palette_fade_out(SCREEN_FADE_FRAMES);
     if (choice == NEW_GAME) {
         progress_reset();
+        story_boot_screen();
         level_index = LEVEL_1;
     } else {
         if (!enter_password()) return 0;

@@ -51,9 +51,12 @@ or git keeps the old one). Details of how the code does it belong in
 - **Pause:** START freezes the game with "PAUSE" in the band; the music keeps playing.
   SELECT while paused loads the next level (cheat, `LEVEL_SELECT_CHEAT`; M9 decides if it
   ships). A real menu waits for M7. **Proposed.**
-- **Hard mode** after clearing the game: every gate needs all of its section's fragments.
+- **No hard mode** (2026-10-05, owner): cut to keep the game small.
 - **Story:** "PATCH n/5"; each level's fragments compile into a patch uploaded in the boss
   fight; the twist that staff #042 wrote the AI stays (STORY.md).
+- **Story screens** (2026-10-05): the boot screen (after NEW GAME) and the elevator log
+  (after level complete) type their lines on a blank screen, a character every 4 frames,
+  then wait for START or 5 s. Log 5 shows before the boss level. **Proposed.**
 - **Boss:** "KERNEL" on one screen, drawn with background tiles (details in M8, reviewed by
   the owner first).
 - **Fades** between screens and on level load (owner likes them).
@@ -166,7 +169,9 @@ or git keeps the old one). Details of how the code does it belong in
 - **The music step runs in the line-23 interrupt, not VBlank** (2026-10-04, owner): about 9
   lines per frame, up to 18; in VBlank it delayed every update.
 - **Songs:** level 1 "Tech", level 2 "Neurotic Robonaut" (owner, after the hardware pass,
-  2026-10-04), level 3 "Observing Jupiter" (owner: keep, 2026-10-04); only Tronimal's own songs, not the packs' remixes of other people's.
+  2026-10-04), level 3 "Observing Jupiter" (owner: keep, 2026-10-04), level 4 "Whirlwind"
+  (2026-10-05, **Proposed**); only Tronimal's own songs, not the packs' remixes of other
+  people's.
 - **Screen songs:** title "Decampment", game over "Gone Missing", level complete "Delight",
   each after the screen's flashes; the level's song starts again after them (2026-10-04,
   owner approved after listening).
@@ -183,17 +188,14 @@ or git keeps the old one). Details of how the code does it belong in
   count on the owner's EverDrive clone (MBC5, MBC1, MBC3). So the cartridge is plain MBC5
   (`0x19`, no RAM); the save test ROMs keep MBC5 + RAM + battery as tools.
 - **Password contents** (2026-10-04, owner): 4 characters from 16 easy-to-read ones (no
-  0/O or 1/I): the next level (1-5), a 100% mark per finished level, hard mode, and a
+  0/O or 1/I): the next level (1-5), a 100% mark per finished level, and a
   checksum, so a typo is refused instead of loading the wrong game. CONTINUE on the title
   screen opens the entry; the level complete screen shows the new password.
 - **Password format** (2026-10-05): letters `BCDFGHJKLMNPRTWX` (consonants only, so no
-  words); one progress byte (furthest level, marks of levels 1-4, the boss level has none,
-  hard mode) and a check byte that is a one-to-one mix of it, so every single wrong letter
+  words); one progress byte (furthest level, marks of levels 1-4, the boss level has none;
+  bit 7 unused, a password with it set is refused) and a check byte that is a one-to-one mix of it, so every single wrong letter
   is refused (`tools/password.py`). The furthest level never passes the build's last
   level, so the password after the last level works in the same build.
-- **Hard mode in the password means playing in hard mode** (2026-10-05): every gate of
-  every level asks for all of its section's fragments. Unlocking it (a password with the
-  flag after the ending) waits for the ending. **Proposed.**
 - **Menus** (2026-10-05): the title shows NEW GAME / CONTINUE after START; CONTINUE asks
   for the password, then a level select (levels up to the furthest, with 100% marks,
   starting on the furthest; skipped when only level 1 is open). Game over shows CONTINUE /

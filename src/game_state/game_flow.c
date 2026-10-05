@@ -5,7 +5,7 @@
 #include "game_flow.h"
 #include "game_over.h"
 #include "pause.h"
-#include "progress.h"
+#include "story.h"
 #include "../engine/camera.h"
 #include "../engine/palette.h"
 #include "../engine/screen.h"
@@ -49,21 +49,12 @@ static void restart_behind_fade(uint8_t invincible)
     screen_show_sprites(1);
 }
 
-// Hard mode: every gate asks for all of its section's fragments.
-static void use_hard_mode_quotas(void)
-{
-    for (uint8_t i = 0; i < current_level.gate_count; i++) {
-        current_level.gates[i].quota = current_level.section_fragments[i];
-    }
-}
-
 // Builds the level behind a black screen, then fades in.
 void start_level(void) BANKED
 {
     palette_fade_to(PALETTE_BLACK);
     screen_show_sprites(0);
     level_load(level_index);
-    if (hard_mode) use_hard_mode_quotas();
     music_play_level(level_index);
     actors_load_tiles();
     pause_load_tiles();
@@ -96,10 +87,12 @@ uint8_t lose_life(void) BANKED
     return COREGAMELOOP;
 }
 
-// After the exit: the next game level, with full lives. After the last level comes
-// level 1 again, until the ending exists; a test room starts over.
+// After the exit: the elevator ride with its log line, then the next game level, with
+// full lives. After the last level comes level 1 again, until the ending exists; a test
+// room starts over.
 void go_to_next_level(void) BANKED
 {
+    story_elevator_log(level_index);
     if (level_index < GAME_LEVEL_COUNT) {
         level_index++;
         if (level_index == GAME_LEVEL_COUNT) level_index = LEVEL_1;

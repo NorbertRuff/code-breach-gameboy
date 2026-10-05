@@ -76,9 +76,10 @@ for _name, _fmt in PLAYER_FIELDS:
 LEVEL_1 = 0
 LEVEL_2 = 1
 LEVEL_3 = 2
-LEVEL_GREYBOX_TEST = 3
-LEVEL_TEST_JUMPS = 4
-LEVEL_TEST_MOVERS = 5
+LEVEL_4 = 3
+LEVEL_GREYBOX_TEST = 4
+LEVEL_TEST_JUMPS = 5
+LEVEL_TEST_MOVERS = 6
 RING_COLUMNS = 32
 RING_ROWS = 16
 TILE_SIZE = 8
@@ -187,9 +188,9 @@ class Game:
             return False
 
     def rom_level_index(self, level: int) -> int:
-        """A LEVEL_* index in this build's numbering: builds before level 3 had the test
-        rooms one index lower, builds before level 2 two."""
-        missing = sum(not self.has_symbol(f"_level_{n}") for n in (2, 3))
+        """A LEVEL_* index in this build's numbering: each game level a build doesn't
+        have yet (2, 3 or 4) puts its test rooms one index lower."""
+        missing = sum(not self.has_symbol(f"_level_{n}") for n in (2, 3, 4))
         return level - missing if level >= LEVEL_GREYBOX_TEST else level
 
     def _set_level_index(self, level: int) -> None:

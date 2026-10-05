@@ -6,16 +6,17 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 
 ## Status (2026-10-05)
 
-- **Playable:** levels 1-3 (level 1 art pending; levels 2 and 3 greyboxes, kept after the
-  owner's passes), music and sound effects; passwords with the title menu, the password
-  screen, the level select and the game over menu (M7, new: owner check pending).
-  Next: the owner's check of the menus and passwords; then M7 story text (owner edits
-  STORY.md) or level 4; M5 art waits for the style guide.
-- **Tests:** `make test` 223 tests in about 20 s; `make test-full` 328 in about 23 s.
-- **Memory:** bank 0 has 1,238 bytes free (the menus and passwords are in ROM banks);
-  WRAM uses 1,496 of 4,096 bytes.
+- **Playable:** levels 1-4 (level 1 art pending; levels 2 and 3 greyboxes, kept after the
+  owner's passes; the level 4 greybox is new), music and sound effects; passwords with the
+  title menu, the password screen, the level select and the game over menu; the story text
+  (boot screen, "PATCH n/5", the AI log per elevator ride). The M7 menus and story and
+  level 4 wait for the owner's check. Next: the owner reviews the boss design, then
+  level 5 is built; M5 art waits for the style guide.
+- **Tests:** `make test` 227 tests in about 14 s; `make test-full` 336 in about 19 s.
+- **Memory:** bank 0 has 1,365 bytes free (`level_load` reads tables instead of a chain
+  of ifs); WRAM uses 1,495 of 4,096 bytes.
 - **Frame budget** (worst update, line of the 140 allowed; average): level 1 125 (79),
-  level 2 108 (66), level 3 131 (91), greybox route 121 (80). Lifts cost about 10 lines on
+  level 2 108 (66), level 3 131 (91), level 4 107 (69), greybox route 121 (80). Lifts cost about 10 lines on
   average where they are; the music step about 9, up to 18; a streamed column's write 5.
 
 ## Bugs
@@ -29,11 +30,13 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
-- Claude Design style guide (M5); edit the story text in [STORY.md](STORY.md) (M7).
+- Claude Design style guide (M5).
 - Try the M7 menus in Emulicious and on hardware: the title menu, a password from a level
   complete screen typed back in (`python tools/password.py` lists them), the level select,
-  game over CONTINUE and QUIT. Agree or change the **Proposed** menu decisions
-  (DECISIONS.md "Saves").
+  game over CONTINUE and QUIT, the boot screen and the elevator log screens. Agree or
+  change the **Proposed** menu and story-screen decisions (DECISIONS.md).
+- Play the level 4 greybox and its song ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7,
+  "Level 4 brief": the open points).
 
 The physics and level loading (M2) came before color (M4) and art (M5) on purpose: level
 layouts depend on the jump, and levels are designed with plain blocks first.
@@ -103,8 +106,9 @@ Done when level 1 looks like the final game in both modes.
       (`make soundtest`). Done 2026-10-04; owner approved the picks.
 - [ ] Music per level, title, game over and ending. Levels 1 and 2, title, game over and
       level complete have songs (owner approved 2026-10-04; both packs in `music/packs/`,
-      all 18 songs in the sound test); level 3 too (owner: keep). Levels 4-5 and the
-      ending wait for those (candidate for the ending: "Closing").
+      all 18 songs in the sound test); level 3 too (owner: keep). Level 4 plays
+      "Whirlwind" (2026-10-05, **(owner)** listen). Level 5 and the ending wait for those
+      (candidates: "Terminate" for the boss, "Closing" for the ending).
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
 
@@ -118,10 +122,9 @@ Done when level 1 looks like the final game in both modes.
 - [x] Level select after a password, game over with CONTINUE / QUIT, level complete with
       the fragments and the password (2026-10-05). A score beyond the fragment count isn't
       designed; add one only if wanted.
-- [ ] Story text: 3-line boot screen, one AI log line per elevator ride, "PATCH n/5"
-      progress. Drafted in [STORY.md](STORY.md); **(owner)** edit it.
-- [ ] Hard mode, unlocked after clearing the game. The password's flag and the quotas
-      work (2026-10-05); the unlock waits for the ending.
+- [x] Story text: 3-line boot screen on a new game, "PATCH n/5 COMPILED" on level
+      complete, the AI log on the elevator ride after levels 1-3 (2026-10-05,
+      `src/game_state/story.c`). Log 4 comes with level 4, log 5 with the boss level (M8).
 - [ ] Ending and the in-game credits screen.
 
 ## M8 — Levels 2 to 5
@@ -136,9 +139,12 @@ replay test that finishes it.
       (`src/actor/lift.c`), chasers done (`src/actor/chaser.c`), both tested in
       `levels/test_movers.tmj`; greybox built ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7)
       with a replay test; **(owner)** play it. Then the art pass.
-- [ ] Level 4, Network Hub: hazards.
-- [ ] Level 5, Mainframe: the KERNEL boss (concept in GAME_DESIGN.md).
-      **(owner)** Review the detailed boss design before it's built.
+- [ ] Level 4, Network Hub: hazards. Greybox built 2026-10-05 (`levels/level_4.tmj`,
+      [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7) with a replay test; **(owner)** play it.
+      Then the art pass.
+- [ ] Level 5, Mainframe: the KERNEL boss. Design drafted 2026-10-05
+      ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7, "Level 5 design");
+      **(owner)** review it and answer its questions before it's built.
 
 ## M9 — Polish and release
 

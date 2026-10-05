@@ -28,7 +28,7 @@ static void clear_play_area(void)
 // Fades the message in and waits for START, or MESSAGE_FRAMES.
 static void show_message(void)
 {
-    text_print(4, 13, "PRESS START");
+    text_print(4, 14, "PRESS START");
     palette_fade_in(SCREEN_FADE_FRAMES);
     for (uint16_t frame = 0; frame < MESSAGE_FRAMES && !(joypad() & J_START); frame++) {
         wait_vbl_done();
@@ -50,7 +50,8 @@ uint8_t game_over(void) BANKED
 }
 
 // Level complete: notes it in the progress; 6 flashes at 3 per second, then its song,
-// the level's fragments and the new password until START.
+// the patch it compiled (game levels only), the level's fragments and the new password
+// until START.
 void level_complete(void) BANKED
 {
     uint8_t collected = current_level.section_collected[0] + current_level.section_collected[1]
@@ -60,12 +61,17 @@ void level_complete(void) BANKED
     palette_flash(6, 10);
     music_play_level_complete();
     clear_play_area();
-    text_print(3, 5, "LEVEL COMPLETE");
-    text_print(2, 7, "FRAGMENTS");
-    text_print_two_digits(12, 7, collected);
-    text_print(14, 7, "/");
-    text_print_two_digits(15, 7, current_level.fragment_count);
-    if (perfect) text_print(8, 9, "100%");
-    menu_print_password(3, 11);
+    text_print(3, 4, "LEVEL COMPLETE");
+    if (level_index < GAME_LEVEL_COUNT) {
+        char patch[] = "PATCH 1/5 COMPILED";
+        patch[6] += level_index;
+        text_print(1, 6, patch);
+    }
+    text_print(2, 8, "FRAGMENTS");
+    text_print_two_digits(12, 8, collected);
+    text_print(14, 8, "/");
+    text_print_two_digits(15, 8, current_level.fragment_count);
+    if (perfect) text_print(8, 10, "100%");
+    menu_print_password(3, 12);
     show_message();
 }

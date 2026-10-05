@@ -78,9 +78,9 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Story: a programmer escapes ApexLab after the AI security goes haywire | Owner | GAME_DESIGN.md | In use |
 | Key-gated sections, fragment quota, gates as checkpoints, elevator exit | Owner decisions 2026-10-02; Donkey Kong '94 key-to-door idea (game-feel research) | LEVEL_DESIGN.md, `src/level/section.c` | In use |
 | 16×32 multi-sprite player | Owner (early decision, kept 2026-10-03) | `player.c`, ART_PIPELINE.md | In use |
-| "PATCH n/5" story tie-in, boot screen lines, AI log per elevator ride | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md | Planned (M7) |
+| "PATCH n/5" story tie-in, boot screen lines, AI log per elevator ride | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md, STORY.md, `src/game_state/story.c` | In use (logs 4-5 with levels 4-5) |
 | KERNEL boss concept | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md | Planned (M8) |
-| Hard mode after clearing (quota = all fragments) | Kirby's Dream Land extra mode (game-feel research), accepted by the owner | GAME_DESIGN.md, `src/game_state/game_flow.c` | In use from a password; the unlock waits for the ending (M7) |
+| Hard mode after clearing (quota = all fragments) | Kirby's Dream Land extra mode (game-feel research), accepted by the owner | — | Cut (owner, 2026-10-05) |
 | 4-letter passwords with a check byte that refuses every single wrong letter | Owner decision (contents, 2026-10-04); own design for the encoding | `src/game_state/progress.c`, `tools/password.py` | In use |
 | Brighter palettes on GBA | Shantae's GBA enhancement (game-feel research), accepted by the owner | CGB_PLAN.md | Planned (M4) |
 | Readability: light shades behind the play lane, black outlines | GB Studio Central sprite style notes (game-feel research) | ART_PIPELINE.md | Planned (M5) |

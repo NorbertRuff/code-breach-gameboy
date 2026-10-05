@@ -5,7 +5,7 @@ until they end (src/sound/music.c, src/sound/sound.c)."""
 import sys
 from pathlib import Path
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_COMPLETE, PAUSED, TITLE_SCREEN_STATE
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_COMPLETE, PAUSED, TITLE_SCREEN_STATE
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
@@ -43,7 +43,7 @@ def track_songs(game) -> list:
     """From now on, add the name of each song the game starts to the returned list."""
     names = {game.pyboy.symbol_lookup(symbol)[1]: symbol[len("_song_"):]
              for symbol in ("_song_tech", "_song_neurotic_robonaut", "_song_observing_jupiter", "_song_decampment",
-                            "_song_gone_missing", "_song_delight")}
+                            "_song_gone_missing", "_song_delight", "_song_whirlwind")}
     registers = game.pyboy.register_file
     started = []
     # hUGE_init gets the song's address in DE (GBDK's calling convention).
@@ -53,8 +53,8 @@ def track_songs(game) -> list:
 
 
 def press_start_on_screen(game, presses: int = 1) -> None:
-    """Wait on a title or message screen, then START back to the game (twice on the
-    title: PRESS START, then NEW GAME)."""
+    """Wait on a title or message screen, then START back to the game; START on each of
+    `presses` screens in turn."""
     for _ in range(presses):
         game.frames(200)
         game.hold("start", 3)
@@ -65,17 +65,21 @@ def test_each_level_and_screen_starts_its_own_song(game):
     # After the title, game over and level complete, a level's song starts again.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     songs = track_songs(game)
-    for level in (LEVEL_1, LEVEL_2, LEVEL_3):
+    for level in (LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4):
         game.load_level(level)
     game.set_state(TITLE_SCREEN_STATE)
-    press_start_on_screen(game, presses=2)              # a new game: level 1
+    press_start_on_screen(game, presses=3)              # PRESS START, NEW GAME, the boot screen
     game.set_lives(1)
     game.lose_life()
     game.answer_game_over()
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.set_state(LEVEL_COMPLETE)
-    press_start_on_screen(game)
-    assert songs == ["tech", "neurotic_robonaut", "observing_jupiter", "decampment", "tech",
+    game.wait_for_text(4, 14, "PRESS START")
+    game.tap("start")
+    game.wait_for_text(0, 9, "NOT FOUND IN RACKS.")     # the elevator ride's log
+    game.tap("start")
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    assert songs == ["tech", "neurotic_robonaut", "observing_jupiter", "whirlwind", "decampment", "tech",
                      "gone_missing", "tech", "delight", "neurotic_robonaut"]
 
 

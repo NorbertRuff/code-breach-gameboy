@@ -8,21 +8,19 @@
 #define LEVEL_BITS    0x07   // bits 0-2: the furthest level
 #define PERFECT_SHIFT 3      // bits 3-6: the 100% marks of levels 1-4
 #define PERFECT_BITS  0x0F
-#define HARD_MODE_BIT 0x80
+#define UNUSED_BIT    0x80   // bit 7: always 0
 #define MARKED_LEVELS 4      // the boss level (5) has no mark
 
 uint8_t furthest_level;
 uint8_t perfect_levels;
-uint8_t hard_mode;
 
 static const char letters[] = PASSWORD_LETTERS;
 
-// A new game: only level 1, no marks, normal mode.
+// A new game: only level 1, no marks.
 void progress_reset(void) BANKED
 {
     furthest_level = 0;
     perfect_levels = 0;
-    hard_mode = 0;
 }
 
 // Notes a finished game level (test rooms don't count): the next level becomes playable,
@@ -50,7 +48,6 @@ static uint8_t check_byte(uint8_t progress)
 void password_make(char* text) BANKED
 {
     uint8_t progress = furthest_level | (perfect_levels << PERFECT_SHIFT);
-    if (hard_mode) progress |= HARD_MODE_BIT;
     uint8_t check = check_byte(progress);
     text[0] = letters[check >> 4];
     text[1] = letters[progress & 0x0F];
@@ -60,17 +57,17 @@ void password_make(char* text) BANKED
 }
 
 // Takes a typed password (4 letter values, 0-15) as the progress if it is one: its check
-// byte matches, its level is in this build, and only finished levels have marks.
-// Returns 1 if taken.
+// byte matches, bit 7 is clear, its level is in this build, and only finished levels
+// have marks. Returns 1 if taken.
 uint8_t password_check(const uint8_t* typed) BANKED
 {
     uint8_t check = (typed[0] << 4) | typed[2];
     uint8_t progress = (typed[3] << 4) | typed[1];
     uint8_t level = progress & LEVEL_BITS;
     uint8_t perfect = (progress >> PERFECT_SHIFT) & PERFECT_BITS;
-    if (check != check_byte(progress) || level >= GAME_LEVEL_COUNT || (perfect >> (level + 1))) return 0;
+    if (check != check_byte(progress) || (progress & UNUSED_BIT) || level >= GAME_LEVEL_COUNT
+        || (perfect >> (level + 1))) return 0;
     furthest_level = level;
     perfect_levels = perfect;
-    hard_mode = (progress & HARD_MODE_BIT) ? 1 : 0;
     return 1;
 }

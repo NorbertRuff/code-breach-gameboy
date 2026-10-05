@@ -24,7 +24,6 @@ What that means in practice:
   - Boot screen: three terminal lines, "ANOMALY / STAFF #042 / LOCKDOWN".
   - Each elevator ride: one line from the AI's log, more corrupted on every floor.
   - Ending: the elevator goes up, the palette fades to light, "LOCKDOWN LIFTED".
-- **Hard mode**: unlocked after clearing the game. Every gate needs all of its section's fragments.
 
 ---
 
@@ -92,7 +91,7 @@ Bug list of the 2026-10-02 audit: [docs/archive/PROJECT_STATE.md](docs/archive/P
 
 ### Level 5: Mainframe *(planned)*
 - **Theme**: Core system, central processing
-- **Boss: "KERNEL"** (concept accepted 2026-10-02; details in M8)
+- **Boss: "KERNEL"** (concept accepted 2026-10-02; the detailed design for review is in [docs/LEVEL_DESIGN.md](docs/LEVEL_DESIGN.md) section 7)
   - **Arena:** one screen. KERNEL is a monitor face of about 7×6 tiles, drawn with background tiles, so it uses no sprites. A screen-line split moves the face while the floor stays still.
   - **How to hurt it:** the player has no attack. Three kill-switch terminals light up in turn; standing on the lit one and holding Up for about half a second uploads part of the patch.
   - **Hit feedback:** a short freeze, screen shake, and a wobble on the face.

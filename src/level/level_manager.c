@@ -9,6 +9,7 @@
 #include "../levels/level_1.h"
 #include "../levels/level_2.h"
 #include "../levels/level_3.h"
+#include "../levels/level_4.h"
 #include "../levels/test_jumps.h"
 #include "../levels/test_movers.h"
 #include "../engine/banking.h"
@@ -107,29 +108,23 @@ static void draw_band(void)
     palette_use_bkg(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, BAND_PALETTE);
 }
 
+// The levels by index (LEVEL_1, ...): each header's ROM bank and address. A bank is the
+// address of its BANKREF symbol (what BANK() reads), kept as a pointer so the table is
+// a constant.
+static const void* const level_banks[LEVEL_COUNT] = {
+    &__bank_level_1, &__bank_level_2, &__bank_level_3, &__bank_level_4,
+    &__bank_greybox_test, &__bank_test_jumps, &__bank_test_movers
+};
+static const LevelData* const level_headers[LEVEL_COUNT] = {
+    &level_1, &level_2, &level_3, &level_4, &greybox_test, &test_jumps, &test_movers
+};
+
 // Sets up a level behind a dark screen: header, tiles, HUD. The columns are drawn by
 // level_stream_reset() once the camera is placed.
 void level_load(uint8_t index)
 {
-    if (index == LEVEL_2) {
-        current_level.bank = BANK(level_2);
-        WITH_BANK(level_2, copy_header(&level_2));
-    } else if (index == LEVEL_3) {
-        current_level.bank = BANK(level_3);
-        WITH_BANK(level_3, copy_header(&level_3));
-    } else if (index == LEVEL_GREYBOX_TEST) {
-        current_level.bank = BANK(greybox_test);
-        WITH_BANK(greybox_test, copy_header(&greybox_test));
-    } else if (index == LEVEL_TEST_JUMPS) {
-        current_level.bank = BANK(test_jumps);
-        WITH_BANK(test_jumps, copy_header(&test_jumps));
-    } else if (index == LEVEL_TEST_MOVERS) {
-        current_level.bank = BANK(test_movers);
-        WITH_BANK(test_movers, copy_header(&test_movers));
-    } else {
-        current_level.bank = BANK(level_1);
-        WITH_BANK(level_1, copy_header(&level_1));
-    }
+    current_level.bank = (uint8_t)(uint16_t)level_banks[index];
+    WITH_ROM_BANK(current_level.bank, copy_header(level_headers[index]));
     level_stream_start();
 
     WITH_BANK(greybox, {

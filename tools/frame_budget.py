@@ -5,8 +5,8 @@ update, part by part.
 
 Run with "make budget" (DMG mode, greybox route), or:
     tools/frame_budget.py --mode cgb --route level1 --rom <file.gb>
-The level1, level2 and level3 routes are the replays that finish those levels
-(tests/test_level_1.py, tests/test_level_2.py, tests/test_level_3.py).
+The level1 to level4 routes are the replays that finish those levels
+(tests/test_level_1.py to tests/test_level_4.py).
 
 Each part runs until the next part in PARTS starts. A part that an update skips (the HUD
 count without a pickup) adds its time to the part before it.
@@ -21,11 +21,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_GREYBOX_TEST, LINES_PER_FRAME, Game, Pilot, boot  # noqa: E402
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_GREYBOX_TEST, LINES_PER_FRAME, Game, Pilot, boot  # noqa: E402
 from test_frame_budget import FRAME_LINE_LIMIT, GREYBOX_ROUTE  # noqa: E402
 from test_level_1 import play_level_1  # noqa: E402
 from test_level_2 import play_level_2  # noqa: E402
 from test_level_3 import play_level_3  # noqa: E402
+from test_level_4 import play_level_4  # noqa: E402
 
 # Route name: the level it plays and how.
 ROUTES = {
@@ -33,6 +34,7 @@ ROUTES = {
     "level1": (LEVEL_1, lambda game: play_level_1(Pilot(game))),
     "level2": (LEVEL_2, lambda game: play_level_2(Pilot(game))),
     "level3": (LEVEL_3, lambda game: play_level_3(Pilot(game))),
+    "level4": (LEVEL_4, lambda game: play_level_4(Pilot(game))),
 }
 
 # C functions in the order an update calls them, and a label for each. The first starts

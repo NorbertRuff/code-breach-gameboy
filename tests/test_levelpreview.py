@@ -84,7 +84,7 @@ def test_greybox_level_can_be_finished():
     assert len(result.paths) == len(result.surfaces)
 
 
-@pytest.mark.parametrize("name", ["level_1", "level_2", "level_3"])
+@pytest.mark.parametrize("name", ["level_1", "level_2", "level_3", "level_4"])
 def test_game_levels_pass_the_check(name):
     level = tiled2c.load_level(ROOT / "levels" / f"{name}.tmj")
     result = levelpreview.explore(level)

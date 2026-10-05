@@ -230,7 +230,7 @@ def section_starts(entities: list[Entity], gates: list[int]) -> list[int]:
 
 
 def check_quotas(level: Level, gates: list[int], fail) -> None:
-    """A gate can't ask for more fragments than its section has (hard mode needs all)."""
+    """A gate can't ask for more fragments than its section has."""
     for section, gate in enumerate(e for e in level.entities if e.kind == "gate"):
         found = sum(e.kind == "fragment" and section_of(e.x, gates) == section for e in level.entities)
         if not 1 <= gate.param <= found:

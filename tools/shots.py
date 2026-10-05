@@ -5,7 +5,7 @@ Run with "make shots". Writes, per mode (dmg, cgb):
   tests/out/shots/<mode>/NN_<name>.png   one picture per step in the greybox level
   tests/out/shots/<mode>_contact.png     all steps on one sheet, 2x, with labels
   tests/out/shots/<mode>_level_map.png   the whole 32x18 background map from VRAM, 2x
-  tests/out/shots/<mode>_level_N/ and <mode>_level_N_contact.png: level N (1, 2) played by
+  tests/out/shots/<mode>_level_N/ and <mode>_level_N_contact.png: level N (1-4) played by
                                          its replay (tests/test_level_N.py), high route
 
 The script uses the same helpers as the tests (tests/gamelib.py). Long ways are skipped
@@ -24,13 +24,15 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, Game, Pilot, boot  # noqa: E402
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, Game, Pilot, boot  # noqa: E402
 from test_level_1 import play_level_1  # noqa: E402
 from test_level_2 import play_level_2  # noqa: E402
 from test_level_3 import play_level_3  # noqa: E402
+from test_level_4 import play_level_4  # noqa: E402
 
 # The game's levels by number: the level index and the replay that plays it.
-LEVELS = {1: (LEVEL_1, play_level_1), 2: (LEVEL_2, play_level_2), 3: (LEVEL_3, play_level_3)}
+LEVELS = {1: (LEVEL_1, play_level_1), 2: (LEVEL_2, play_level_2), 3: (LEVEL_3, play_level_3),
+          4: (LEVEL_4, play_level_4)}
 
 OUT = ROOT / "tests" / "out" / "shots"
 SHADES = [(232, 232, 232), (160, 160, 160), (88, 88, 88), (16, 16, 16)]

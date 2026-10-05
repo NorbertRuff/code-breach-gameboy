@@ -55,8 +55,6 @@ sketches in this file can be redrawn after an edit in Tiled):
   section. Bonus fragments missed there can only be collected by replaying the level, so
   put each section's bonus fragments where an attentive player will find them before
   the gate.
-- **Hard mode** (unlocked after clearing the game): every gate needs all of its
-  section's fragments. Every fragment must therefore be reachable without going back.
 - **Section C ends at the exit elevator.** It has no quota. Its fragments are all bonus.
 - **Inside a level:** section A teaches the level's new idea safely, B mixes it with
   earlier ideas, and C is the hardest.
@@ -495,3 +493,210 @@ What changed from the brief, and why:
 
 Fragments: A 5 (gate 3 of 5), B 5 (gate 3 of 5), C 3 (bonus): 13. The replay's worst frame
 ends at line 115 of the 140 allowed (average 61; `tools/frame_budget.py --route level2`).
+
+### Level 4 brief: Network Hub (draft)
+
+**Status: draft by Claude, 2026-10-05, built the same day** (`levels/level_4.tmj`, below)
+with Claude's answers to its open points. Next: the owner plays it.
+
+Teaches: **hazard tiles** ("corrupted data"): never solid, and touching one with any part
+of the body costs a life, like a bot. Three shapes: **spike strips** on a floor (jump
+over), **spike pits** (a hazard floor, crossed on shelves or a lift), and **hanging
+hazards** from the top of the screen (walk under them; a full jump under one hits it, a
+low hop doesn't). Earlier mechanics come back: one-way shelves, bots, a chaser, a lift.
+Limits as in levels 2 and 3 (climbs up to 3, gaps up to 6); no jump near the maximum.
+
+**Section A, "Patch panel"** (59 tiles)
+1. A 1-tile spike strip on the floor, a fragment over it: the first hazard, with room
+   before and after.
+2. A 3-tile strip.
+3. A 2-tile step with a fragment, spikes right after it: jump off the step over them.
+4. A spike pit 10 wide with a one-way shelf in its middle (fragment), a bonus fragment
+   high above the shelf.
+5. A slow bot with a fragment over it. **Gate A: 3 of 5.**
+
+**Section B, "Router farm"** (66 tiles)
+1. Two hanging hazards with a 1-tile strip between them: a low hop over the strip; a
+   full jump under a hanger costs a life. Fragment over the strip.
+2. The packet bridge: 4 one-way shelves over a 28-tile spike floor (gaps of 3), a
+   fragment on shelf 2 with a bonus fragment high above it, one on shelf 4.
+3. A fast bot with a fragment over it. **Gate B: 3 of 5.**
+
+**Section C, "Backbone"** (55 tiles)
+1. A chaser under a one-way shelf (fragment), a 2-tile strip just past its range: from
+   the shelf, one jump clears the chaser and the spikes.
+2. A lift in a 12-tile spike pit up to the top block; a fragment at its highest place.
+3. A last strip on the block with a fragment over it, then the exit elevator.
+
+**Open points, answered by Claude for the greybox (owner: keep or change):**
+- **Static hazards only:** no timed packet lasers or turrets (RESEARCH.md section 3). They
+  would be a new actor; the static shapes already make the level.
+- **Song: "Whirlwind"** (Tronimal, Game Boy Music Pack #2), not heard yet; any unused
+  Tronimal song from the packs fits (`make soundtest` renders them all).
+
+### Level 4 greybox (2026-10-05)
+
+`levels/level_4.tmj`, 180 tiles wide (A 59, B 66, C 55; like levels 1-3, over the 160
+target). `make preview` reaches every surface and all 13 fragments; `tests/test_level_4.py`
+plays it from the start to the exit without losing a life, collecting all 13.
+
+Columns 0-89 (section A and most of B):
+
+```
+0         1         2         3         4         5         6         7         8
+................................................................^^^.......^^^.............
+................................................................^^^.......^^^.............
+..........................................*.....................^^^.......^^^.............
+................................................................^^^.......^^^.............
+................................................................^^^.......^^^.............
+..........................................................................................
+.....................................................*....................................
+..........*...............................*...........................*.................==
+..........................................................................................
+............................*............===....................................=====.....
+.........................######...........................................................
+.P........^.......^^^....######^^^.................EEEEE..G...........^...................
+#####################################^^^^^^^^^^#################################^^^^^^^^^^
+```
+
+Columns 90-179 (the end of B, and C):
+
+```
+9         0         1         2         3         4         5         6         7
+*.....................................................................*...................
+..........................................................................................
+..................................................................................*.......
+.....................................................................LLL..................
+.....................................................................LLL..................
+*....................................................................LLL..........^....D..
+................*...........*....................*...................LLL.....#############
+===..................................................................LLL.....#############
+..............=====............................=====.................LLL.....#############
+......=====..........................................................LLL.....#############
+.....................................................................LLL.....#############
+........................FFFFFFFF..G.......CCCCCCCCCCCCC.^^...................#############
+^^^^^^^^^^^^^^^^^^###############################################^^^^^^^^^^^^#############
+```
+
+What changed while building it, and why:
+- **A2 moved 4 tiles right:** with 4 tiles between the first two strips, the landing
+  after the first left 2 tiles for a 2-tile body.
+- **A4's pit is 10 wide and A5's bot starts 4 tiles after it:** the jump off the shelf
+  landed next to a bot that patrolled up to the pit's edge.
+- **B3's bot starts 6 tiles after the bridge:** a fast bot reached the bridge's landing.
+- **C1's shelf ends 3 tiles before the spikes:** from 5, clearing the chaser and the
+  spikes took a jump near the maximum.
+
+Fragments: A 5 (gate 3 of 5), B 5 (gate 3 of 5), C 3 (bonus): 13. **Actors:** 2 bots
+(1 fast), 1 chaser, 1 lift. The replay's worst frame ends at line 107 of the 140 allowed
+(average 69; `tools/frame_budget.py --route level4`).
+
+### Level 5 design: Mainframe, the KERNEL boss (draft for the owner's review)
+
+**Status: draft by Claude, 2026-10-05, from the concept in GAME_DESIGN.md and RESEARCH.md
+section 3. Nothing is built.** The owner reviews it first (roadmap M8); the questions are
+at the end.
+
+**The fight in one line:** KERNEL can't be hit, so the player uploads the patch at three
+kill-switch terminals that light up one at a time, while KERNEL attacks. Each phase adds
+one earlier level's idea: packets (hazards that fall), then a lift, then a floor that
+corrupts.
+
+**Arena** (one screen, 20 tiles wide; legend as in section 1, plus `K` KERNEL's face,
+background only, and `1` `2` `3` the terminals in the order they light up):
+
+```
+          1
+01234567890123456789
+......KKKKKKK.......
+......KKKKKKK.......
+......KKKKKKK.......
+......KKKKKKK.......
+......KKKKKKK.....2.
+......KKKKKKKLLL####
+.............LLL....
+.............LLL....
+...====......LLL....
+.............LLL....
+....................
+.1...P...3..........
+####################
+```
+
+- **The face**, 7×6 background tiles at the top middle. It doesn't block or hurt; the
+  player and the packets are drawn over it. Its eyes change before every attack (the
+  wind-up), and it looks more corrupted in each phase (a few tile swaps).
+- **Terminal 1** on the floor at the left, **terminal 2** on the high shelf at the right,
+  reached only by the lift, **terminal 3** in the middle of the floor. A terminal is one
+  tile; the lit one has a different shape (it reads on DMG) and blinks.
+- **The lift** (level 3's) appears in phase 2 and stays; it waits at its bottom 2 tiles
+  above the floor, like level 3's first lifts.
+- **The one-way shelf** at the left is the safe place in phase 3.
+- No camera movement and no column streaming: the arena is drawn once.
+- Checked with `tools/levelpreview.py` on a stand-in map (fragments for the terminals):
+  everything can be reached, and terminal 2 only with the lift.
+
+**Uploading:** stand on the lit terminal and hold Up for 32 frames (about half a second).
+Its screen fills in 4 steps, with a beep each. Letting go of Up, jumping or getting hit
+starts it over. The HUD's counter shows the uploads, `00/03`, in place of the fragments.
+
+**Flow:**
+
+| Step | What happens |
+|---|---|
+| Intro | Log 5 is typed under the face: `L0G 5: WH0 WR0T3 M3` / `...#042? Y0U?`. After 2 s it clears, terminal 1 lights, and the first attack comes 1 s later. |
+| Phase 1 (terminal 1) | Packet rain: 2 packets per volley. |
+| Hit 1 | 8 frames of hit-stop, 16 frames of screen shake, 2 slow flashes. 1 s without attacks; the lift appears; terminal 2 lights. |
+| Phase 2 (terminal 2) | Packet rain with 3 packets per volley. Ride the lift to the shelf. |
+| Hit 2 | Same feedback; terminal 3 lights. |
+| Phase 3 (terminal 3) | Packet rain with 2 per volley, and the floor corrupts in turns. |
+| Hit 3 | Hit-stop, 3 flashes, the face breaks up, the music stops, fade out: the ending (M7: "LOCKDOWN LIFTED", the credits). |
+
+**Attacks** (fixed pattern tables, no randomness, so the replay test can win every time):
+
+| Attack | Wind-up | Attack | Recovery |
+|---|---|---|---|
+| **Packet rain** (all phases) | The face's eyes change, and a marker blinks at the top of each chosen column for 30 frames. One column is the player's at the start of the warning. | A 16×16 packet falls at 2 px per frame from the top to the floor (about 48 frames) and vanishes there. Touching it costs a life. Packets of one volley start 8 frames apart. | 60 frames to the next volley. |
+| **Corrupted floor** (phase 3) | One 4-tile floor segment flickers for 30 frames, still solid. | It turns into hazard tiles for 90 frames. | Back to floor; 30 frames later the next segment from the table. Terminal 3's segment is in the table too, so the upload waits for a safe moment. |
+
+**Lives:** losing one fades out, puts the player back at the start and restarts the current
+phase (uploads done stay done, packets and the floor reset). **Game over** with CONTINUE
+restarts the fight from phase 1, as a section restarts with its fragments put back.
+The password after level 4 already opens level 5.
+
+**Hardware budget:**
+- **Sprites:** the player 4, at most 3 packets (2 each), the lift 3: at most 13 of 40.
+  Per screen line: a volley's packets start 8 frames apart, so at most 2 share a line:
+  the player 2 + packets 4 + the lift 3 = 9 of 10.
+- **Frame budget:** no streaming saves the camera's 21 lines; the boss update (one
+  volley's actors, one floor segment's tiles) should stay under about 15 lines, so the
+  worst update should end well under level 3's 131.
+- **Bank 0:** the boss code goes to a ROM bank; bank 0 gets only the call from the game
+  loop (about 30 bytes).
+- **Tiles:** face 42, terminals 3, corrupted floor 2, the warning marker 1; the packet's 4
+  sprite tiles.
+
+**What it reuses and what's new:**
+- Reused: the lift actor, hazard tiles (the corrupted floor is the same as level 4's
+  spikes), the HUD counter, `palette_flash`, the fades, the story's typed text, the
+  `boss` map property in `tools/tiled2c.py` (no gates needed).
+- New: `src/game_state/kernel.c` (phases, terminals, uploads, attack tables, the floor),
+  a packet actor, Up in the input, the face tiles and the boss song ("Terminate",
+  owner to listen), the ending and credits screens (M7).
+- Tests: a replay that wins without losing a life; every attack's warning lasts at least
+  24 frames; releasing Up resets an upload; a lost life keeps the uploads; game over
+  restarts phase 1; the frame budget and sprites per line.
+
+**Left out to keep the boss small** (RESEARCH.md had them):
+- **Spawned level 1 bots** and the **purge sweep:** two more attack types to build,
+  tune and test. The packets and the floor already use the hazard lessons.
+- **A screen split that moves only the face:** the whole screen shakes instead, with the
+  same `SCX` the camera uses; no new line interrupt.
+
+**Questions for the owner:**
+1. Is the fight right at 3 uploads, one per phase, with the hit feedback above?
+2. Hold Up for half a second at a terminal, or a single press?
+3. Cut the spawned bots and the purge sweep, as proposed?
+4. Shake the whole screen instead of moving only the face?
+5. Game over restarts the fight from phase 1: or keep the uploads done?
+6. The song: "Terminate" (Tronimal, pack 1), after listening (`make soundtest`).

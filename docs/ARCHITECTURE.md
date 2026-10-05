@@ -9,25 +9,26 @@ each choice are in [DECISIONS.md](DECISIONS.md); where an idea came from is in
 States are defined in `src/utils.h`:
 - `INTRO_CREDITS_STATE` → `TITLE_SCREEN_STATE` → `GAMEPLAY_START` → `COREGAMELOOP` → `GAMEPLAY_END` / `LEVEL_COMPLETE`
 - `TITLE_SCREEN_STATE` (`run_title_screen`, then `title_menu`) returns once a level is
-  chosen: NEW GAME (level 1, progress reset) or CONTINUE (the password screen, then the
-  level select). B on an empty password shows the title again.
+  chosen: NEW GAME (progress reset, the boot screen, level 1) or CONTINUE (the password
+  screen, then the level select). B on an empty password shows the title again.
 - `COREGAMELOOP` ↔ `PAUSED` on START ("PAUSE" in sprites over the parallax band). While
   paused, SELECT loads the next level (`LEVEL_SELECT_CHEAT`).
 - `GAMEPLAY_END` (a life lost): `lose_life` restarts the current section behind a fade
   (`restart_behind_fade`) and returns the next state. On game over, `game_over` in
   `game_over.c` asks CONTINUE (the lives refill, the section's fragments come back) or
   QUIT (`TITLE_SCREEN_STATE`).
-- `LEVEL_COMPLETE` (the exit reached) notes the level in the progress, shows the fragment
-  summary and the password (`level_complete`), then loads the next game level with full
-  lives (`go_to_next_level`: level 1 again after the last; a test room restarts).
+- `LEVEL_COMPLETE` (the exit reached) notes the level in the progress, shows the patch,
+  the fragment summary and the password (`level_complete`), then the elevator ride's log
+  and the next game level with full lives (`go_to_next_level`: level 1 again after the
+  last; a test room restarts).
 
 The per-frame gameplay code is `main_game_loop()`. Global state: in `main.c`
 `joypad_current`, `joypad_previous`, `current_game_state`, `lives`, `lag_frames`,
 `Player player`; in `actor.c` `actors[]` and `actor_count`; in `level_manager.c`
 `Level current_level` and `level_index` (the game's levels `LEVEL_1`, `LEVEL_2` first,
 `GAME_LEVEL_COUNT`, then the test rooms; the game starts in `LEVEL_1`, the tests in
-`LEVEL_GREYBOX_TEST`); in `camera.c` `camera_x`; in `progress.c` `furthest_level`,
-`perfect_levels`, `hard_mode`.
+`LEVEL_GREYBOX_TEST`); in `camera.c` `camera_x`; in `progress.c` `furthest_level` and
+`perfect_levels`.
 
 Development flags in `src/utils.h`: `SKIP_INTRO_AND_START` (1: straight to gameplay; the
 tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next level).
@@ -36,11 +37,11 @@ tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next le
 
 | Directory | Purpose |
 |---|---|
-| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, hard mode, and the password; `tools/password.py` is a copy), `game_flow` (level start with hard mode quotas, section restart, losing a life), `game_over` (also `level_complete`), `pause` (the label); all banked but `start_screen` |
+| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, and the password; `tools/password.py` is a copy), `game_flow` (level start, section restart, losing a life), `game_over` (also `level_complete`), `story` (the boot screen and the elevator logs, typed), `pause` (the label); all banked but `start_screen` |
 | `src/engine/` | `platform.c` (`is_cgb`), `palette.c` and `palette_effects.c` (every palette write; loads in bank 0, fades and flashes banked), `text.c` (screen text in the game's font), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK`), `camera.c`, `screen.c` (line interrupts) |
 | `src/player/` | `Player` struct and physics: `player_update`, `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad, Down and A into the player |
-| `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
+| `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, which finds a level's header and bank in two tables by index; `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
 | `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `chaser.c` (the chaser), `lift.c` (the lift) |
 | `src/sound/` | `sound.c` (the effect player), `effects.c` (generated: `make sounds`), `music.c` (the level's song through hUGEDriver) |
 | `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus hand-made `splashscreen.c`, `hud_digits.c`, `font.c`) |
@@ -168,7 +169,7 @@ status.
   read inside `WITH_BANK(name, ...)`, one asset per `WITH_BANK`, only from bank 0 code.
   Code that never runs in a gameplay frame and doesn't use `WITH_BANK` lives in a ROM bank
   (`#pragma bank 255`, `BANKED`): `intro_credits.c`, `game_over.c`, `pause.c`,
-  `prepare_gameboy.c`, `game_flow.c`, `menu.c`, `title_menu.c`, `progress.c`,
+  `prepare_gameboy.c`, `game_flow.c`, `menu.c`, `title_menu.c`, `progress.c`, `story.c`,
   `hud_digits.c`. Metasprite tables are banked data too.
 - **GBC palettes:** background 0 the level, 1 the band, 2 the HUD; sprite 0 the player
   (and for now the bots), 1 the player while invincible. The title and menu screens put

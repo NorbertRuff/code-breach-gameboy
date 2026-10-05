@@ -1,8 +1,10 @@
-# Story Text (draft)
+# Story Text
 
-**Status: draft by Claude, 2026-10-04.** Roadmap M7, story text. The owner keeps the twist
-(staff #042 wrote the AI); the wording may still change.
-The concept is in GAME_DESIGN.md (Story & Setting). Nothing here is in the game yet.
+**Status: written by Claude 2026-10-04, approved by the owner 2026-10-05.** Roadmap M7,
+story text. The owner keeps the twist (staff #042 wrote the AI).
+The concept is in GAME_DESIGN.md (Story & Setting). In the game since 2026-10-05
+(`src/game_state/story.c`, `game_over.c`), except log 5 (before the boss level) and the
+ending.
 
 A Game Boy text screen is 20 characters wide. Every line below fits.
 
@@ -47,6 +49,6 @@ The elevator goes up and the palette fades to light:
 LOCKDOWN LIFTED
 ```
 
-## Questions for the owner
+## Corruption
 
-- Corruption style: digits for letters (as above), or glitch tiles from the font?
+Digits stand in for letters (as above): the font already has them, so no extra tiles.

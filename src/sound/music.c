@@ -9,6 +9,7 @@
 #include "../music/song_neurotic_robonaut.h"
 #include "../music/song_observing_jupiter.h"
 #include "../music/song_tech.h"
+#include "../music/song_whirlwind.h"
 
 static uint8_t song_bank;   // the playing song's ROM bank; 0 while none plays
 
@@ -35,6 +36,7 @@ void music_play_level(uint8_t level)
 {
     if (level == LEVEL_2) play_song(&song_neurotic_robonaut, BANK(song_neurotic_robonaut));
     else if (level == LEVEL_3) play_song(&song_observing_jupiter, BANK(song_observing_jupiter));
+    else if (level == LEVEL_4) play_song(&song_whirlwind, BANK(song_whirlwind));
     else play_song(&song_tech, BANK(song_tech));
 }
 
