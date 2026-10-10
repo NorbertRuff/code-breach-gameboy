@@ -150,7 +150,7 @@ or git keeps the old one). Details of how the code does it belong in
 - **A tileset per level** (2026-10-10): each level's header points at its tileset's
   `TilesetData`, written by `tools/tiled2c.py` from the `.tsx`: the art and band, the
   collision and palette of each tile, the marker tiles, the open elevator. Level 1 uses
-  `server_room`, the other levels the greybox.
+  `server_room`, level 2 `code_testing_lab`, the other levels the greybox.
 - **Bank 0 is for per-frame code;** code that never runs in a gameplay frame lives in ROM
   banks (`#pragma bank 255`, `BANKED`). Code that reads banked data inside the caller's
   `WITH_BANK` stays in bank 0 (2026-10-04: the palette fades and the level start/restart
@@ -185,7 +185,7 @@ or git keeps the old one). Details of how the code does it belong in
 - **Art pipeline:** Claude Design → `tools/gbconvert.py` → png2asset (ART_PIPELINE.md);
   every palette light to dark; no background tile flips.
 - **Placeholders until each level's art pass:** the greybox tileset and band (drawn by
-  scripts), in levels 2-5 and the test rooms.
+  scripts), in levels 3-5 and the test rooms.
 - **Server Room art** (2026-10-10, **Proposed**): redrawn by hand on the 8×8 grid from
   the owner's Gemini starter art (mock-up, band, object sheet; not on a pixel grid, so
   used as references). Green riveted machine blocks with a striped top lip (a 16-tile
@@ -195,6 +195,21 @@ or git keeps the old one). Details of how the code does it belong in
   ladder), a 2×4 elevator that opens at level complete (closed gray, open lit green), a
   floppy disk for the fragment; 68 tiles, the band 16. No light plates in the fill: on
   DMG they read as holes.
+- **Code Testing Lab art** (2026-10-10, **Proposed**): level 2 in Server Room's way,
+  redrawn by hand from the owner's Gemini mock-up and band. Teal riveted panels with a
+  dark outline and a light lip on exposed sides (a 16-tile "panel" terrain set, plus a
+  vent plate), thin blue shelves with brackets (one-way: the tile's lower half is empty),
+  sparking cut cables (hazard, unused in level 2), and behind the play lane only shades 0
+  and 1 of the props palette: desks with monitors, lab benches with an oscilloscope,
+  towers, chairs, whiteboards, hanging cables and pipes. The gate, its rails, the elevator,
+  the floppy and the start marker are level 1's tiles at the same ids, recolored. 69 tiles,
+  the band (desks, racks and benches under a ceiling pipe) 22. The map keeps its layout
+  and every cell's collision; the props were placed by a script, so the owner can repaint
+  them in Tiled.
+- **Title screen** (2026-10-10, **Proposed**): the owner's `apexLogo.png` as it is, in
+  its 4 greens on GBC (grays on DMG). "Press START" is part of the picture and no longer
+  blinks: a text-free copy of those 24 tiles has no room next to the font the menu needs
+  (204 tiles of the 207 free). START opens NEW GAME / CONTINUE in a light box over it.
 - **Background tiles** (2026-10-10, **Proposed**): the tileset from 0 and its band after
   it (tileset at most 128, band 32), the font 160-208, the HUD 209-218 (was 64-73, which
   capped a tileset at 64 tiles), KERNEL 219-236.

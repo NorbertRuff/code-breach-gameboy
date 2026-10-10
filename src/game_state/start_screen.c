@@ -1,48 +1,47 @@
+#pragma bank 255
+
 #include <gb/gb.h>
 
 #include "start_screen.h"
 #include "menu.h"
 #include "title_menu.h"
-#include "../graphics/splashscreen.h"
+#include "../graphics/title_top.h"
+#include "../graphics/title_bottom.h"
 #include "../engine/banking.h"
 #include "../engine/palette.h"
+#include "../engine/text.h"
 #include "../sound/music.h"
 #include "../utils.h"
 
-static uint8_t blink_frames;   // frames into the "PRESS START" blink cycle
+#define TITLE_TOP_ROWS (title_top_HEIGHT >> 3)
+#define TITLE_BOTTOM_ROWS (title_bottom_HEIGHT >> 3)
+#define TITLE_BOTTOM_FIRST_TILE (uint8_t)(FONT_FIRST_TILE + FONT_CHAR_COUNT)   // after the font
 
-// Draws the title screen on a blank screen and fades it in.
-static void draw_title_screen(void)
+// Draws the title picture: the top part's tiles from 0, the bottom part's after the font,
+// which the title menu prints with. In bank 0, to read the picture's banks.
+static void draw_title_picture(void) NONBANKED
 {
-    menu_open_screen();
-    WITH_BANK(splashscreen, {
-        set_bkg_data(0, splashscreen_tileset_size, splashscreen_tileset);
-        set_bkg_tiles(splashscreen_tileset_X, splashscreen_tileset_Y, splashscreen_tileset_width, splashscreen_tileset_height, splashscreen_tilemap);
+    WITH_BANK(title_top, {
+        set_bkg_data(0, title_top_TILE_COUNT, title_top_tiles);
+        set_bkg_tiles(0, 0, DEVICE_SCREEN_WIDTH, TITLE_TOP_ROWS, title_top_map);
+        palette_set_bkg(0, 1, title_top_palettes);
     });
-    palette_fade_in(10);
-}
-
-// Blinks "PRESS START": hides it after PRESS_START_SHOWN_FRAMES, shows it again at the
-// start of the next cycle. Once per frame.
-static void blink_press_start(void)
-{
-    blink_frames++;
-    if (blink_frames == PRESS_START_SHOWN_FRAMES) {
-        WITH_BANK(splashscreen, set_bkg_tiles(press_start_tileset_X, press_start_tileset_Y, press_start_tileset_width, press_start_tileset_height, press_start_blank_tilemap));
-    } else if (blink_frames >= PRESS_START_CYCLE_FRAMES) {
-        WITH_BANK(splashscreen, set_bkg_tiles(press_start_tileset_X, press_start_tileset_Y, press_start_tileset_width, press_start_tileset_height, press_start_tilemap));
-        blink_frames = 0;
-    }
+    WITH_BANK(title_bottom, {
+        set_bkg_data(TITLE_BOTTOM_FIRST_TILE, title_bottom_TILE_COUNT, title_bottom_tiles);
+        set_bkg_based_tiles(0, TITLE_TOP_ROWS, DEVICE_SCREEN_WIDTH, TITLE_BOTTOM_ROWS, title_bottom_map, TITLE_BOTTOM_FIRST_TILE);
+    });
 }
 
 // Shows the title screen until START is pressed, then its menu; the title again after
 // backing out of the password screen. Returns with the level to start chosen.
-void run_title_screen(void)
+void run_title_screen(void) BANKED
 {
     music_play_title();
     do {
-        draw_title_screen();
+        menu_open_screen();
+        draw_title_picture();
+        palette_fade_in(10);
         menu_start_input();
-        while (!(menu_wait_press() & J_START)) blink_press_start();
+        while (!(menu_wait_press() & J_START));
     } while (!title_menu());
 }

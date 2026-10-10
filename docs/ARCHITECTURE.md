@@ -42,14 +42,14 @@ tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next le
 
 | Directory | Purpose |
 |---|---|
-| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, and the password; `tools/password.py` is a copy), `game_flow` (level start, section restart, losing a life), `game_over` (also `level_complete`), `story` (the boot screen, the AI logs, the ending and credits), `kernel` (the boss: face, terminals, packet volleys, the lift, the corrupted floor; `start_level` and `restart_section` call it in level 5), `pause` (the label); all banked but `start_screen` |
+| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, and the password; `tools/password.py` is a copy), `game_flow` (level start, section restart, losing a life), `game_over` (also `level_complete`), `story` (the boot screen, the AI logs, the ending and credits), `kernel` (the boss: face, terminals, packet volleys, the lift, the corrupted floor; `start_level` and `restart_section` call it in level 5), `pause` (the label); all banked (the title picture's loader, `draw_title_picture`, is `NONBANKED`) |
 | `src/engine/` | `platform.c` (`is_cgb`), `palette.c` and `palette_effects.c` (every palette write; loads in bank 0, fades and flashes banked), `text.c` (screen text in the game's font), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK`), `camera.c`, `screen.c` (line interrupts) |
 | `src/player/` | `Player` struct and physics: `player_update`, `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad, Down and A into the player |
 | `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, which finds a level's header and bank in two tables by index; `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
 | `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `chaser.c` (the chaser), `lift.c` (the lift), `packet.c` (KERNEL's packet: kernel.c adds it to `actors[]`, and its x set to `ACTOR_GONE` removes it) |
 | `src/sound/` | `sound.c` (the effect player), `effects.c` (generated: `make sounds`), `music.c` (the level's song through hUGEDriver) |
-| `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus the hand-made `splashscreen.c`) |
+| `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` |
 | `graphics/`, `levels/`, `music/`, `sounds/` | Sources: PNGs and Tiled `.tsx`, Tiled maps `.tmj`, hUGETracker songs `.uge`, FX Hammer effect packs `.sav` and the effect list `effects.txt` |
 | `lib/hUGEDriver/` | The music driver's header and GBDK library (6.1.3, public domain) |
 | `tests/` | PyBoy tests: `gamelib.py` helpers, `conftest.py` fixtures and tiers ([TESTING.md](TESTING.md)) |
@@ -194,7 +194,8 @@ status.
   png2asset's metasprite tables are banked data too; the actors' are
   written by hand in bank 0.
 - **GBC palettes:** background 0–3 the level's tileset, 4 the band, 5 the HUD; sprite 0
-  the player, 1 the player while invincible, 2 the enemies, 3 the lifts. The title and
-  menu screens put every cell on background 0 with the grays (`palette_use_grays`); the
+  the player, 1 the player while invincible, 2 the enemies, 3 the lifts. The menu
+  screens put every cell on background 0 with the grays (`palette_use_grays`), the title
+  then loads its picture's greens there; the
   game over and level complete text puts the play area on background 0.
 - **WRAM per-tile tables:** `tile_collision` and `tile_palette`, 256 bytes each.

@@ -41,8 +41,8 @@ The ROM must work on DMG, so all tiles live in VRAM bank 0: 384 tiles in three b
 
 So a level tileset gets **128 tiles** (every cell of its sheet, `tools/tiled2c.py`
 checks) and its band **32** (`gbconvert.py` budget), 160 together. Moving the font up
-would free about 20 more. Screens without a level, like the title, can use all 256
-background tiles.
+would free about 20 more. Screens without a level can use all 256 background tiles, or
+the 207 around the font (0-159, 209-255) when they print text, like the title.
 
 ## 3. Claude Design workflow
 
@@ -85,8 +85,9 @@ Input: an exported PNG plus its entry in `graphics/assets.json`:
 
 `graphics/palettes.json` holds the palette sets, each with `bg` palettes (4 colors) and
 `sprite` palettes (3 colors; index 0 is transparent), every palette light to dark, as hex
-colors. It has the `greybox` set (the DMG grays) and one set per level from the style
-guide: `server_room`, `code_testing_lab`, `ai_research_wing`, `network_hub`, `mainframe`.
+colors. It has the `greybox` set (the DMG grays), one set per level from the style
+guide: `server_room`, `code_testing_lab`, `ai_research_wing`, `network_hub`, `mainframe`,
+a set per band (`<tileset>_band`), `hud` and `title`.
 
 1. Shrink the whole-number upscale (for example 4×) with nearest-neighbor: to the
    entry's `size` when given, else at the largest scale that fits. Fail if the pixel grid
@@ -114,7 +115,7 @@ Design.
 |---|---|
 | Sprites | `-spr8x16 -keep_palette_order -sw W -sh H -px X -py Y -b 255` |
 | Actor sheets (enemies, the lift) | `-spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255`: tiles only, in sheet order (each 8 px column's top, then bottom); the metasprites are written by hand in `src/actor/` |
-| Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` |
+| Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` (one palette: no `-use_map_attributes`). The title is two PNGs, rows 0-13 and 14-17, so its 204 tiles fit around the font: tiles 0-158 and 209-253 |
 | Level tilesets | `-map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255`: one tile per sheet cell, in sheet order, so Tiled's tile ids are the VRAM tiles. Maps, and each tile's palette (from the indexed PNG), come from the level converter ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)). |
 | Parallax bands (256×24 px) | `-map -noflip -keep_palette_order -b 255`: tiles and a 32×3 map, drawn into rows 0–2 with a tile offset |
 
@@ -129,19 +130,17 @@ Design.
 | KERNEL's data packet (L5) | 16×16 | Flicker (2) | Done (2026-10-10) |
 | Enemies for L2–L4 | 16×16 or 16×32 | One or two types per level | Not started |
 | Boss (L5) | Large | Built from background tiles or a metasprite within 10 sprites per line | Not designed |
-| Collectibles | 8×8 tiles in the level tileset | Code fragment, bug report, debug tool, AI core, security protocol | Code fragment (a floppy) in the Server Room tileset (2026-10-10); greybox diamond elsewhere |
-| Level objects | Tiles in the level tileset | Security gate (a striped shutter column between rails, opened a row at a time), exit elevator (2×4 tiles, closed and open) | Server Room done (2026-10-10) |
-| Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Server Room wiring (top and fill, 2026-10-10); level 1 has no hazards |
-| Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room done (2026-10-10, 16 tiles); greybox placeholder for levels 2-5 |
-| Tilesets | ≤ 128 tiles each, with a `.tsx` | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Server Room done (2026-10-10): `graphics/tilesets/server_room.png`, 68 tiles in an 80-cell sheet, machine terrain set in Tiled |
+| Collectibles | 8×8 tiles in the level tileset | Code fragment, bug report, debug tool, AI core, security protocol | Code fragment (a floppy) in the Server Room and Code Testing Lab tilesets (2026-10-10); greybox diamond elsewhere |
+| Level objects | Tiles in the level tileset | Security gate (a striped shutter column between rails, opened a row at a time), exit elevator (2×4 tiles, closed and open) | Server Room done (2026-10-10); Code Testing Lab recolored from it |
+| Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Server Room wiring, Code Testing Lab sparking cables (top and fill, 2026-10-10); levels 1 and 2 have no hazards |
+| Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room (16 tiles) and Code Testing Lab (22) done (2026-10-10); greybox placeholder for levels 3-5 |
+| Tilesets | ≤ 128 tiles each, with a `.tsx` | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Server Room done (2026-10-10): `graphics/tilesets/server_room.png`, 68 tiles in an 80-cell sheet, machine terrain set in Tiled. Code Testing Lab done (2026-10-10): `code_testing_lab.png`, 69 tiles in an 80-cell sheet, same tile ids for the shared objects, "panel" terrain set |
 | HUD and font | 59 tiles | Frame (heart, floppy icon, riveted strip), A–Z, 0–9, punctuation | Done (2026-10-10): `graphics/hud/hud.png`, `graphics/font/font.png` |
-| Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Old `splashscreen.c`, unused `apexLogo.png` |
+| Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Title done (2026-10-10): `apexLogo.png` as `graphics/start_screen/title_top.png` and `title_bottom.png`; the others are text screens in the game font |
 
 ## 7. Existing art
 
 | File | Use |
 |---|---|
 | `graphics/player/programmer.png` | The final player sheet (SOURCES.md). Palette light → dark since 2026-10-03 (review G1). |
-| `graphics/background/background.png` | Old city skyline, not drawn anywhere (its C file removed 2026-10-10). Replace. |
-| `graphics/hud/Font.png` | Not used anywhere; the game font is `graphics/font/font.png`. |
-| `graphics/start_screen/apexLogo.png` | Title art, generated but never drawn. The title screen uses `src/graphics/splashscreen.c` from an older pipeline. |
+| `graphics/start_screen/apexLogo.png` | The owner's title picture, the source of `title_top.png` and `title_bottom.png` (crop at row 112, then `gbconvert.py`). |

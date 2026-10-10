@@ -9,10 +9,18 @@
                      "size": [24, 16], "out": "graphics/objects/lift_platform.png" },
   "data_packet":   { "type": "sprite", "palettes": "server_room", "budget": 8,
                      "size": [32, 16], "out": "graphics/enemies/data_packet.png" },
+  "title_top":     { "type": "bg", "palettes": "title", "budget": 160,
+                     "size": [160, 112], "out": "graphics/start_screen/title_top.png" },
+  "title_bottom":  { "type": "bg", "palettes": "title", "budget": 47,
+                     "size": [160, 32], "out": "graphics/start_screen/title_bottom.png" },
   "hud":           { "type": "bg", "palettes": "hud", "budget": 14,
                      "size": [160, 16], "out": "graphics/hud/hud.png" },
   "server_room":   { "type": "bg", "palettes": "server_room", "budget": 128,
                      "size": [128, 40], "out": "graphics/tilesets/server_room.png" },
   "server_room_band": { "type": "bg", "palettes": "server_room_band", "budget": 32,
-                     "size": [256, 24], "out": "graphics/bands/server_room_band.png" }
+                     "size": [256, 24], "out": "graphics/bands/server_room_band.png" },
+  "code_testing_lab": { "type": "bg", "palettes": "code_testing_lab", "budget": 128,
+                     "size": [128, 40], "out": "graphics/tilesets/code_testing_lab.png" },
+  "code_testing_lab_band": { "type": "bg", "palettes": "code_testing_lab_band", "budget": 32,
+                     "size": [256, 24], "out": "graphics/bands/code_testing_lab_band.png" }
 }

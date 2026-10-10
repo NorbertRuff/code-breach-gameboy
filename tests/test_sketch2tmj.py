@@ -23,7 +23,7 @@ def same_level(a: tiled2c.Level, b: tiled2c.Level) -> bool:
            (b.tiles, b.entities, b.player_start, b.section_start)
 
 
-@pytest.mark.parametrize("name", ["level_2", "greybox_test"])   # sketches are greybox maps
+@pytest.mark.parametrize("name", ["level_4", "greybox_test"])   # sketches are greybox maps
 def test_a_map_survives_the_trip_to_a_sketch_and_back(name):
     tmj = json.loads((ROOT / "levels" / f"{name}.tmj").read_text(encoding="utf-8"))
     rows, quotas = sketch2tmj.read_sketch(sketch2tmj.tmj_to_sketch(tmj))

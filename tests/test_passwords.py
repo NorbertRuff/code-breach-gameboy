@@ -21,7 +21,7 @@ def open_title_menu(game) -> None:
     game.set_state(TITLE_SCREEN_STATE)
     game.frames(150)
     game.tap("start")
-    game.wait_for_text(11, 11, "NEW GAME")
+    game.wait_for_text(7, 13, "NEW GAME")
 
 
 def type_password(game, text: str, cursor: int = 0) -> int:
@@ -63,7 +63,7 @@ def test_continue_takes_a_password_then_a_level(game):
     game.wait_for_state(TITLE_SCREEN_STATE)
     game.frames(150)
     game.tap("start")
-    game.wait_for_text(11, 11, "NEW GAME")
+    game.wait_for_text(7, 13, "NEW GAME")
     game.tap("down start")
     game.wait_for_text(3, 2, "ENTER PASSWORD")
     good = password.make(2, 0b11)
@@ -90,7 +90,7 @@ def test_quit_after_game_over_goes_to_the_title_and_a_new_game(game):
     game.frames(100)
     assert not game.reg("LCDC") & LCDC_WINDOW_ON
     game.tap("start")
-    game.wait_for_text(11, 11, "NEW GAME")
+    game.wait_for_text(7, 13, "NEW GAME")
     game.tap("start")
     game.wait_for_text(6, 10, "LOCKDOWN")
     assert [game.text(6, row, 10) for row in (6, 8)] == ["ANOMALY   ", "STAFF #042"]

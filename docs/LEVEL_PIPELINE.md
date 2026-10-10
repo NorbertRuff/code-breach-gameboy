@@ -8,8 +8,9 @@ editor, a data format in ROM, and maps wider than one 256 px background.
 
 **Files:** maps in `levels/*.tmj`, tilesets in `graphics/tilesets/*.tsx` next to their
 PNG, generated C in `src/levels/`, the data format in `src/level/level_data.h`. Level 1
-uses the Server Room tileset (`server_room.tsx`); the others still use the greybox
-tileset drawn by `tools/greybox_tileset.py` until their art passes. A level's band is
+uses the Server Room tileset (`server_room.tsx`), level 2 the Code Testing Lab
+(`code_testing_lab.tsx`); the others still use the greybox tileset drawn by
+`tools/greybox_tileset.py` until their art passes. A level's band is
 `graphics/bands/<tileset>_band.png`.
 
 ## 1. Options compared

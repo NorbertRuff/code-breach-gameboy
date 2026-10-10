@@ -8,14 +8,17 @@
 #include "story.h"
 #include "../engine/palette.h"
 #include "../engine/text.h"
-#include "../graphics/splashscreen.h"
 #include "../level/level_manager.h"
 #include "../sound/sound.h"
 #include "../utils.h"
 
-// The title menu, over "PRESS START" and the row above it.
-#define TITLE_MENU_X 11
-#define TITLE_MENU_TOP 11
+// The title menu, in a box over the title picture's "Press START" (rows 13-14).
+#define TITLE_MENU_BOX_X 4
+#define TITLE_MENU_BOX_Y 12
+#define TITLE_MENU_BOX_W 12
+#define TITLE_MENU_BOX_H 5
+#define TITLE_MENU_X 7
+#define TITLE_MENU_TOP 13
 #define NEW_GAME 0
 
 // The password screen: the letters in 2 rows of 8, every 2 columns with the cursor left
@@ -148,7 +151,7 @@ static void choose_level(void)
 // the screen faded out; returns 0 to show the title again (B on the password screen).
 uint8_t title_menu(void) BANKED
 {
-    fill_bkg_rect(press_start_tileset_X, press_start_tileset_Y, press_start_tileset_width, press_start_tileset_height, TEXT_SPACE_TILE);
+    fill_bkg_rect(TITLE_MENU_BOX_X, TITLE_MENU_BOX_Y, TITLE_MENU_BOX_W, TITLE_MENU_BOX_H, TEXT_SPACE_TILE);
     text_print(TITLE_MENU_X, TITLE_MENU_TOP, "NEW GAME");
     text_print(TITLE_MENU_X, TITLE_MENU_TOP + 2, "CONTINUE");
     uint8_t choice = menu_choose(TITLE_MENU_X - 1, TITLE_MENU_TOP, 2, NEW_GAME);
