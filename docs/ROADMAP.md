@@ -49,10 +49,7 @@ A fixed bug leaves this list; its regression test keeps the number.
   elevator): agree or change the **Proposed** Code Testing Lab art decision
   (DECISIONS.md). Repaint or move the props in Tiled with the
   "panel" terrain set (`graphics/tilesets/code_testing_lab.tsx`).
-- The new title screen on DMG and GBC: the redrawn corridor, programmer and logo, the
-  warning triangle blinking on the monitor (on and off every half second, steady under
-  the menu), "PRESS START" in the font: agree or change the **Proposed** title screen
-  decision (DECISIONS.md).
+- The new title screen on hardware (DMG and GBC): agreed in Emulicious (2026-10-10).
 - The new bot, chaser, lift and packet on DMG and GBC (2 frames every 8 frames, the lift
   still): agree or change the **Proposed** enemy sprite decision (DECISIONS.md).
 - The player's 10 frames on DMG and GBC (idle breathing, jump, fall, the hurt and death
@@ -129,7 +126,8 @@ Done when level 1 looks like the final game in both modes.
       the **Proposed** HUD palette and HUD decisions (DECISIONS.md).
 - [x] Title screen redrawn from Gemini starter art with a blinking warning triangle
       (2026-10-10; `apexLogo.png` kept out of the build); `splashscreen.c`,
-      `press_start.png` and the unused `background.png` and `Font.png` removed.
+      `press_start.png` and the unused `background.png` and `Font.png` removed. The
+      owner finished the programmer in Aseprite and agreed the title in Emulicious.
       **(owner)** Check it on hardware.
 - [x] Parallax band art for the Server Room (32×3 tiles, wraps; 2026-10-10).
 - [x] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md)

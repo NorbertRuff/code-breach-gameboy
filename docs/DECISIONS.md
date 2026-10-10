@@ -208,7 +208,7 @@ or git keeps the old one). Details of how the code does it belong in
   the band (desks, racks and benches under a ceiling pipe) 22. The map keeps its layout
   and every cell's collision; the props were placed by a script, so the owner can repaint
   them in Tiled.
-- **Title screen** (2026-10-10, **Proposed**): redrawn by hand at 1× on the 8×8 grid from
+- **Title screen** (2026-10-10, owner): redrawn by hand at 1× on the 8×8 grid from
   the owner's Gemini starter art (a server corridor, the programmer from behind, his head turned
   to a monitor; the "APEX [LAB] / CODE BREACH" logo), 139 tiles from 0. A warning triangle on the
   monitor (6×5 tiles, 23 more after the font) blinks by a tile-map swap every 30 frames,
@@ -216,7 +216,8 @@ or git keeps the old one). Details of how the code does it belong in
   font below the monitor, where START's NEW GAME / CONTINUE box covers it. 4 palettes on
   GBC (`title` set: scene and racks, walls and monitor, the programmer, the triangle and
   LEDs), a palette per map cell from png2asset's attribute map; on DMG the 4 grays by
-  palette index. Replaces the owner's `apexLogo.png` as it was.
+  palette index. The programmer is traced from the Gemini scene, his face, glasses and
+  hair finished by the owner in Aseprite. Replaces the owner's `apexLogo.png` as it was.
 - **Background tiles** (2026-10-10, **Proposed**): the tileset from 0 and its band after
   it (tileset at most 128, band 32), the font 160-208, the HUD 209-218 (was 64-73, which
   capped a tileset at 64 tiles), KERNEL 219-236.

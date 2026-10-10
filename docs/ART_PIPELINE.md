@@ -143,4 +143,5 @@ Design.
 | File | Use |
 |---|---|
 | `graphics/player/programmer.png` | The final player sheet (SOURCES.md). Palette light → dark since 2026-10-03 (review G1). |
+| `graphics/start_screen/title.png` | The title picture, the source of truth since the owner's Aseprite pass (2026-10-10). Edit it there, then `gbconvert.py title graphics/start_screen/title.png` and `make assets`. Pick colors from the palette row of the tile's palette: blacks and whites that look the same in another row break the one-palette-per-tile rule. On the programmer (x 0-31, y 88-143) that is the 3rd row; the rack row above (y 80-87) takes only the hair's black and dark green. |
 | `graphics/start_screen/apexLogo.png` | The owner's first title picture, kept out of the build. |
