@@ -8,6 +8,7 @@
 
 #define FLASH_MIN_HOLD_FRAMES 10   // at most 3 flashes per second (photosensitivity)
 #define DMG_ALL_BLACK 0xFF
+#define DMG_SPRITE_PALETTE 0xD0    // sprite colors 1-3 as white, light gray, black (0 is transparent)
 
 // DMG: the background palette at each fade step, one shade darker each.
 static const uint8_t dmg_fade_bgp[PALETTE_BLACK + 1] = { 0xE4, 0xF9, 0xFE, 0xFF };
@@ -26,6 +27,7 @@ void palette_init(void) BANKED
 {
     palette_fade_step = PALETTE_NORMAL;
     BGP_REG = dmg_fade_bgp[PALETTE_NORMAL];
+    OBP0_REG = DMG_SPRITE_PALETTE;
     for (uint8_t palette = 0; palette < PALETTE_COUNT; palette++) {
         palette_set_bkg(palette, 1, grays);
         palette_set_sprite(palette, 1, grays);

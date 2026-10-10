@@ -17,6 +17,7 @@
 #include "../utils.h"
 
 #define RESPAWN_INVINCIBILITY_FRAMES 90   // 1.5 s at 60 fps
+#define HIT_POSE_FRAMES 30                // 0.5 s at 60 fps
 
 // Starts the current section again: the player at its start, the gates and actors as
 // they were when it began, the camera on the player with everything it shows drawn, and
@@ -69,6 +70,15 @@ void start_level(void) BANKED
     if (level_index == LEVEL_BOSS) kernel_intro();
 }
 
+// Holds the player still in the hurt pose, or the death pose on the last life, before the
+// fade.
+static void show_hit_pose(void)
+{
+    player.draw_frame = lives ? HURT_FRAME : DEATH_FRAME;
+    draw_sprites(0);
+    for (uint8_t i = 0; i < HIT_POSE_FRAMES; i++) wait_vbl_done();
+}
+
 // Takes a life and restarts the section. On game over the player continues (the lives
 // refill and the section's fragments come back) or quits to the title. Returns the next
 // game state.
@@ -76,6 +86,7 @@ uint8_t lose_life(void) BANKED
 {
     lives--;
     hud_update_lives(lives);
+    show_hit_pose();
     if (lives) {
         restart_behind_fade(1);
         return COREGAMELOOP;

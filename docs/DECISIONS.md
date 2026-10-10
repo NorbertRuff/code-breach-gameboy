@@ -31,8 +31,9 @@ or git keeps the old one). Details of how the code does it belong in
 
 ## Game design
 
-- **Lives: 3.** Losing one restarts the section at the last opened gate (fade out, fade
-  in, 1.5 s invincibility); fragments are kept. Game over refills the lives and restarts
+- **Lives: 3.** Losing one restarts the section at the last opened gate (the hurt pose,
+  or the death pose on the last life, held 0.5 s, then fade out, fade in, 1.5 s
+  invincibility; pose hold 2026-10-10, owner); fragments are kept. Game over refills the lives and restarts
   the section with its fragments put back. Hazards cost a life like enemies, and
   invincibility protects from both; falling out costs a life even then.
 - **Lives refill at each new level** (2026-10-04, owner).
@@ -160,13 +161,23 @@ or git keeps the old one). Details of how the code does it belong in
   loads, 4-step fades and flashes on both systems; GBC fade steps by masked shifts of
   RGB555 (multiplying took 2 frames per step).
 - **GBC palettes:** background 0 the level, 1 the band, 2 the HUD (green until the M5 HUD
-  art, owner); sprite 0 the player, 1 the pale invincible player (DMG blinks instead).
+  art, owner); sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
+  2 the enemies (bots, chasers, KERNEL's packets), 3 the lifts: the style guide's three
+  sprite palettes in order (player, red, gold; `server_room` set through
+  `tools/gbconvert.py`), 2026-10-10, owner.
 - **Brighter palettes on GBA**, chosen at boot (`_is_GBA`). No GBC double-speed mode.
   **Proposed.**
 - **Art pipeline:** Claude Design → `tools/gbconvert.py` → png2asset (ART_PIPELINE.md);
   every palette light to dark; no background tile flips.
 - **Placeholders until M5:** the greybox tileset and band (drawn by scripts), the
-  mushroom bot, the programmer sprite, the HUD art.
+  mushroom bot, the HUD art.
+- **Player sprite is final** (2026-10-10, owner): the owner's programmer, first based on
+  a Mario sprite and then heavily redrawn, plus 5 frames drawn in its style (10 frames:
+  idle 2, run 4, jump, fall, hurt, death). `graphics/player/programmer.png` and the
+  "ApexLab Hero Sprite Sheet" Claude Design canvas are the source of truth.
+- **All player frames stay in VRAM** (68 sprite tiles, 2026-10-10): no per-frame tile
+  copy, so no frame budget cost; 88 of the 128 sprite-only tiles are in use, enough for
+  the L2-L4 enemies. Copying each frame's 8 tiles in VBlank is the fallback if tiles run out.
 - **Golden screenshots** of key screens in both modes catch visual changes.
 
 ## Audio

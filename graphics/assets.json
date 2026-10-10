@@ -1,1 +1,4 @@
-{}
+{
+  "programmer": { "type": "sprite", "palettes": "server_room", "budget": 68,
+                  "size": [160, 32], "out": "graphics/player/programmer.png" }
+}

@@ -39,12 +39,16 @@ void set_hud_window_tiles(void)
     palette_use_win(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, HUD_PALETTE);
 }
 
-// Loads the player's sprite tiles and palette, and its pale copy for invincibility.
+// Loads the player's sprite tiles and palette, its pale copy for invincibility, and the
+// actors' palettes. The sheet carries the level set's 3 sprite palettes: the player's,
+// the enemies' and the objects'.
 void set_programmer_metasprite(void)
 {
     WITH_BANK(programmer, {
         set_sprite_data(0, programmer_TILE_COUNT, programmer_tiles);
-        palette_set_sprite(0, programmer_PALETTE_COUNT, programmer_palettes);
+        palette_set_sprite(0, 1, programmer_palettes);
+        palette_set_sprite(ENEMY_PALETTE, 1, programmer_palettes + PALETTE_COLORS);
+        palette_set_sprite(OBJECT_PALETTE, 1, programmer_palettes + 2 * PALETTE_COLORS);
     });
     palette_set_pale_sprite(PLAYER_PALE_PALETTE, 0);
 }

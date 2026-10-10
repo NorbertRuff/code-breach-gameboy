@@ -94,7 +94,7 @@ games ships (decision 2026-10-03).
 
 | Asset | Origin | Status |
 |---|---|---|
-| `graphics/player/programmer.png` | Early prototype; partly based on a Mario sprite (owner, 2026-10-03) | **Replace** in M5 (new art from Claude Design) |
+| `graphics/player/programmer.png` | Owner: first based on a Mario sprite, then heavily redrawn (owner, 2026-10-10); idle 2, jump, fall, hurt and death added in its style with Claude Design ("ApexLab Hero Sprite Sheet" canvas, 2026-10-05) | Final (owner, 2026-10-10) |
 | `graphics/enemies/Mushroom.png`, mushroom tiles in `src/actor/bot.c` | Copied from Mario | **Replace** in M5 (security bot) |
 | `graphics/background/background.png` | Early placeholder, origin unclear | **Replace** in M5 (Server Room tileset and parallax band) |
 | `graphics/hud/hud_a.png` | Early placeholder, Mario-like bricks and coin | **Replace** in M5 |

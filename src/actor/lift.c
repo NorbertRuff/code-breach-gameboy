@@ -1,3 +1,4 @@
+#include "../engine/palette.h"
 #include "lift.h"
 
 #define LIFT_FIRST_TILE 82   // sprite tiles after the pause label's (72-81)
@@ -11,11 +12,14 @@ static const uint8_t lift_tiles[LIFT_TILE_COUNT * 16] = {
     0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00
 };
 
+// Actors draw with ENEMY_PALETTE; these bits in a lift's sprites turn it into OBJECT_PALETTE.
+#define LIFT_PALETTE_BITS (ENEMY_PALETTE ^ OBJECT_PALETTE)
+
 // Three 8x16 sprites side by side, their top on the pivot's row (the lift's top).
 static const metasprite_t lift_metasprite[] = {
-    METASPR_ITEM(0, -LIFT_HALF_WIDTH, 0, 0),
-    METASPR_ITEM(0, 8, 0, 0),
-    METASPR_ITEM(0, 8, 0, 0),
+    METASPR_ITEM(0, -LIFT_HALF_WIDTH, 0, LIFT_PALETTE_BITS),
+    METASPR_ITEM(0, 8, 0, LIFT_PALETTE_BITS),
+    METASPR_ITEM(0, 8, 0, LIFT_PALETTE_BITS),
     METASPR_TERM
 };
 

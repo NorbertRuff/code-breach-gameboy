@@ -4,19 +4,20 @@ From the current prototype to the full 5-level game, playable in color on GBC an
 4 shades on DMG. Claude writes the code; the owner runs git, reviews, and plays it in
 Emulicious and on hardware. Items marked **(owner)** need the owner.
 
-## Status (2026-10-05)
+## Status (2026-10-10)
 
 - **Playable from start to end:** levels 1-4 (level 1 art pending; levels 2 and 3
   greyboxes, kept after the owner's passes; level 4's greybox new) and level 5, the KERNEL
   boss (greybox, placeholder face), then the ending and the credits; music and sound
   effects; passwords, the title menu, the level select and the game over menu; the story
   text. New since the owner's last check: the M7 menus and story, level 4, level 5 and the
-  ending. Next: the owner's playthrough; M5 art waits for the style guide.
-- **Tests:** `make test` 232 tests in about 16 s; `make test-full` 346 in about 21 s.
-- **Memory:** bank 0 has 1,074 bytes free (KERNEL's packet actor and the boss and ending
+  ending, and since 2026-10-10 the final player sprite (10 frames, GBC colors from the
+  style guide). Next: the owner's playthrough; the rest of the M5 art.
+- **Tests:** `make test` 234 tests in about 16 s; `make test-full` 350 in about 20 s.
+- **Memory:** bank 0 has 1,016 bytes free (KERNEL's packet actor and the boss and ending
   states are in it); WRAM uses 1,504 of 4,096 bytes.
-- **Frame budget** (worst update, line of the 140 allowed; average): level 1 125 (79),
-  level 2 108 (66), level 3 131 (91), level 4 107 (69), level 5 111 (72), greybox route
+- **Frame budget** (worst update, line of the 140 allowed; average): level 1 124 (79),
+  level 2 107 (66), level 3 130 (90), level 4 106 (69), level 5 109 (71), greybox route
   121 (80). KERNEL's own update about 8 lines, up to 25 when it writes tiles. Lifts cost about 10 lines on
   average where they are; the music step about 9, up to 18; a streamed column's write 5.
 
@@ -31,7 +32,9 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
-- Claude Design style guide (M5): palettes are in; the character look and sprite sheets are next.
+- Claude Design style guide (M5): palettes and the player are in; the other sprite sheets are next.
+- The player's 10 frames on DMG and GBC (idle breathing, jump, fall, the hurt and death
+  poses held 0.5 s on a hit), the white coat on DMG, red enemies and gold lifts on GBC.
 - Try the M7 menus in Emulicious and on hardware: the title menu, a password from a level
   complete screen typed back in (`python tools/password.py` lists them), the level select,
   game over CONTINUE and QUIT, the boot screen and the elevator log screens. Agree or
@@ -72,7 +75,8 @@ Done when the game runs in color on GBC and unchanged on DMG. Steps in
 - [x] `src/engine/palette.c`: load, fade, flash for both systems. No other file writes
       palette registers. Done 2026-10-04, `tests/test_palette.py`.
 - [ ] Load the exported palettes for background, HUD and sprites. Done 2026-10-04 for
-      the current assets (level tiles, band, HUD, player); the M5 art adds the rest.
+      the current assets (level tiles, band, HUD); the player and actors use the style
+      guide's sprite palettes since 2026-10-10; the M5 art adds the rest.
 - [ ] Attribute maps behind `is_cgb`, including streamed columns. The band and HUD have
       theirs (2026-10-04); streamed columns wait for per-tile palettes from the M5 tilesets.
 - [ ] Brighter palette set when `_is_GBA` is set.
@@ -90,7 +94,8 @@ Done when level 1 looks like the final game in both modes.
       all five levels in `graphics/palettes.json` (2026-10-05).
 - [x] `tools/gbconvert.py` with previews ([ART_PIPELINE.md](ART_PIPELINE.md)). Built and
       tested 2026-10-04.
-- [ ] Player sprite with all animations.
+- [x] Player sprite with all animations: idle (2), run (4), jump, fall, hurt and death
+      (2026-10-10). **(owner)** Check them on hardware.
 - [ ] Security bot enemy.
 - [ ] Server Room tileset with Tiled terrain sets. Swap it in for the greybox tileset.
 - [ ] Security gate and exit elevator art.
@@ -98,7 +103,7 @@ Done when level 1 looks like the final game in both modes.
 - [ ] Title screen from `apexLogo`. Remove `splashscreen.c`.
 - [ ] Parallax band art for the Server Room (32×3 tiles, wraps).
 - [ ] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md):
-      programmer sprite, mushroom enemy, background, HUD. Claude Design for the pixel art.
+      mushroom enemy, background, HUD. Claude Design for the pixel art.
 
 ## M6 — Audio
 
@@ -155,8 +160,8 @@ replay test that finishes it.
 ## M9 — Polish and release
 
 - [ ] **(owner)** Full playthrough on DMG and GBC.
-- [ ] No lag frames in any level. Sprite flicker below the per-line limit. The level
-      replay tests check both.
+- [x] No lag frames in any level, at most 10 sprites per line: each level's replay test
+      (`tests/test_level_1.py` to `test_level_4.py`, `test_boss.py`) checks both.
 - [ ] Difficulty and checkpoint tuning.
 - [ ] Project README, screenshots, itch.io page.
 - [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;

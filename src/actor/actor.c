@@ -1,3 +1,4 @@
+#include "../engine/palette.h"
 #include "actor.h"
 #include "bot.h"
 #include "lift.h"
@@ -142,21 +143,26 @@ uint8_t actors_touch(int16_t left, int16_t top, int16_t right, int16_t bottom)
 // Returns the next unused hardware sprite.
 uint8_t actors_draw(uint8_t first_sprite, int16_t camera_x)
 {
-    Actor* actor = actors;
-    for (uint8_t i = 0; i < actor_count; i++, actor++) {
+    // Static, not on the stack: SDCC reaches them with fewer instructions (2 lines a frame).
+    static Actor* actor;
+    static const ActorType* type;
+    static uint8_t half_width;
+    static int16_t screen_x;
+    actor = actors;
+    for (uint8_t i = actor_count; i; i--, actor++) {
         // Entirely off screen? Skip it: an 8-bit sprite x would wrap into view. On screen,
         // screen_x is within half_width of it: one unsigned compare checks both sides.
-        const ActorType* type = actor->type;
-        uint8_t half_width = type->half_width;
-        int16_t screen_x = actor->x - camera_x;
+        type = actor->type;
+        half_width = type->half_width;
+        screen_x = actor->x - camera_x;
         if ((uint16_t)(screen_x + half_width - 1) >= DEVICE_SCREEN_PX_WIDTH + 2 * half_width - 1) continue;
 
         uint8_t x = screen_x + DEVICE_SPRITE_PX_OFFSET_X;
         uint8_t y = actor->y + DEVICE_SPRITE_PX_OFFSET_Y;
         if (actor->velocity_x > 0) {
-            first_sprite += move_metasprite_ex(type->metasprite, type->first_tile, 0, first_sprite, x, y);
+            first_sprite += move_metasprite_ex(type->metasprite, type->first_tile, ENEMY_PALETTE, first_sprite, x, y);
         } else {
-            first_sprite += move_metasprite_flipx(type->metasprite, type->first_tile, 0, first_sprite, x, y);
+            first_sprite += move_metasprite_flipx(type->metasprite, type->first_tile, ENEMY_PALETTE, first_sprite, x, y);
         }
     }
     return first_sprite;

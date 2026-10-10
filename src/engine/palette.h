@@ -17,6 +17,11 @@
 #define BAND_PALETTE  1
 #define HUD_PALETTE   2
 
+// GBC sprite palettes: 0 the player, 1 the pale invincible player (player.h), then the
+// actors': the enemies' and the harmless objects' (lifts).
+#define ENEMY_PALETTE  2
+#define OBJECT_PALETTE 3
+
 #define PALETTE_COUNT 8    // per kind (background, sprites) on GBC
 #define PALETTE_COLORS 4
 

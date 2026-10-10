@@ -92,7 +92,7 @@ COLLISION_ONE_WAY = 2
 COLLISION_HAZARD = 3
 
 # The patrol bot's two 8x16 sprites use these sprite tiles (src/actor/bot.c).
-BOT_TILES = (40, 42)
+BOT_TILES = (68, 70)
 
 # Screen text: the font's first tile (src/engine/text.h) and its characters in tile order
 # (src/graphics/font.h).

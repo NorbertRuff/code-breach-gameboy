@@ -129,3 +129,51 @@ def test_hazard_tile_costs_a_life(game):
     game.hold("right", 30)
     assert game.lives() == lives - 1
 
+
+
+# Sprite frames of graphics/player/programmer.png (src/player/player.h).
+IDLE_FRAMES = {0, 1}
+RUN_FRAMES = {2, 3, 4, 5}
+JUMP_FRAME, FALL_FRAME, HURT_FRAME, DEATH_FRAME = 6, 7, 8, 9
+
+
+def frames_seen(game, n: int) -> set:
+    seen = set()
+    for _ in range(n):
+        game.frames(1)
+        seen.add(game.player().draw_frame)
+    return seen
+
+
+def test_animation_breathes_jumps_falls_and_runs(game):
+    game.start_on_open_ground()
+    assert frames_seen(game, 70) == IDLE_FRAMES, "standing swaps the two idle frames"
+    game.pyboy.button_press("a")
+    rising, falling = set(), set()
+    for _ in range(60):
+        game.frames(1)
+        p = game.player()
+        if not p.on_ground:
+            (rising if p.velocity_y < 0 else falling).add(p.draw_frame)
+    game.pyboy.button_release("a")
+    assert rising == {JUMP_FRAME} and falling == {FALL_FRAME}
+    game.pyboy.button_press("right")
+    game.frames(4)
+    assert frames_seen(game, 20) == RUN_FRAMES
+
+
+def test_a_hit_holds_the_hurt_pose_and_the_last_life_the_death_pose(game):
+    game.start_on_open_ground()
+    start = game.save()
+    for lives, pose in ((3, HURT_FRAME), (1, DEATH_FRAME)):
+        game.load(start)
+        game.set_lives(lives)
+        game.place_player(336, 119)
+        game.pyboy.button_press("right")
+        for _ in range(30):
+            game.frames(1)
+            if game.lives() != lives:
+                break
+        game.pyboy.button_release("right")
+        game.frames(10)
+        assert game.player().draw_frame == pose

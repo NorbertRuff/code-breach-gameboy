@@ -168,8 +168,8 @@ status.
 - **Background tiles** (GBDK uses `0x8800` addressing, so background tiles 128–255 share
   memory with sprite tiles 128–255): the level's from 0, the HUD frame from 64, KERNEL's
   from 78 (level 5), the HUD digits 133–144, the font 160–208.
-- **Sprite tiles:** the player 0–39, the bot 40–43, the pause label 44–53, the lift 54–55,
-  KERNEL's packet 56–59. The player is
+- **Sprite tiles:** the player 0–67 (all 10 frames), the bot 68–71, the pause label
+  72–81, the lift 82–83, KERNEL's packet 84–87. The player is
   4 OAM entries (8×16 mode), a bot 2.
 - **ROM banks:** assets are made with `png2asset -b 255` (autobank, `BANKREF(name)`) and
   read inside `WITH_BANK(name, ...)`, one asset per `WITH_BANK`, only from bank 0 code.

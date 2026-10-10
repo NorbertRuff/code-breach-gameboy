@@ -192,8 +192,6 @@ assets:
 	$(PNG2ASSET) graphics/bands/greybox_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/greybox_band.c
 	$(PNG2ASSET) graphics/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255 -o src/graphics/programmer.c
 	$(PNG2ASSET) graphics/hud/hud_a.png -map -noflip -b 255 -o src/graphics/hud.c
-	$(PNG2ASSET) graphics/background/background.png -map -noflip -b 255 -o src/graphics/background.c
-	$(PNG2ASSET) graphics/enemies/Mushroom.png -map -noflip -b 255 -o src/graphics/mushroom.c
 
 # tools/tiled2c.py output is committed too. Run this after saving a map in Tiled.
 # A level that breaks a rule (docs/LEVEL_PIPELINE.md) stops with a message.

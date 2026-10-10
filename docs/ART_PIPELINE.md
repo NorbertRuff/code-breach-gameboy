@@ -35,7 +35,7 @@ The ROM must work on DMG, so all tiles live in VRAM bank 0: 384 tiles in three b
 
 | Block | Tiles | Used for |
 |---|---|---|
-| Sprite-only (`0x8000`) | 128 | Player (≤ 48), current level's enemies (≤ 40), pickups and effects (≤ 24), spare |
+| Sprite-only (`0x8000`) | 128 | Player (68, all 10 frames), current level's enemies and objects (about 40), pause label (10), spare |
 | Shared (`0x8800`) | 128 | HUD frame and font (about 60), the rest goes to level tiles |
 | Background-only (`0x9000`) | 128 | Level tileset |
 
@@ -119,7 +119,7 @@ Design.
 
 | Asset | Size | Content | Status |
 |---|---|---|---|
-| Player (programmer) | 16×32 | Idle (2), run (6), jump up, fall, land, hurt, death | Placeholder: 5 frames, dark → light palette |
+| Player (programmer) | 16×32 | Idle (2), run (4), jump up, fall, hurt, death | Done (2026-10-10): 10 frames, owner's design |
 | Security bot (L1) | 16×16 | Walk (2–4), turn | Mushroom placeholder |
 | Enemies for L2–L4 | 16×16 or 16×32 | One or two types per level | Not started |
 | Boss (L5) | Large | Built from background tiles or a metasprite within 10 sprites per line | Not designed |
@@ -135,10 +135,9 @@ Design.
 
 | File | Use |
 |---|---|
-| `graphics/player/programmer.png` | Keep as a reference for proportions. Palette reordered light → dark on 2026-10-03 (review G1), so it now reads correctly on DMG. |
-| `graphics/background/background.png` | Placeholder city skyline. Replace. |
-| `graphics/enemies/Mushroom.png` | Placeholder. Replace with the security bot. |
+| `graphics/player/programmer.png` | The final player sheet (SOURCES.md). Palette light → dark since 2026-10-03 (review G1). |
+| `graphics/background/background.png` | Old city skyline, not drawn anywhere (its C file removed 2026-10-10). Replace. |
+| `graphics/enemies/Mushroom.png` | The bot's placeholder art, copied by hand into `src/actor/bot.c` (its C file removed 2026-10-10). Replace with the security bot. |
 | `graphics/hud/hud_a.png` | The layout idea (heart left, counter right) can stay. |
 | `graphics/hud/Font.png` | Not used anywhere. Candidate base for the font. |
 | `graphics/start_screen/apexLogo.png` | Title art, generated but never drawn. The title screen uses `src/graphics/splashscreen.c` from an older pipeline. |
-| `graphics/player/programmerMario.png`, `graphics/start_screen/apexLogo3.*` | Unused. Remove during cleanup. |
