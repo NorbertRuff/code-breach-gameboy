@@ -1,3 +1,4 @@
+#include "../engine/banking.h"
 #include "../engine/palette.h"
 #include "actor.h"
 #include "bot.h"
@@ -28,7 +29,6 @@ static const ActorType* const actor_types[] = {
     &lift_type,  // ENTITY_LIFT
     &chaser_type,  // ENTITY_CHASER
 };
-#define ACTOR_TYPE_COUNT (sizeof(actor_types) / sizeof(actor_types[0]))
 
 static uint8_t spawn_cursor;        // index of the next level entity to spawn
 static LevelEntity next_entity;     // a copy of it, so most frames need no bank switch
@@ -43,13 +43,13 @@ static void read_next_entity(void)
     }
 }
 
-// Loads every actor type's tiles into sprite VRAM.
+// Loads every actor's tiles into sprite VRAM, KERNEL's packet's too.
 void actors_load_tiles(void)
 {
-    for (uint8_t i = 0; i < ACTOR_TYPE_COUNT; i++) {
-        const ActorType* type = actor_types[i];
-        if (type) set_sprite_data(type->first_tile, type->tile_count, type->tiles);
-    }
+    WITH_BANK(security_bot, set_sprite_data(BOT_FIRST_TILE, security_bot_TILE_COUNT, security_bot_tiles));
+    WITH_BANK(chaser_drone, set_sprite_data(CHASER_FIRST_TILE, chaser_drone_TILE_COUNT, chaser_drone_tiles));
+    WITH_BANK(lift_platform, set_sprite_data(LIFT_FIRST_TILE, lift_platform_TILE_COUNT, lift_platform_tiles));
+    WITH_BANK(data_packet, set_sprite_data(PACKET_FIRST_TILE, data_packet_TILE_COUNT, data_packet_tiles));
 }
 
 // Removes every actor and points the spawn cursor at a section's first entity: for a
@@ -148,6 +148,10 @@ uint8_t actors_draw(uint8_t first_sprite, int16_t camera_x)
     static const ActorType* type;
     static uint8_t half_width;
     static int16_t screen_x;
+    static uint8_t tile;
+    static uint8_t frame_mask;
+    // 2-frame actors show their second frame while this bit of the frame count is set.
+    frame_mask = (sys_time & ACTOR_FRAME_BIT) ? 0xFF : 0;
     actor = actors;
     for (uint8_t i = actor_count; i; i--, actor++) {
         // Entirely off screen? Skip it: an 8-bit sprite x would wrap into view. On screen,
@@ -159,10 +163,11 @@ uint8_t actors_draw(uint8_t first_sprite, int16_t camera_x)
 
         uint8_t x = screen_x + DEVICE_SPRITE_PX_OFFSET_X;
         uint8_t y = actor->y + DEVICE_SPRITE_PX_OFFSET_Y;
+        tile = type->first_tile + (type->frame_tiles & frame_mask);
         if (actor->velocity_x > 0) {
-            first_sprite += move_metasprite_ex(type->metasprite, type->first_tile, ENEMY_PALETTE, first_sprite, x, y);
+            first_sprite += move_metasprite_ex(type->metasprite, tile, ENEMY_PALETTE, first_sprite, x, y);
         } else {
-            first_sprite += move_metasprite_flipx(type->metasprite, type->first_tile, ENEMY_PALETTE, first_sprite, x, y);
+            first_sprite += move_metasprite_flipx(type->metasprite, tile, ENEMY_PALETTE, first_sprite, x, y);
         }
     }
     return first_sprite;

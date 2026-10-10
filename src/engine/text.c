@@ -5,10 +5,12 @@
 
 #define MAX_LINE 20   // characters across the screen
 
-// Loads the font's tiles into background tile memory.
+// Loads the font's 1-bit tiles into background tile memory: ink in color 3 (darkest),
+// the rest color 0 (lightest).
 void text_load_font(void)
 {
-    WITH_BANK(font, set_bkg_data(FONT_FIRST_TILE, font_TILE_COUNT, font_tiles));
+    set_1bpp_colors(DMG_BLACK, DMG_WHITE);
+    WITH_BANK(font, set_bkg_1bpp_data(FONT_FIRST_TILE, FONT_CHAR_COUNT, font_tiles));
 }
 
 // The font tile of a character: lowercase shows as uppercase, and anything the font

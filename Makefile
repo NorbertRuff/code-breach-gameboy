@@ -191,7 +191,12 @@ assets:
 	$(PYTHON) tools/greybox_band.py
 	$(PNG2ASSET) graphics/bands/greybox_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/greybox_band.c
 	$(PNG2ASSET) graphics/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255 -o src/graphics/programmer.c
-	$(PNG2ASSET) graphics/hud/hud_a.png -map -noflip -b 255 -o src/graphics/hud.c
+	$(PNG2ASSET) graphics/enemies/security_bot.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/security_bot.c
+	$(PNG2ASSET) graphics/enemies/chaser_drone.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/chaser_drone.c
+	$(PNG2ASSET) graphics/objects/lift_platform.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/lift_platform.c
+	$(PNG2ASSET) graphics/enemies/data_packet.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/data_packet.c
+	$(PNG2ASSET) graphics/hud/hud.png -map -noflip -keep_palette_order -b 255 -o src/graphics/hud.c
+	$(PNG2ASSET) graphics/font/font.png -map -bpp 1 -noflip -keep_duplicate_tiles -tiles_only -b 255 -o src/graphics/font.c
 
 # tools/tiled2c.py output is committed too. Run this after saving a map in Tiled.
 # A level that breaks a rule (docs/LEVEL_PIPELINE.md) stops with a message.

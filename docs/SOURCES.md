@@ -95,14 +95,13 @@ games ships (decision 2026-10-03).
 | Asset | Origin | Status |
 |---|---|---|
 | `graphics/player/programmer.png` | Owner: first based on a Mario sprite, then heavily redrawn (owner, 2026-10-10); idle 2, jump, fall, hurt and death added in its style with Claude Design ("ApexLab Hero Sprite Sheet" canvas, 2026-10-05) | Final (owner, 2026-10-10) |
-| `graphics/enemies/Mushroom.png`, mushroom tiles in `src/actor/bot.c` | Copied from Mario | **Replace** in M5 (security bot) |
+| `graphics/enemies/security_bot.png`, `chaser_drone.png`, `data_packet.png`, `graphics/objects/lift_platform.png` | The owner's reference pictures (2026-10-10), redrawn at 16×16 (the lift 24×16) in the style guide's sprite palettes with Claude Design ("ApexLab Enemy Sprites" canvas) | In use |
 | `graphics/background/background.png` | Early placeholder, origin unclear | **Replace** in M5 (Server Room tileset and parallax band) |
-| `graphics/hud/hud_a.png` | Early placeholder, Mario-like bricks and coin | **Replace** in M5 |
+| `graphics/hud/hud.png` (HUD frame), `graphics/font/font.png` (the game font) | Gemini starter, redrawn (2026-10-10): shrunk to 160×16 and 7×7 glyphs on 8×8 tiles, snapped to the `hud` palette, redrawn by hand | In use |
 | `graphics/hud/Font.png` | Unknown | Check origin, or use a CC0 font (RESEARCH.md section 4) |
 | `graphics/start_screen/apexLogo.png`, `press_start.png`, `src/graphics/splashscreen.c` | Owner (ApexLab logo) | Keep the logo; redo the title screen in M5 |
-| Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`), HUD digits and heart (hand-written in `level_manager.c`) | Project code | Placeholders until M5 |
+| Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`) | Project code | Placeholder until M5 |
 | Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder until M5 |
-| Placeholder font (`src/graphics/font.c`): A-Z, 0-9, punctuation, 8×8 bold | Project code, drawn in the style of the existing HUD digits | Placeholder until the M5 font |
 | Music: `music/*.uge` (Tech, Neurotic Robonaut, Observing Jupiter, Decampment, Gone Missing, Delight); both packs in `music/packs/` for the sound test | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
 | hUGEDriver 6.1.3 (`lib/hUGEDriver/`) | SuperDisk, github.com/SuperDisk/hUGEDriver release, public domain | In use; credited in `CREDITS.md` |
 | Sound effects: `sounds/GBFX.sav`, `sounds/GBFX2.sav` (picks in `sounds/effects.txt`) | Tronimal, GBFX and GBFX2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |

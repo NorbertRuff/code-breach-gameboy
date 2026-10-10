@@ -49,7 +49,7 @@ tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next le
 | `src/level/` | `level_data.h` (ROM level format), `level_manager.c` (`level_load`, which finds a level's header and bank in two tables by index; `Level` state, HUD), `level_stream.c` (collision ring, column streaming, fragments, gates, exit), `section.c` (quotas, gates, checkpoints) |
 | `src/actor/` | `actor.c` (spawning, type table, update, hit test, drawing), `bot.c` (the patrol bot), `chaser.c` (the chaser), `lift.c` (the lift), `packet.c` (KERNEL's packet: kernel.c adds it to `actors[]`, and its x set to `ACTOR_GONE` removes it) |
 | `src/sound/` | `sound.c` (the effect player), `effects.c` (generated: `make sounds`), `music.c` (the level's song through hUGEDriver) |
-| `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus hand-made `splashscreen.c`, `hud_digits.c`, `font.c`) |
+| `src/graphics/`, `src/levels/`, `src/music/` | Generated, banked: `make assets`, `make levels`, `make music` (plus the hand-made `splashscreen.c`) |
 | `graphics/`, `levels/`, `music/`, `sounds/` | Sources: PNGs and Tiled `.tsx`, Tiled maps `.tmj`, hUGETracker songs `.uge`, FX Hammer effect packs `.sav` and the effect list `effects.txt` |
 | `lib/hUGEDriver/` | The music driver's header and GBDK library (6.1.3, public domain) |
 | `tests/` | PyBoy tests: `gamelib.py` helpers, `conftest.py` fixtures and tiers ([TESTING.md](TESTING.md)) |
@@ -101,8 +101,11 @@ Moving level objects (patrol bots, chasers and lifts) are actors; the player is 
 reads the level's entities in x order with a cursor and spawns each one that has an
 `ActorType` once it is within 16 px of the screen's right edge. A bot walks at its
 entity's `speed` (1 or 2 px per frame), kept as the signed `velocity_x`. An `ActorType`
-has `spawn`, `update`, a metasprite (pivot = body center, feet row), its tiles, a hit
-box and a half width (to skip actors off screen). Actors stay packed in `actors[0..actor_count-1]`; one more than a screen behind the
+has `spawn`, `update`, a metasprite (pivot = body center, feet row; written by hand, in
+bank 0), its first sprite tile, the tile step to its second animation frame
+(`frame_tiles`, shown every other 8 frames; 0 for one frame), a hit box and a half width
+(to skip actors off screen). `actors_load_tiles` loads every actor's tiles at a level
+start, KERNEL's packet's too. Actors stay packed in `actors[0..actor_count-1]`; one more than a screen behind the
 camera is removed until `actors_reset(section)`. `draw_sprites` (`main.c`) rebuilds the
 sprite list every frame: the player (OAM 0–3), the actors, then `hide_sprites_range`.
 
@@ -166,17 +169,20 @@ status.
 ## Memory map
 
 - **Background tiles** (GBDK uses `0x8800` addressing, so background tiles 128–255 share
-  memory with sprite tiles 128–255): the level's from 0, the HUD frame from 64, KERNEL's
-  from 78 (level 5), the HUD digits 133–144, the font 160–208.
-- **Sprite tiles:** the player 0–67 (all 10 frames), the bot 68–71, the pause label
-  72–81, the lift 82–83, KERNEL's packet 84–87. The player is
+  memory with sprite tiles 128–255): the level's from 0, the HUD frame 64–73, KERNEL's
+  from 78 (level 5), the font 160–208 (1-bit, loaded in color 3 on 0; the HUD's digits
+  are the font's).
+- **Sprite tiles:** the player 0–67 (all 10 frames), the bot 68–75, the chaser 76–83,
+  the lift 84–89, KERNEL's packet 90–97 (`src/actor/actor.h`), the pause label 98–107.
+  The player is
   4 OAM entries (8×16 mode), a bot 2.
 - **ROM banks:** assets are made with `png2asset -b 255` (autobank, `BANKREF(name)`) and
   read inside `WITH_BANK(name, ...)`, one asset per `WITH_BANK`, only from bank 0 code.
   Code that never runs in a gameplay frame and doesn't use `WITH_BANK` lives in a ROM bank
   (`#pragma bank 255`, `BANKED`): `intro_credits.c`, `game_over.c`, `pause.c`,
-  `prepare_gameboy.c`, `game_flow.c`, `menu.c`, `title_menu.c`, `progress.c`, `story.c`,
-  `hud_digits.c`. Metasprite tables are banked data too.
-- **GBC palettes:** background 0 the level, 1 the band, 2 the HUD; sprite 0 the player
-  (and for now the bots), 1 the player while invincible. The title and menu screens put
+  `prepare_gameboy.c`, `game_flow.c`, `menu.c`, `title_menu.c`, `progress.c`, `story.c`.
+  png2asset's metasprite tables are banked data too; the actors' are
+  written by hand in bank 0.
+- **GBC palettes:** background 0 the level, 1 the band, 2 the HUD; sprite 0 the player,
+  1 the player while invincible, 2 the enemies, 3 the lifts. The title and menu screens put
   every cell on background 0 with the grays (`palette_use_grays`).

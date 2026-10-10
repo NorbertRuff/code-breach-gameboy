@@ -12,13 +12,13 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
   effects; passwords, the title menu, the level select and the game over menu; the story
   text. New since the owner's last check: the M7 menus and story, level 4, level 5 and the
   ending, and since 2026-10-10 the final player sprite (10 frames, GBC colors from the
-  style guide). Next: the owner's playthrough; the rest of the M5 art.
-- **Tests:** `make test` 234 tests in about 16 s; `make test-full` 350 in about 20 s.
-- **Memory:** bank 0 has 1,016 bytes free (KERNEL's packet actor and the boss and ending
+  style guide), the bot, chaser, lift and packet sprites, and the HUD and font. Next: the owner's playthrough; the rest of the M5 art.
+- **Tests:** `make test` 235 tests in about 16 s; `make test-full` 352 in about 21 s.
+- **Memory:** bank 0 has 932 bytes free (KERNEL's packet actor and the boss and ending
   states are in it); WRAM uses 1,504 of 4,096 bytes.
 - **Frame budget** (worst update, line of the 140 allowed; average): level 1 124 (79),
-  level 2 107 (66), level 3 130 (90), level 4 106 (69), level 5 109 (71), greybox route
-  121 (80). KERNEL's own update about 8 lines, up to 25 when it writes tiles. Lifts cost about 10 lines on
+  level 2 108 (67), level 3 131 (90), level 4 107 (70), level 5 109 (72), greybox route
+  122 (80). KERNEL's own update about 8 lines, up to 25 when it writes tiles. Lifts cost about 10 lines on
   average where they are; the music step about 9, up to 18; a streamed column's write 5.
 
 ## Bugs
@@ -32,7 +32,10 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
-- Claude Design style guide (M5): palettes and the player are in; the other sprite sheets are next.
+- Claude Design style guide (M5): palettes, the player, the enemies and the lift are in;
+  the tilesets are next.
+- The new bot, chaser, lift and packet on DMG and GBC (2 frames every 8 frames, the lift
+  still): agree or change the **Proposed** enemy sprite decision (DECISIONS.md).
 - The player's 10 frames on DMG and GBC (idle breathing, jump, fall, the hurt and death
   poses held 0.5 s on a hit), the white coat on DMG, red enemies and gold lifts on GBC.
 - Try the M7 menus in Emulicious and on hardware: the title menu, a password from a level
@@ -96,14 +99,16 @@ Done when level 1 looks like the final game in both modes.
       tested 2026-10-04.
 - [x] Player sprite with all animations: idle (2), run (4), jump, fall, hurt and death
       (2026-10-10). **(owner)** Check them on hardware.
-- [ ] Security bot enemy.
+- [x] Security bot, chaser, lift and KERNEL's packet sprites (2026-10-10). **(owner)**
+      Check them on hardware.
 - [ ] Server Room tileset with Tiled terrain sets. Swap it in for the greybox tileset.
 - [ ] Security gate and exit elevator art.
-- [ ] HUD frame and font (the placeholder font's tiles in `src/graphics/font.c` get swapped).
+- [x] HUD frame and font (2026-10-10). **(owner)** Check them on hardware; agree or change
+      the **Proposed** HUD palette and HUD decisions (DECISIONS.md).
 - [ ] Title screen from `apexLogo`. Remove `splashscreen.c`.
 - [ ] Parallax band art for the Server Room (32×3 tiles, wraps).
 - [ ] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md):
-      mushroom enemy, background, HUD. Claude Design for the pixel art.
+      background. Claude Design for the pixel art.
 
 ## M6 — Audio
 

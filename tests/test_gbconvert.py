@@ -115,9 +115,10 @@ def test_palettes_must_be_light_to_dark(tmp_path):
 
 def test_project_palettes_load():
     path = ROOT / "graphics" / "palettes.json"
-    for set_name in json.loads(path.read_text(encoding="utf-8")):
+    for set_name, kinds in json.loads(path.read_text(encoding="utf-8")).items():
         assert len(load_palettes(path, set_name, "bg")[0]) == 4
-        assert len(load_palettes(path, set_name, "sprite")[0]) == 3
+        if "sprite" in kinds:   # the HUD's set has only its background palette
+            assert len(load_palettes(path, set_name, "sprite")[0]) == 3
 
 
 def test_previews_show_gbc_colors_and_dmg_grays():

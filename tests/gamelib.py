@@ -91,17 +91,17 @@ COLLISION_SOLID = 1
 COLLISION_ONE_WAY = 2
 COLLISION_HAZARD = 3
 
-# The patrol bot's two 8x16 sprites use these sprite tiles (src/actor/bot.c).
-BOT_TILES = (68, 70)
+# The patrol bot's two 8x16 sprites in each walk frame (src/actor/actor.h, bot.c).
+BOT_FRAME_TILES = ({68, 70}, {72, 74})
+BOT_TILES = (68, 70, 72, 74)
 
-# Screen text: the font's first tile (src/engine/text.h) and its characters in tile order
-# (src/graphics/font.h).
+# Screen text: the font's first tile and its characters in tile order (src/engine/text.h).
 FONT_FIRST_TILE = 160
 FONT_CHARS = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?()/:-#%>"
 
-# HUD tiles, from src/level/level_manager.h.
-HUD_DIGIT_TILE_BASE = 133
-HUD_SLASH_TILE = 143
+# The HUD's digits and '/' are the font's (src/level/level_manager.c).
+HUD_DIGIT_TILE_BASE = FONT_FIRST_TILE + FONT_CHARS.index("0")
+HUD_SLASH_TILE = FONT_FIRST_TILE + FONT_CHARS.index("/")
 
 # Player body box around its pivot (x = center, y = lowest row), from src/player/player.h.
 SUBPIXELS = 32

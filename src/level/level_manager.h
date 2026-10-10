@@ -84,11 +84,8 @@ void level_collect_fragment(uint8_t tile_x, uint8_t tile_y);
 void level_reset_fragments(uint8_t section);
 uint8_t level_open_gate_row(Gate* gate);
 
-// HUD tiles: the window frame from the hud asset, then digits, '/' and a heart.
-#define HUD_TILE_BASE       64
-#define HUD_DIGIT_TILE_BASE 133   // tile 133 = '0', 134 = '1', ..., 142 = '9'
-#define HUD_SLASH_TILE      143
-#define HUD_HEART_TILE      144
+// HUD frame tiles (the hud asset, heart included); its digits and '/' are the font's.
+#define HUD_TILE_BASE 64
 
 void set_hud_window_tiles(void);
 void set_programmer_metasprite(void);

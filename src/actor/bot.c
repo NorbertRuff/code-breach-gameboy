@@ -2,17 +2,8 @@
 
 #define BOT_HALF_WIDTH 8                       // body: 16x16 px, x is its center
 
-// Placeholder art: the mushroom from the early prototype, until the security bot (M5).
-// Tiles in 8x16 sprite order: left column top and bottom, then the right column.
-const uint8_t bot_tiles[BOT_TILE_COUNT * 16] = {
-    0x07,0xff, 0x19,0xf8, 0x21,0xe0, 0x43,0xc0, 0x46,0xc0, 0xfc,0x80, 0xcc,0x80, 0x86,0x80,
-    0x87,0x80, 0xcf,0x80, 0xff,0x8f, 0x72,0xf2, 0x22,0xe2, 0x20,0xe0, 0x10,0xf0, 0x0f,0xff,
-    0xe0,0xff, 0xf8,0x1f, 0xe4,0x07, 0xf2,0x03, 0x1a,0x03, 0x0f,0x01, 0x0f,0x01, 0x19,0x01,
-    0xe1,0x01, 0xf3,0x01, 0xff,0xf1, 0x4e,0x4f, 0x44,0x47, 0x04,0x07, 0x08,0x0f, 0xf0,0xff
-};
-
-// Two 8x16 sprites around the pivot (body center, feet row). Each item's offset is from
-// the item before it.
+// Two 8x16 sprites around the pivot (body center, feet row): the left column's tiles,
+// then the right's (png2asset's order). Each item's offset is from the item before it.
 const metasprite_t bot_metasprite[] = {
     METASPR_ITEM(-15, -8, 0, 0),    // left half
     METASPR_ITEM(0, 8, 2, 0),       // right half
@@ -44,6 +35,6 @@ static void bot_update(Actor* bot)
 
 // The hit box is 1 px smaller than the body at the sides and the bottom.
 const ActorType bot_type = {
-    bot_spawn, bot_update, bot_metasprite, bot_tiles, BOT_FIRST_TILE, BOT_TILE_COUNT,
+    bot_spawn, bot_update, bot_metasprite, BOT_FIRST_TILE, FRAME_TILES_16X16,
     -7, -15, 6, -1, BOT_HALF_WIDTH, 0
 };

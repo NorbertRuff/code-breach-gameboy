@@ -1,25 +1,16 @@
 #include "../engine/palette.h"
 #include "lift.h"
 
-#define LIFT_FIRST_TILE 82   // sprite tiles after the pause label's (72-81)
-#define LIFT_TILE_COUNT 2
 #define LIFT_PAUSE_FRAMES 30   // 0.5 s at each end of its travel
-
-// Placeholder art until M5: an 8 px platform with a dark top edge, in the top tile of an
-// 8x16 sprite; the bottom tile is empty.
-static const uint8_t lift_tiles[LIFT_TILE_COUNT * 16] = {
-    0xff,0xff, 0xff,0x00, 0xff,0x00, 0x00,0xff, 0xff,0x00, 0xff,0x00, 0xff,0xff, 0x00,0x00,
-    0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00
-};
 
 // Actors draw with ENEMY_PALETTE; these bits in a lift's sprites turn it into OBJECT_PALETTE.
 #define LIFT_PALETTE_BITS (ENEMY_PALETTE ^ OBJECT_PALETTE)
 
 // Three 8x16 sprites side by side, their top on the pivot's row (the lift's top).
 static const metasprite_t lift_metasprite[] = {
-    METASPR_ITEM(0, -LIFT_HALF_WIDTH, 0, LIFT_PALETTE_BITS),
-    METASPR_ITEM(0, 8, 0, LIFT_PALETTE_BITS),
-    METASPR_ITEM(0, 8, 0, LIFT_PALETTE_BITS),
+    METASPR_ITEM(0, -LIFT_HALF_WIDTH, 0, LIFT_PALETTE_BITS),   // left cap
+    METASPR_ITEM(0, 8, 2, LIFT_PALETTE_BITS),                  // middle
+    METASPR_ITEM(0, 8, 4, LIFT_PALETTE_BITS),                  // right cap
     METASPR_TERM
 };
 
@@ -52,6 +43,6 @@ static void lift_update(Actor* lift)
 
 // No hit box: a lift never hurts.
 const ActorType lift_type = {
-    lift_spawn, lift_update, lift_metasprite, lift_tiles, LIFT_FIRST_TILE, LIFT_TILE_COUNT,
+    lift_spawn, lift_update, lift_metasprite, LIFT_FIRST_TILE, 0,
     0, 0, 0, 0, LIFT_HALF_WIDTH, 1
 };

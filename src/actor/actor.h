@@ -5,6 +5,20 @@
 #include <gb/metasprites.h>
 #include <stdint.h>
 #include "../level/level_data.h"
+#include "../graphics/programmer.h"
+#include "../graphics/security_bot.h"
+#include "../graphics/chaser_drone.h"
+#include "../graphics/lift_platform.h"
+#include "../graphics/data_packet.h"
+
+// Sprite VRAM tiles of the actors, after the player's; the pause label's follow.
+#define BOT_FIRST_TILE    programmer_TILE_COUNT                          // 68-75
+#define CHASER_FIRST_TILE (BOT_FIRST_TILE + security_bot_TILE_COUNT)     // 76-83
+#define LIFT_FIRST_TILE   (CHASER_FIRST_TILE + chaser_drone_TILE_COUNT)  // 84-89
+#define PACKET_FIRST_TILE (LIFT_FIRST_TILE + lift_platform_TILE_COUNT)   // 90-97
+#define ACTOR_TILES_END   (PACKET_FIRST_TILE + data_packet_TILE_COUNT)   // 98
+
+#define ACTOR_FRAME_BIT 8   // bit of the frame count: 2-frame actors switch every 8 frames
 
 // Actors are the level's moving objects (patrol bots, chasers and lifts), spawned from
 // its entity list as the camera reaches them, and KERNEL's packets and lift, which the
@@ -29,15 +43,15 @@ typedef struct {
 } Actor;
 
 // What an entity type does once spawned. Each type's tiles sit in sprite VRAM from
-// first_tile on; its metasprite's pivot is the actor's (x, y): body center, feet row
-// (a lift's top row). A lift moves before the player and carries it; it never hurts.
+// first_tile on, its second animation frame's frame_tiles further on; its metasprite's
+// pivot is the actor's (x, y): body center, feet row (a lift's top row). A lift moves
+// before the player and carries it; it never hurts.
 struct ActorType {
     void (*spawn)(Actor* actor, const LevelEntity* entity);
     void (*update)(Actor* actor);
     const metasprite_t* metasprite;
-    const uint8_t* tiles;
     uint8_t first_tile;
-    uint8_t tile_count;
+    uint8_t frame_tiles;      // 0: one frame only
     int8_t hit_left, hit_top, hit_right, hit_bottom;   // hit box around (x, y), inclusive
     uint8_t half_width;       // px from x to the art's edges, to skip actors off screen
     uint8_t is_lift;

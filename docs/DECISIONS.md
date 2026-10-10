@@ -95,7 +95,7 @@ or git keeps the old one). Details of how the code does it belong in
 - **Chasers** (level 3, owner 2026-10-04): a bot that stands still until the player is
   within about 6 tiles on its floor (feet within 2 tiles of its own), then walks toward them
   at 1 px per frame (the player runs at 1.5), only inside its range. In Tiled an `enemy`
-  with `kind` = `chaser`; the bot's art until M5.
+  with `kind` = `chaser`; its own art (a hovering drone) since 2026-10-10.
 - **Level 1** (Server Room) greybox: kept as built after the owner's hardware pass
   (2026-10-04). **Level 2** (Code Testing Lab) greybox: built 2026-10-04, the low route
   needs the bridge's fragment for gate B; kept as built after the owner's hardware pass
@@ -160,8 +160,8 @@ or git keeps the old one). Details of how the code does it belong in
 - **Palette module** (`src/engine/palette.c`) is the only code that writes palettes:
   loads, 4-step fades and flashes on both systems; GBC fade steps by masked shifts of
   RGB555 (multiplying took 2 frames per step).
-- **GBC palettes:** background 0 the level, 1 the band, 2 the HUD (green until the M5 HUD
-  art, owner); sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
+- **GBC palettes:** background 0 the level, 1 the band, 2 the HUD (`hud` set: #E0F8D0
+  #88C070 #346856 #081820, 2026-10-10, **Proposed**); sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
   2 the enemies (bots, chasers, KERNEL's packets), 3 the lifts: the style guide's three
   sprite palettes in order (player, red, gold; `server_room` set through
   `tools/gbconvert.py`), 2026-10-10, owner.
@@ -169,15 +169,26 @@ or git keeps the old one). Details of how the code does it belong in
   **Proposed.**
 - **Art pipeline:** Claude Design → `tools/gbconvert.py` → png2asset (ART_PIPELINE.md);
   every palette light to dark; no background tile flips.
-- **Placeholders until M5:** the greybox tileset and band (drawn by scripts), the
-  mushroom bot, the HUD art.
+- **Placeholders until M5:** the greybox tileset and band (drawn by scripts).
+- **HUD and font** (2026-10-10): redrawn from Gemini starter art. The HUD is 2 tile rows
+  (Gemini's was 30 px tall): light boxes for the lives and the count, which the code
+  writes, a heart and a floppy icon in the frame, a riveted strip below; 10 tiles. One
+  1-bit font of 49 characters (7×7 glyphs) for all text, the HUD's digits and '/'
+  included. 59 tiles together; GBDK's 1-bit loader costs about 110 bytes of bank 0.
+  **Proposed.**
 - **Player sprite is final** (2026-10-10, owner): the owner's programmer, first based on
   a Mario sprite and then heavily redrawn, plus 5 frames drawn in its style (10 frames:
   idle 2, run 4, jump, fall, hurt, death). `graphics/player/programmer.png` and the
   "ApexLab Hero Sprite Sheet" Claude Design canvas are the source of truth.
 - **All player frames stay in VRAM** (68 sprite tiles, 2026-10-10): no per-frame tile
-  copy, so no frame budget cost; 88 of the 128 sprite-only tiles are in use, enough for
-  the L2-L4 enemies. Copying each frame's 8 tiles in VBlank is the fallback if tiles run out.
+  copy, so no frame budget cost. Copying each frame's 8 tiles in VBlank is the fallback
+  if tiles run out.
+- **Enemy and lift sprites** (2026-10-10): the security bot, the chaser, the lift and
+  KERNEL's packet, redrawn at 16×16 (the lift 24×16) from the owner's reference pictures
+  on the "ApexLab Enemy Sprites" Claude Design canvas. 2 frames each but the lift, every
+  8 frames, by a tile offset (no tile copies, about 1 line). Every actor's tiles stay
+  loaded in every level: 108 of the 128 sprite-only tiles in use, 20 left for the L2-L4
+  enemies. **Proposed.**
 - **Golden screenshots** of key screens in both modes catch visual changes.
 
 ## Audio

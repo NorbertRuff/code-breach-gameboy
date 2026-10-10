@@ -3,9 +3,14 @@
 
 #include <stdint.h>
 
-// Screen text in the game's font, one background tile per character.
-#define FONT_FIRST_TILE 160   // background tiles 160-208, after the level's and the HUD's
+// Screen text in the game's font, one background tile per character. The font's tile n
+// shows FONT_CHARS[n] (graphics/font/font.png, in this order).
+#define FONT_CHARS " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?()/:-#%>"
+#define FONT_CHAR_COUNT (sizeof(FONT_CHARS) - 1)
+#define FONT_FIRST_TILE 160                    // background tiles 160-208
 #define TEXT_SPACE_TILE FONT_FIRST_TILE
+#define FONT_DIGIT_TILE (uint8_t)(FONT_FIRST_TILE + 27)  // '0'; '1' to '9' follow
+#define FONT_SLASH_TILE (uint8_t)(FONT_FIRST_TILE + 43)  // '/'
 
 void text_load_font(void);
 void text_print(uint8_t x, uint8_t y, const char* text);

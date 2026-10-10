@@ -5,7 +5,7 @@ levels/greybox_test.tmj: bot B patrols platform B (centers 72-88), bot D platfor
 
 import pytest
 
-from gamelib import ACTOR_SIZE, BOT_TILES, COREGAMELOOP, LEVEL_2
+from gamelib import ACTOR_SIZE, BOT_FRAME_TILES, COREGAMELOOP, LEVEL_2
 
 BOT_B, BOT_D, FLOOR_BOT = 72, 176, 416      # min_x of each bot's patrol
 SPAWN_REACH = 160 + 16                      # screen width + SPAWN_AHEAD (src/actor/actor.c)
@@ -86,7 +86,17 @@ def test_sprite_list_has_the_player_and_the_bots_on_screen(game):
     left = bot.x - 8 - game.camera_x()
     assert len(sprites) == 6, "the player's 4 hardware sprites and bot B's 2, the rest hidden"
     assert {(x, y) for x, y, _ in sprites[4:]} == {(left, bot.y - 15), (left + 8, bot.y - 15)}
-    assert {tile for _, _, tile in sprites[4:]} == set(BOT_TILES)
+    assert {tile for _, _, tile in sprites[4:]} in BOT_FRAME_TILES
+
+
+def test_bots_switch_between_their_two_walk_frames(game):
+    # 2-frame actors change frames every 8 frames, so 16 frames show both.
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    seen = set()
+    for _ in range(16):
+        game.frames(1)
+        seen.add(frozenset(tile for _, _, tile in game.visible_sprites()[4:]))
+    assert seen == {frozenset(tiles) for tiles in BOT_FRAME_TILES}
 
 
 def test_sprite_list_is_rebuilt_every_frame(game):

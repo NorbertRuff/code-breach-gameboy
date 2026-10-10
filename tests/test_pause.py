@@ -3,7 +3,7 @@
 from gamelib import (COREGAMELOOP, GAMEPLAY_START, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_GREYBOX_TEST,
                      LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, PAUSED)
 
-PAUSE_TILES = {72, 74, 76, 78, 80}      # P, A, U, S, E (src/game_state/pause.c)
+PAUSE_TILES = {98, 100, 102, 104, 106}  # P, A, U, S, E (src/game_state/pause.c)
 
 
 def pause_label_shown(game) -> bool:

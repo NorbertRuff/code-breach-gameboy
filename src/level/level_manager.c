@@ -3,7 +3,6 @@
 #include "../graphics/greybox.h"
 #include "../graphics/greybox_band.h"
 #include "../graphics/hud.h"
-#include "../graphics/hud_digits.h"
 #include "../graphics/programmer.h"
 #include "../levels/greybox_test.h"
 #include "../levels/level_1.h"
@@ -15,6 +14,7 @@
 #include "../levels/test_movers.h"
 #include "../engine/banking.h"
 #include "../engine/palette.h"
+#include "../engine/text.h"
 #include "../player/player.h"
 
 Level current_level;
@@ -53,12 +53,10 @@ void set_programmer_metasprite(void)
     palette_set_pale_sprite(PLAYER_PALE_PALETTE, 0);
 }
 
-// Shows a heart and the number of lives in the HUD's top-left corner.
+// Shows the number of lives next to the HUD frame's heart, in the top-left corner.
 void hud_update_lives(uint8_t lives)
 {
-    uint8_t t_heart = HUD_HEART_TILE;
-    uint8_t t_digit = HUD_DIGIT_TILE_BASE + (lives <= 9 ? lives : 9);
-    set_win_tiles(0, 0, 1, 1, &t_heart);
+    uint8_t t_digit = FONT_DIGIT_TILE + (lives <= 9 ? lives : 9);
     set_win_tiles(1, 0, 1, 1, &t_digit);
 }
 
@@ -71,8 +69,8 @@ static void write_two_digits(uint8_t value, uint8_t* tiles)
         value -= 10;
         tens++;
     }
-    tiles[0] = HUD_DIGIT_TILE_BASE + tens;
-    tiles[1] = HUD_DIGIT_TILE_BASE + value;
+    tiles[0] = FONT_DIGIT_TILE + tens;
+    tiles[1] = FONT_DIGIT_TILE + value;
 }
 
 // Shows "NN/TT" fragments in the HUD's top-right five tiles, each value capped at 99.
@@ -82,7 +80,7 @@ void hud_update_count(uint8_t collected, uint8_t total)
     if (collected > 99) collected = 99;
     if (total > 99) total = 99;
     write_two_digits(collected, tiles);
-    tiles[2] = HUD_SLASH_TILE;
+    tiles[2] = FONT_SLASH_TILE;
     write_two_digits(total, tiles + 3);
     set_win_tiles(15, 0, 5, 1, tiles);
 }
@@ -136,7 +134,7 @@ void level_load(uint8_t index)
         set_bkg_data(0, greybox_TILE_COUNT, greybox_tiles);
         palette_set_bkg(LEVEL_PALETTE, 1, greybox_palettes);
     });
-    WITH_BANK(hud_digits, set_bkg_data(HUD_DIGIT_TILE_BASE, hud_digits_TILE_COUNT, hud_digits_tiles));
+    text_load_font();
     draw_band();
     set_hud_window_tiles();
     set_programmer_metasprite();

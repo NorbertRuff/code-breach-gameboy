@@ -111,6 +111,7 @@ Design.
 | Asset | Flags |
 |---|---|
 | Sprites | `-spr8x16 -keep_palette_order -sw W -sh H -px X -py Y -b 255` |
+| Actor sheets (enemies, the lift) | `-spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255`: tiles only, in sheet order (each 8 px column's top, then bottom); the metasprites are written by hand in `src/actor/` |
 | Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` |
 | Level tilesets | `-map -noflip -keep_palette_order -tiles_only -b 255`. Maps come from the level converter ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)). |
 | Parallax bands (256×24 px) | `-map -noflip -keep_palette_order -b 255`: tiles and a 32×3 map, drawn into rows 0–2 with a tile offset |
@@ -120,7 +121,10 @@ Design.
 | Asset | Size | Content | Status |
 |---|---|---|---|
 | Player (programmer) | 16×32 | Idle (2), run (4), jump up, fall, hurt, death | Done (2026-10-10): 10 frames, owner's design |
-| Security bot (L1) | 16×16 | Walk (2–4), turn | Mushroom placeholder |
+| Security bot (levels 1–5) | 16×16 | Walk (2) | Done (2026-10-10) |
+| Chaser (L3) | 16×16 | Move (2) | Done (2026-10-10) |
+| Lift (L3, L5) | 24×16 | Left cap, middle, right cap | Done (2026-10-10) |
+| KERNEL's data packet (L5) | 16×16 | Flicker (2) | Done (2026-10-10) |
 | Enemies for L2–L4 | 16×16 or 16×32 | One or two types per level | Not started |
 | Boss (L5) | Large | Built from background tiles or a metasprite within 10 sprites per line | Not designed |
 | Collectibles | 8×8 or 16×16 | Code fragment, bug report, debug tool, AI core, security protocol | Hand-coded diamond tile |
@@ -128,7 +132,7 @@ Design.
 | Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Not started |
 | Parallax bands | 32×3 tiles each | One per level theme, wraps around; decoration only | Greybox placeholder (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`, 8 tiles) |
 | Tilesets | ≤ 190 tiles each | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Placeholder city background |
-| HUD and font | about 60 tiles | Frame, A–Z, 0–9, punctuation, icons | Hand-coded digits, `hud_a.png` |
+| HUD and font | 59 tiles | Frame (heart, floppy icon, riveted strip), A–Z, 0–9, punctuation | Done (2026-10-10): `graphics/hud/hud.png`, `graphics/font/font.png` |
 | Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Old `splashscreen.c`, unused `apexLogo.png` |
 
 ## 7. Existing art
@@ -137,7 +141,5 @@ Design.
 |---|---|
 | `graphics/player/programmer.png` | The final player sheet (SOURCES.md). Palette light → dark since 2026-10-03 (review G1). |
 | `graphics/background/background.png` | Old city skyline, not drawn anywhere (its C file removed 2026-10-10). Replace. |
-| `graphics/enemies/Mushroom.png` | The bot's placeholder art, copied by hand into `src/actor/bot.c` (its C file removed 2026-10-10). Replace with the security bot. |
-| `graphics/hud/hud_a.png` | The layout idea (heart left, counter right) can stay. |
-| `graphics/hud/Font.png` | Not used anywhere. Candidate base for the font. |
+| `graphics/hud/Font.png` | Not used anywhere; the game font is `graphics/font/font.png`. |
 | `graphics/start_screen/apexLogo.png` | Title art, generated but never drawn. The title screen uses `src/graphics/splashscreen.c` from an older pipeline. |

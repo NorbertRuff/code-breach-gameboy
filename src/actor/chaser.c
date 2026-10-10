@@ -34,8 +34,8 @@ static void chaser_update(Actor* chaser)
     }
 }
 
-// Placeholder: the bot's art and hit box, until the chaser's own art (M5).
+// The bot's sprite layout and hit box, with its own art.
 const ActorType chaser_type = {
-    chaser_spawn, chaser_update, bot_metasprite, bot_tiles, BOT_FIRST_TILE, BOT_TILE_COUNT,
+    chaser_spawn, chaser_update, bot_metasprite, CHASER_FIRST_TILE, FRAME_TILES_16X16,
     -7, -15, 6, -1, CHASER_HALF_WIDTH, 0
 };

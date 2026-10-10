@@ -1,4 +1,14 @@
 {
-  "programmer": { "type": "sprite", "palettes": "server_room", "budget": 68,
-                  "size": [160, 32], "out": "graphics/player/programmer.png" }
+  "programmer":    { "type": "sprite", "palettes": "server_room", "budget": 68,
+                     "size": [160, 32], "out": "graphics/player/programmer.png" },
+  "security_bot":  { "type": "sprite", "palettes": "server_room", "budget": 8,
+                     "size": [32, 16], "out": "graphics/enemies/security_bot.png" },
+  "chaser_drone":  { "type": "sprite", "palettes": "server_room", "budget": 8,
+                     "size": [32, 16], "out": "graphics/enemies/chaser_drone.png" },
+  "lift_platform": { "type": "sprite", "palettes": "server_room", "budget": 6,
+                     "size": [24, 16], "out": "graphics/objects/lift_platform.png" },
+  "data_packet":   { "type": "sprite", "palettes": "server_room", "budget": 8,
+                     "size": [32, 16], "out": "graphics/enemies/data_packet.png" },
+  "hud":           { "type": "bg", "palettes": "hud", "budget": 14,
+                     "size": [160, 16], "out": "graphics/hud/hud.png" }
 }
