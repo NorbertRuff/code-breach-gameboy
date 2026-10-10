@@ -3,6 +3,7 @@
 #pragma bank 255
 
 #include "level_5.h"
+#include "greybox_tileset.h"
 
 BANKREF(level_5)
 
@@ -25,5 +26,6 @@ static const uint8_t level_5_map[260] = {
 const LevelData level_5 = {
     20, 48, 119, 0, 0,
     { 0, 0, 0 },
-    level_5_map, 0
+    level_5_map, 0,
+    &__bank_greybox_tileset, &greybox_tileset
 };

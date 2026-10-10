@@ -3,7 +3,8 @@
     python tools/tiled2c.py levels/greybox_test.tmj [more .tmj files] -o src/levels
 
 For each level it writes <name>.c and <name>.h (a LevelData from src/level/level_data.h),
-and for the level's tileset <tileset>_tileset.c and .h (one collision type per tile).
+and for the level's tileset <tileset>_tileset.c and .h: a TilesetData with a collision
+type and a GBC palette per tile, the marker tiles, and the tileset's art and band.
 "make levels" runs it on every level. The output is committed, like png2asset output.
 
 The format and the checks are described in docs/LEVEL_PIPELINE.md. A failed check stops
@@ -20,12 +21,14 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from PIL import Image
+
 TILE = 8
 MAP_ROWS = 13              # screen rows 3-15
 MAP_TOP_ROW = 3            # screen row of map row 0
 MIN_WIDTH, MAX_WIDTH = 20, 255
 MAX_FRAGMENTS = 32
-TILESET_BUDGET = 190       # unique tiles per level tileset, docs/ART_PIPELINE.md
+TILESET_BUDGET = 128       # tiles per level tileset, docs/ART_PIPELINE.md section 2
 SECTIONS = 3
 BOT_SPEEDS = (1, 2)         # px per frame, the enemy property "speed" (default 1)
 ENEMY_KINDS = ("patrol", "chaser")   # the enemy property "kind" (default patrol)
@@ -42,6 +45,10 @@ ENTITY_TYPES = {"enemy": "ENTITY_ENEMY", "fragment": "ENTITY_FRAGMENT",
                 "gate": "ENTITY_GATE", "exit": "ENTITY_EXIT", "lift": "ENTITY_LIFT",
                 "chaser": "ENTITY_CHASER"}
 OBJECT_CLASSES = set(ENTITY_TYPES) | {"player_start"}
+# The exit elevator, 2 x 4 tiles row by row, the exit marker its bottom-left tile: the
+# map holds the closed one, and the game draws the open one when the level is complete.
+ELEVATOR_TILES = 8
+ELEVATOR_EXIT_TILE = 6
 
 
 class LevelError(Exception):
@@ -54,6 +61,12 @@ class Tileset:
     collision: list[str]               # per tile: "", "solid", "one_way" or "hazard"
     names: list[str]                   # per tile, from its "name" property
     classes: dict[int, str]            # tile id -> class, for marker tiles
+    palette: list[int] = field(default_factory=list)   # per tile: GBC palette 0-3
+
+    def named(self, prefix: str) -> list[int]:
+        """The ids of the tiles named prefix_1 to prefix_8 (the elevator), or []."""
+        names = [f"{prefix}_{i + 1}" for i in range(ELEVATOR_TILES)]
+        return [self.names.index(n) for n in names] if all(n in self.names for n in names) else []
 
 
 @dataclass
@@ -103,7 +116,23 @@ def load_tileset(path: Path) -> Tileset:
                 collision[tile_id] = prop.get("value")
     if count > TILESET_BUDGET:
         raise LevelError(f"{path.name}: {count} tiles, the budget is {TILESET_BUDGET}")
-    return Tileset(path.stem, collision, names, classes)
+    image = root.find("image").get("source")
+    return Tileset(path.stem, collision, names, classes,
+                   tile_palettes(path.parent / image, count, int(root.get("columns"))))
+
+
+def tile_palettes(png: Path, count: int, columns: int) -> list[int]:
+    """Each tile's GBC palette, from the indexed tileset PNG: tools/gbconvert.py writes
+    palette p's colors at indices 4p to 4p + 3."""
+    image = Image.open(png)
+    palettes = []
+    for tile in range(count):
+        left, top = tile % columns * TILE, tile // columns * TILE
+        used = {image.getpixel((left + x, top + y)) >> 2 for y in range(TILE) for x in range(TILE)}
+        if len(used) != 1:
+            raise LevelError(f"{png.name}: tile {tile} mixes palettes {sorted(used)}")
+        palettes.append(used.pop())
+    return palettes
 
 
 def properties(obj: dict) -> dict:
@@ -208,6 +237,7 @@ def convert(name: str, tmj: dict, tileset: Tileset, firstgid: int) -> Level:
     if level.fragment_count > MAX_FRAGMENTS:
         fail(f"{level.fragment_count} fragments, at most {MAX_FRAGMENTS}")
     check_quotas(level, gates, fail)
+    check_elevator(level, fail)
     check_checkpoints(level, fail)
     check_lifts(level, fail)
     warn_about_patrols(level)
@@ -237,6 +267,23 @@ def check_quotas(level: Level, gates: list[int], fail) -> None:
         found = sum(e.kind == "fragment" and section_of(e.x, gates) == section for e in level.entities)
         if not 1 <= gate.param <= found:
             fail(f"gate at x {gate.x} asks for {gate.param} fragments, section {'ABC'[section]} has {found}")
+
+
+def check_elevator(level: Level, fail) -> None:
+    """A tileset with an elevator needs the closed one around the exit: the marker is its
+    bottom-left tile, and the game opens it there."""
+    closed = level.tileset.named("elevator")
+    exits = [e for e in level.entities if e.kind == "exit"]
+    if not closed or not exits:
+        return
+    column, row = exits[0].x // TILE, exits[0].y // TILE - MAP_TOP_ROW
+    for i, tile in enumerate(closed):
+        if i == ELEVATOR_EXIT_TILE:
+            continue
+        c, r = column + i % 2, row - 3 + i // 2
+        if not (0 <= r and c < level.width and level.tiles[r * level.width + c] == tile):
+            fail(f"the exit at column {column} needs the closed elevator around it "
+                 f"(elevator_{i + 1} at column {c}, row {r})")
 
 
 def check_checkpoints(level: Level, fail) -> None:
@@ -321,6 +368,7 @@ static const LevelEntity {n}_entities[{len(entities)}] = {{
 #pragma bank 255
 
 #include "{n}.h"
+#include "{level.tileset.name}_tileset.h"
 
 BANKREF({n})
 
@@ -331,7 +379,8 @@ static const uint8_t {n}_map[{MAP_ROWS * level.width}] = {{
 const LevelData {n} = {{
     {level.width}, {x}, {y}, {level.fragment_count}, {len(level.entities)},
     {{ {', '.join(str(s) for s in level.section_start)} }},
-    {n}_map, {f"{n}_entities" if entities else "0"}
+    {n}_map, {f"{n}_entities" if entities else "0"},
+    &__bank_{level.tileset.name}_tileset, &{level.tileset.name}_tileset
 }};
 """
     h = f"""// Generated by tools/tiled2c.py from {source}. Don't edit.
@@ -350,21 +399,38 @@ extern const LevelData {n};
 
 
 def c_tileset(tileset: Tileset, source: str) -> tuple[str, str]:
-    """The .c and .h text for a tileset's collision table."""
+    """The .c and .h text for a tileset: its TilesetData and per-tile tables."""
     n = f"{tileset.name}_tileset"
+    art, band = tileset.name, f"{tileset.name}_band"
     values = [f"    {COLLISION_TYPES[c] + ',':22}// {i} {name}"
               for i, (c, name) in enumerate(zip(tileset.collision, tileset.names))]
-    markers = [f"#define {n}_TILE_{cls.upper()} {i}" for i, cls in sorted(tileset.classes.items())]
+    markers = {cls: i for i, cls in tileset.classes.items()}
+    opened = tileset.named("exit_open") or [0] * ELEVATOR_TILES
+    defines = [f"#define {n}_TILE_{cls.upper()} {i}" for i, cls in sorted(tileset.classes.items())]
     c = f"""// Generated by tools/tiled2c.py from {source}. Don't edit: change the
 // tile properties in Tiled and run "make levels".
 #pragma bank 255
 
 #include "{n}.h"
+#include "../graphics/{art}.h"
+#include "../graphics/{band}.h"
 
 BANKREF({n})
 
-const uint8_t {n}_collision[{len(tileset.collision)}] = {{
+static const uint8_t {n}_collision[{len(tileset.collision)}] = {{
 {chr(10).join(values)}
+}};
+
+static const uint8_t {n}_palette[{len(tileset.palette)}] = {{
+    {", ".join(str(p) for p in tileset.palette)}
+}};
+
+const TilesetData {n} = {{
+    &__bank_{art}, {art}_tiles, {art}_TILE_COUNT, {art}_palettes, {art}_PALETTE_COUNT,
+    &__bank_{band}, {band}_tiles, {band}_TILE_COUNT, {band}_map, {band}_palettes,
+    {n}_collision, {n}_palette,
+    {markers["fragment"]}, {markers["gate"]}, {markers["exit"]},
+    {{ {", ".join(str(t) for t in opened)} }}
 }};
 """
     h = f"""// Generated by tools/tiled2c.py from {source}. Don't edit.
@@ -375,10 +441,10 @@ const uint8_t {n}_collision[{len(tileset.collision)}] = {{
 #include "../level/level_data.h"
 
 // Marker tiles, by class
-{chr(10).join(markers)}
+{chr(10).join(defines)}
 
 BANKREF_EXTERN({n})
-extern const uint8_t {n}_collision[{len(tileset.collision)}];
+extern const TilesetData {n};
 
 #endif
 """

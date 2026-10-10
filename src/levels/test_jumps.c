@@ -3,6 +3,7 @@
 #pragma bank 255
 
 #include "test_jumps.h"
+#include "greybox_tileset.h"
 
 BANKREF(test_jumps)
 
@@ -25,5 +26,6 @@ static const uint8_t test_jumps_map[2210] = {
 const LevelData test_jumps = {
     170, 16, 119, 0, 0,
     { 0, 0, 0 },
-    test_jumps_map, 0
+    test_jumps_map, 0,
+    &__bank_greybox_tileset, &greybox_tileset
 };

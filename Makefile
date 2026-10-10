@@ -190,6 +190,8 @@ assets:
 	$(PNG2ASSET) graphics/tilesets/greybox.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/greybox.c
 	$(PYTHON) tools/greybox_band.py
 	$(PNG2ASSET) graphics/bands/greybox_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/greybox_band.c
+	$(PNG2ASSET) graphics/tilesets/server_room.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/server_room.c
+	$(PNG2ASSET) graphics/bands/server_room_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/server_room_band.c
 	$(PNG2ASSET) graphics/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255 -o src/graphics/programmer.c
 	$(PNG2ASSET) graphics/enemies/security_bot.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/security_bot.c
 	$(PNG2ASSET) graphics/enemies/chaser_drone.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/chaser_drone.c

@@ -72,7 +72,7 @@ static const uint8_t floor_order[FLOOR_TURNS] = { 2, 0, 4, 1, 3 };
 enum { FLOOR_SAFE, FLOOR_WARNING, FLOOR_HAZARD };
 
 // KERNEL's background tiles, after the HUD frame's. Placeholder art until M5.
-#define KERNEL_TILE_BASE (HUD_TILE_BASE + hud_TILE_COUNT)
+#define KERNEL_TILE_BASE (uint8_t)(HUD_TILE_BASE + hud_TILE_COUNT)
 enum {
     FRAME_TL, FRAME_T, FRAME_TR, FRAME_L, SCREEN, FRAME_R, FRAME_BL, FRAME_B, FRAME_BR,
     EYE, EYE_WIDE, MOUTH, GLITCH, TERMINAL_OFF, TERMINAL_LIT, TERMINAL_FILL, KERNEL_TILE_COUNT = TERMINAL_FILL + 3
@@ -320,7 +320,7 @@ void kernel_restart(void) BANKED
     fill_bkg_rect(ARENA_WIDTH, LEVEL_MAP_TOP_ROW, RING_COLUMNS - ARENA_WIDTH, FLOOR_ROW - LEVEL_MAP_TOP_ROW, ARENA_EMPTY_TILE);
     fill_bkg_rect(ARENA_WIDTH, FLOOR_ROW, RING_COLUMNS - ARENA_WIDTH, 1, ARENA_FLOOR_TILE);
     for (uint8_t i = 0; i < UPLOADS; i++) {
-        set_bkg_tile_xy(terminal_x[i], terminal_y[i], KERNEL_TILE_BASE + TERMINAL_OFF);
+        draw_tile(terminal_x[i], terminal_y[i], TERMINAL_OFF);
     }
     start_phase();
 }
@@ -359,7 +359,7 @@ uint8_t kernel_hit(void) BANKED
     remove_packets();
     draw_sprites(0);
     if (uploads == UPLOADS) {
-        fill_bkg_rect(FACE_X + 1, FACE_Y + 1, FACE_WIDTH - 2, FACE_HEIGHT - 2, KERNEL_TILE_BASE + GLITCH);
+        fill_bkg_rect(FACE_X + 1, FACE_Y + 1, FACE_WIDTH - 2, FACE_HEIGHT - 2, (uint8_t)(KERNEL_TILE_BASE + GLITCH));
         palette_flash(3, 10);
         palette_fade_out(SCREEN_FADE_FRAMES);
         return ENDING;

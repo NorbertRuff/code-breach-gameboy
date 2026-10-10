@@ -230,7 +230,9 @@ def draw(level: tiled2c.Level, result: Exploration) -> Image.Image:
     """The level at 2x: tiles, column numbers, entities, surfaces and jump arcs."""
     scale, header = 2, 16
     tiles = Image.open(ROOT / "graphics" / "tilesets" / f"{level.tileset.name}.png").convert("RGB")
-    tile_image = lambda i: tiles.crop((i * TILE, 0, i * TILE + TILE, TILE))
+    columns = tiles.width // TILE
+    tile_image = lambda i: tiles.crop((i % columns * TILE, i // columns * TILE,
+                                       i % columns * TILE + TILE, i // columns * TILE + TILE))
     marker = {c: i for i, c in level.tileset.classes.items()}
 
     base = Image.new("RGB", (level.width * TILE, SCREEN_ROWS * TILE), (200, 215, 235))   # the band

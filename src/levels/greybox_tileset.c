@@ -3,10 +3,12 @@
 #pragma bank 255
 
 #include "greybox_tileset.h"
+#include "../graphics/greybox.h"
+#include "../graphics/greybox_band.h"
 
 BANKREF(greybox_tileset)
 
-const uint8_t greybox_tileset_collision[8] = {
+static const uint8_t greybox_tileset_collision[8] = {
     COLLISION_NONE,       // 0 empty
     COLLISION_SOLID,      // 1 solid
     COLLISION_ONE_WAY,    // 2 one_way
@@ -15,4 +17,16 @@ const uint8_t greybox_tileset_collision[8] = {
     COLLISION_NONE,       // 5 exit
     COLLISION_NONE,       // 6 fragment
     COLLISION_NONE,       // 7 player_start
+};
+
+static const uint8_t greybox_tileset_palette[8] = {
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const TilesetData greybox_tileset = {
+    &__bank_greybox, greybox_tiles, greybox_TILE_COUNT, greybox_palettes, greybox_PALETTE_COUNT,
+    &__bank_greybox_band, greybox_band_tiles, greybox_band_TILE_COUNT, greybox_band_map, greybox_band_palettes,
+    greybox_tileset_collision, greybox_tileset_palette,
+    6, 4, 5,
+    { 0, 0, 0, 0, 0, 0, 0, 0 }
 };

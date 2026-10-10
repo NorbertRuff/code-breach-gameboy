@@ -12,6 +12,6 @@
 #define greybox_tileset_TILE_PLAYER_START 7
 
 BANKREF_EXTERN(greybox_tileset)
-extern const uint8_t greybox_tileset_collision[8];
+extern const TilesetData greybox_tileset;
 
 #endif

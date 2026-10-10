@@ -6,20 +6,23 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 
 ## Status (2026-10-10)
 
-- **Playable from start to end:** levels 1-4 (level 1 art pending; levels 2 and 3
-  greyboxes, kept after the owner's passes; level 4's greybox new) and level 5, the KERNEL
+- **Playable from start to end:** levels 1-4 (level 1 in its Server Room art since
+  2026-10-10; levels 2 and 3 greyboxes, kept after the owner's passes; level 4's greybox new) and level 5, the KERNEL
   boss (greybox, placeholder face), then the ending and the credits; music and sound
   effects; passwords, the title menu, the level select and the game over menu; the story
   text. New since the owner's last check: the M7 menus and story, level 4, level 5 and the
   ending, and since 2026-10-10 the final player sprite (10 frames, GBC colors from the
-  style guide), the bot, chaser, lift and packet sprites, and the HUD and font. Next: the owner's playthrough; the rest of the M5 art.
-- **Tests:** `make test` 235 tests in about 16 s; `make test-full` 352 in about 21 s.
-- **Memory:** bank 0 has 932 bytes free (KERNEL's packet actor and the boss and ending
-  states are in it); WRAM uses 1,504 of 4,096 bytes.
-- **Frame budget** (worst update, line of the 140 allowed; average): level 1 124 (79),
-  level 2 108 (67), level 3 131 (90), level 4 107 (70), level 5 109 (72), greybox route
-  122 (80). KERNEL's own update about 8 lines, up to 25 when it writes tiles. Lifts cost about 10 lines on
-  average where they are; the music step about 9, up to 18; a streamed column's write 5.
+  style guide), the bot, chaser, lift and packet sprites, the HUD and font, and level 1's
+  tileset, band, gate and elevator. Next: the owner's playthrough; the title screen.
+- **Tests:** `make test` 239 tests in about 20 s; `make test-full` 356 in about 25 s.
+- **Memory:** bank 0 has 554 bytes free (KERNEL's packet actor and the boss and ending
+  states are in it; the tileset loading and GBC attribute streaming took 380); WRAM uses
+  1,820 of 4,096 bytes.
+- **Frame budget** (worst update on DMG, line of the 140 allowed; average): level 1 127
+  (79), level 2 111 (67), level 3 132 (90; 139 on GBC, the tightest), level 4 110 (70),
+  level 5 111 (72), greybox route 125 (80). KERNEL's own update about 8 lines, up to 25
+  when it writes tiles. Lifts cost about 10 lines on average where they are; the music
+  step about 9, up to 18; a streamed column's write 2 in VBlank, 4 with its GBC palettes.
 
 ## Bugs
 
@@ -33,7 +36,11 @@ A fixed bug leaves this list; its regression test keeps the number.
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
 - Claude Design style guide (M5): palettes, the player, the enemies and the lift are in;
-  the tilesets are next.
+  level 1's tileset too.
+- Level 1's Server Room art on DMG and GBC (tileset, band, the striped gate, the
+  elevator opening at the end): agree or change the **Proposed** Server Room art,
+  background tiles, GBC palettes and palette-per-tile decisions (DECISIONS.md). Repaint
+  or decorate in Tiled with the "machine" terrain set (`graphics/tilesets/server_room.tsx`).
 - The new bot, chaser, lift and packet on DMG and GBC (2 frames every 8 frames, the lift
   still): agree or change the **Proposed** enemy sprite decision (DECISIONS.md).
 - The player's 10 frames on DMG and GBC (idle breathing, jump, fall, the hurt and death
@@ -79,9 +86,11 @@ Done when the game runs in color on GBC and unchanged on DMG. Steps in
       palette registers. Done 2026-10-04, `tests/test_palette.py`.
 - [ ] Load the exported palettes for background, HUD and sprites. Done 2026-10-04 for
       the current assets (level tiles, band, HUD); the player and actors use the style
-      guide's sprite palettes since 2026-10-10; the M5 art adds the rest.
-- [ ] Attribute maps behind `is_cgb`, including streamed columns. The band and HUD have
-      theirs (2026-10-04); streamed columns wait for per-tile palettes from the M5 tilesets.
+      guide's sprite palettes since 2026-10-10, level 1's tileset its 4 palettes; the M5
+      art adds the rest.
+- [x] Attribute maps behind `is_cgb`, including streamed columns. The band and HUD have
+      theirs (2026-10-04); streamed columns a palette per tile (2026-10-10,
+      `tests/test_palette.py`).
 - [ ] Brighter palette set when `_is_GBA` is set.
 - [x] Invincibility shown with a pale sprite palette on GBC instead of blinking.
       Done 2026-10-04 (sprite palette 1).
@@ -101,12 +110,13 @@ Done when level 1 looks like the final game in both modes.
       (2026-10-10). **(owner)** Check them on hardware.
 - [x] Security bot, chaser, lift and KERNEL's packet sprites (2026-10-10). **(owner)**
       Check them on hardware.
-- [ ] Server Room tileset with Tiled terrain sets. Swap it in for the greybox tileset.
-- [ ] Security gate and exit elevator art.
+- [x] Server Room tileset with Tiled terrain sets, swapped in for the greybox tileset in
+      level 1 (2026-10-10). **(owner)** Check it on hardware.
+- [x] Security gate and exit elevator art (Server Room, 2026-10-10).
 - [x] HUD frame and font (2026-10-10). **(owner)** Check them on hardware; agree or change
       the **Proposed** HUD palette and HUD decisions (DECISIONS.md).
 - [ ] Title screen from `apexLogo`. Remove `splashscreen.c`.
-- [ ] Parallax band art for the Server Room (32×3 tiles, wraps).
+- [x] Parallax band art for the Server Room (32×3 tiles, wraps; 2026-10-10).
 - [ ] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md):
       background. Claude Design for the pixel art.
 

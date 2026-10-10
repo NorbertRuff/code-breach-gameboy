@@ -1,6 +1,7 @@
 #ifndef LEVEL_DATA_H
 #define LEVEL_DATA_H
 
+#include <gbdk/platform.h>
 #include <stdint.h>
 
 // Level data in ROM, written by tools/tiled2c.py from the Tiled maps in levels/.
@@ -40,6 +41,27 @@ typedef struct {
 } LevelEntity;
 
 #define LEVEL_SECTIONS 3
+#define EXIT_OPEN_TILES 8   // the opened elevator: 2 x 4 tiles, row by row
+
+// A level theme: its tileset's art and band (png2asset, in their own banks; a bank is the
+// address of its BANKREF symbol), and per tile, in this struct's bank, the collision type
+// and the GBC palette. The marker tiles are drawn by the game where its objects are.
+typedef struct {
+    const void* tiles_bank;
+    const uint8_t* tiles;
+    uint8_t tile_count;
+    const palette_color_t* palettes;
+    uint8_t palette_count;
+    const void* band_bank;
+    const uint8_t* band_tiles;
+    uint8_t band_tile_count;
+    const uint8_t* band_map;                // 32 x 3 tiles
+    const palette_color_t* band_palettes;
+    const uint8_t* collision;
+    const uint8_t* palette;
+    uint8_t fragment_tile, gate_tile, exit_tile;
+    uint8_t exit_open[EXIT_OPEN_TILES];     // all 0: the tileset has no elevator
+} TilesetData;
 
 typedef struct {
     uint8_t width;                          // tiles, at most 255
@@ -50,6 +72,8 @@ typedef struct {
     uint8_t section_start[LEVEL_SECTIONS];  // index of each section's first entity
     const uint8_t* map;                     // tile ids, LEVEL_MAP_ROWS rows of width tiles
     const LevelEntity* entities;            // sorted by x
+    const void* tileset_bank;               // the address of the tileset's BANKREF
+    const TilesetData* tileset;
 } LevelData;
 
 #endif // LEVEL_DATA_H

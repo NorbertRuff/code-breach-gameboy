@@ -23,6 +23,19 @@ static void clear_play_area(void)
     screen_scroll(0);
     text_load_font();
     fill_bkg_rect(0, LEVEL_MAP_TOP_ROW, DEVICE_SCREEN_WIDTH, LEVEL_MAP_ROWS, TEXT_SPACE_TILE);
+    palette_use_bkg(0, LEVEL_MAP_TOP_ROW, DEVICE_SCREEN_WIDTH, LEVEL_MAP_ROWS, LEVEL_PALETTE);
+}
+
+// Opens the elevator doors at the exit, its bottom-left tile: draws the tileset's open
+// elevator over the closed one in the map. Tilesets without one leave the exit as it is.
+static void open_exit(void)
+{
+    if (!current_tileset.exit_open[0]) return;
+    const uint8_t* tile = current_tileset.exit_open;
+    for (uint8_t row = current_level.exit_row - 3; row <= current_level.exit_row; row++) {
+        level_show_tile(current_level.exit_column, row, *tile++);
+        level_show_tile(current_level.exit_column + 1, row, *tile++);
+    }
 }
 
 // Fades the message in and waits for START, or MESSAGE_FRAMES.
@@ -49,15 +62,16 @@ uint8_t game_over(void) BANKED
     return menu_choose(5, 8, 2, CONTINUE) == CONTINUE;
 }
 
-// Level complete: notes it in the progress; 6 flashes at 3 per second, then its song,
-// the patch it compiled (game levels only), the level's fragments and the new password
-// until START.
+// Level complete: notes it in the progress; the elevator opens, 6 flashes at 3 per
+// second, then its song, the patch it compiled (game levels only), the level's fragments
+// and the new password until START.
 void level_complete(void) BANKED
 {
     uint8_t collected = current_level.section_collected[0] + current_level.section_collected[1]
                       + current_level.section_collected[2];
     uint8_t perfect = collected == current_level.fragment_count;
     progress_finish_level(level_index, perfect);
+    open_exit();
     palette_flash(6, 10);
     music_play_level_complete();
     clear_play_area();

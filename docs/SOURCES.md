@@ -49,6 +49,9 @@ document or a person, add a row here in the same change. Status is *in use* or
 | hUGEDriver: `hUGE_init` with the song's bank switched in, `hUGE_dosound` once per frame from an interrupt, with the song's bank switched in | Larold's hUGEDriver tutorial; hUGEDriver `gbdk_example` (public domain) | `src/sound/music.c` (called from the band split in `src/engine/screen.c`) | In use |
 | `.uge` file format (version 6) and its conversion to hUGEDriver C data | hUGETracker `src/song.pas`, `src/hugedatatypes.pas`, `src/instruments.pas`, `src/codegen.pas` `RenderSongToGBDKC` (public domain), ported to Python | `tools/uge2c.py` | In use |
 | Writing a streamed column's tiles at the start of the next update, while VBlank lasts, straight into VRAM | Own finding (`make budget`: GBDK's `set_bkg_tiles` waits for each tile; direct writes in VBlank need no wait, Pan Docs "VRAM access") | `src/level/level_stream.c` `level_stream_flush` | In use |
+| GBC attributes of a streamed column from a palette per tile, written to VRAM bank 1 (`VBK_REG`) right after its tiles | Pan Docs, "BG Map Attributes (CGB Mode only)"; GBDK `set_bkg_attributes`; the per-tile table is own design (DECISIONS.md) | `tools/tiled2c.py` `tile_palettes`, `src/level/level_stream.c` | In use |
+| A tile's palette read back from an indexed PNG: color index / 4 | Own design, from the PNG layout `tools/gbconvert.py` writes | `tools/tiled2c.py` | In use |
+| Tiled terrain set (edge type) for the machine blocks: one tile per combination of exposed sides | Tiled documentation, "Terrain" (Wang sets) | `graphics/tilesets/server_room.tsx` | In use |
 | Save header: magic value, version, size, checksum | CrossZGB `SRAM.c` (MIT); Larold's saving tutorial | Saves | Planned (M7); test ROM in use |
 | Counting lag frames with the VBlank counter: every VBlank during an update is a frame without one | GBDK docs, `sys_time` in `gb/gb.h` | `src/main.c` `lag_frames` | In use |
 | Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT), camera locks; Itay Keren, "Scroll Back" | `src/engine/camera.c` | In use |
@@ -96,12 +99,14 @@ games ships (decision 2026-10-03).
 |---|---|---|
 | `graphics/player/programmer.png` | Owner: first based on a Mario sprite, then heavily redrawn (owner, 2026-10-10); idle 2, jump, fall, hurt and death added in its style with Claude Design ("ApexLab Hero Sprite Sheet" canvas, 2026-10-05) | Final (owner, 2026-10-10) |
 | `graphics/enemies/security_bot.png`, `chaser_drone.png`, `data_packet.png`, `graphics/objects/lift_platform.png` | The owner's reference pictures (2026-10-10), redrawn at 16×16 (the lift 24×16) in the style guide's sprite palettes with Claude Design ("ApexLab Enemy Sprites" canvas) | In use |
-| `graphics/background/background.png` | Early placeholder, origin unclear | **Replace** in M5 (Server Room tileset and parallax band) |
+| `graphics/background/background.png` | Early placeholder, origin unclear | Not drawn anywhere; **replace or delete** in M5 |
+| `graphics/tilesets/server_room.png` (level 1 tileset: machine blocks, catwalk, wiring hazard, racks, pipes, terminal, gate, elevator closed and open, floppy fragment) and `server_room.tsx` | Gemini starter, redrawn (2026-10-10): the owner's level mock-up and object sheet, shrunk to 1× (they were 12.5× and about 28×, not on a pixel grid) and used as references; every tile redrawn by hand on the 8×8 grid in the `server_room` palettes | In use |
+| `graphics/bands/server_room_band.png` (level 1 parallax band) | Gemini starter, redrawn (2026-10-10): the owner's band picture (racks under a ceiling with cables) redrawn at 256×24 in the `server_room_band` palette, 16 tiles | In use |
 | `graphics/hud/hud.png` (HUD frame), `graphics/font/font.png` (the game font) | Gemini starter, redrawn (2026-10-10): shrunk to 160×16 and 7×7 glyphs on 8×8 tiles, snapped to the `hud` palette, redrawn by hand | In use |
 | `graphics/hud/Font.png` | Unknown | Check origin, or use a CC0 font (RESEARCH.md section 4) |
 | `graphics/start_screen/apexLogo.png`, `press_start.png`, `src/graphics/splashscreen.c` | Owner (ApexLab logo) | Keep the logo; redo the title screen in M5 |
-| Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`) | Project code | Placeholder until M5 |
-| Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder until M5 |
+| Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`) | Project code | Placeholder for levels 2-5 until their art passes |
+| Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | Placeholder for levels 2-5 until their art passes |
 | Music: `music/*.uge` (Tech, Neurotic Robonaut, Observing Jupiter, Decampment, Gone Missing, Delight); both packs in `music/packs/` for the sound test | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
 | hUGEDriver 6.1.3 (`lib/hUGEDriver/`) | SuperDisk, github.com/SuperDisk/hUGEDriver release, public domain | In use; credited in `CREDITS.md` |
 | Sound effects: `sounds/GBFX.sav`, `sounds/GBFX2.sav` (picks in `sounds/effects.txt`) | Tronimal, GBFX and GBFX2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |

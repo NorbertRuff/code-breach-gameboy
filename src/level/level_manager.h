@@ -59,6 +59,7 @@ typedef struct {
 } Level;
 
 extern Level current_level;
+extern TilesetData current_tileset;   // a copy of the level's TilesetData header
 extern uint8_t level_index;     // the level GAMEPLAY_START loads
 extern uint8_t collision_ring[RING_COLUMNS * RING_ROWS];
 // Per ring column: 1 if it may hold a tile the body acts on (fragment, hazard, exit), so
@@ -76,16 +77,18 @@ void level_read_entity(uint8_t index, LevelEntity* entity);
      : collision_ring[RING_INDEX(tile_x, tile_y)])
 
 // level_stream.c
-void level_stream_start(void);
+void level_stream_start(uint8_t tileset_bank);
 void level_stream_reset(int16_t camera_x);
 void level_stream_update(int16_t camera_x);
 void level_stream_flush(void);
 void level_collect_fragment(uint8_t tile_x, uint8_t tile_y);
 void level_reset_fragments(uint8_t section);
 uint8_t level_open_gate_row(Gate* gate);
+void level_show_tile(uint8_t tile_x, uint8_t tile_y, uint8_t tile);
 
-// HUD frame tiles (the hud asset, heart included); its digits and '/' are the font's.
-#define HUD_TILE_BASE 64
+// HUD frame tiles (the hud asset, heart included), after the font; its digits and '/'
+// are the font's.
+#define HUD_TILE_BASE 209
 
 void set_hud_window_tiles(void);
 void set_programmer_metasprite(void);

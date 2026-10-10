@@ -3,6 +3,7 @@
 #pragma bank 255
 
 #include "greybox_test.h"
+#include "greybox_tileset.h"
 
 BANKREF(greybox_test)
 
@@ -49,5 +50,6 @@ static const LevelEntity greybox_test_entities[21] = {
 const LevelData greybox_test = {
     64, 8, 119, 15, 21,
     { 0, 15, 18 },
-    greybox_test_map, greybox_test_entities
+    greybox_test_map, greybox_test_entities,
+    &__bank_greybox_tileset, &greybox_tileset
 };

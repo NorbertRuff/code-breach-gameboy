@@ -1,7 +1,5 @@
 #include <string.h>
 #include "level_manager.h"
-#include "../graphics/greybox.h"
-#include "../graphics/greybox_band.h"
 #include "../graphics/hud.h"
 #include "../graphics/programmer.h"
 #include "../levels/greybox_test.h"
@@ -18,12 +16,13 @@
 #include "../player/player.h"
 
 Level current_level;
+TilesetData current_tileset;
 uint8_t level_index = LEVEL_1;
+static uint8_t tileset_bank;
+static const TilesetData* tileset_header;
 
 // Read by the tests to notice Level struct changes.
 const uint8_t level_struct_size = sizeof(Level);
-
-#define BAND_TILE_BASE greybox_TILE_COUNT   // band tiles right after the level's tiles
 
 // Shows the HUD window at the bottom of the screen and loads its frame tiles and, on
 // GBC, its palette.
@@ -97,16 +96,29 @@ static void copy_header(const LevelData* data)
     memcpy(current_level.section_start, data->section_start, LEVEL_SECTIONS);
     current_level.map = data->map;
     current_level.entities = data->entities;
+    tileset_bank = (uint8_t)(uint16_t)data->tileset_bank;
+    tileset_header = data->tileset;
+}
+
+// Loads the tileset's tiles from 0 and its palettes from LEVEL_PALETTE on.
+static void load_tileset_art(void)
+{
+    WITH_ROM_BANK((uint8_t)(uint16_t)current_tileset.tiles_bank, {
+        set_bkg_data(0, current_tileset.tile_count, current_tileset.tiles);
+        palette_set_bkg(LEVEL_PALETTE, current_tileset.palette_count, current_tileset.palettes);
+    });
 }
 
 // Draws the parallax band into rows 0-2 of the background map, once per level: its 32
-// columns wrap with the map, and streaming never writes these rows.
+// columns wrap with the map, and streaming never writes these rows. Its tiles follow the
+// tileset's.
 static void draw_band(void)
 {
-    WITH_BANK(greybox_band, {
-        set_bkg_data(BAND_TILE_BASE, greybox_band_TILE_COUNT, greybox_band_tiles);
-        set_bkg_based_tiles(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, greybox_band_map, BAND_TILE_BASE);
-        palette_set_bkg(BAND_PALETTE, 1, greybox_band_palettes);
+    uint8_t base = current_tileset.tile_count;
+    WITH_ROM_BANK((uint8_t)(uint16_t)current_tileset.band_bank, {
+        set_bkg_data(base, current_tileset.band_tile_count, current_tileset.band_tiles);
+        set_bkg_based_tiles(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, current_tileset.band_map, base);
+        palette_set_bkg(BAND_PALETTE, 1, current_tileset.band_palettes);
     });
     palette_use_bkg(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, BAND_PALETTE);
 }
@@ -122,18 +134,15 @@ static const LevelData* const level_headers[LEVEL_COUNT] = {
     &level_1, &level_2, &level_3, &level_4, &level_5, &greybox_test, &test_jumps, &test_movers
 };
 
-// Sets up a level behind a dark screen: header, tiles, HUD. The columns are drawn by
-// level_stream_reset() once the camera is placed.
+// Sets up a level behind a dark screen: header, tileset, band, HUD. The columns are
+// drawn by level_stream_reset() once the camera is placed.
 void level_load(uint8_t index)
 {
     current_level.bank = (uint8_t)(uint16_t)level_banks[index];
     WITH_ROM_BANK(current_level.bank, copy_header(level_headers[index]));
-    level_stream_start();
-
-    WITH_BANK(greybox, {
-        set_bkg_data(0, greybox_TILE_COUNT, greybox_tiles);
-        palette_set_bkg(LEVEL_PALETTE, 1, greybox_palettes);
-    });
+    WITH_ROM_BANK(tileset_bank, current_tileset = *tileset_header);
+    level_stream_start(tileset_bank);
+    load_tileset_art();
     text_load_font();
     draw_band();
     set_hud_window_tiles();

@@ -147,6 +147,10 @@ or git keeps the old one). Details of how the code does it belong in
 - **Actors:** spawned from the level's sorted entity list with a cursor when within 16 px
   of the screen's right edge, removed a screen behind the camera until the section
   restarts, at most 8, one type table. The sprite list is rebuilt every frame.
+- **A tileset per level** (2026-10-10): each level's header points at its tileset's
+  `TilesetData`, written by `tools/tiled2c.py` from the `.tsx`: the art and band, the
+  collision and palette of each tile, the marker tiles, the open elevator. Level 1 uses
+  `server_room`, the other levels the greybox.
 - **Bank 0 is for per-frame code;** code that never runs in a gameplay frame lives in ROM
   banks (`#pragma bank 255`, `BANKED`). Code that reads banked data inside the caller's
   `WITH_BANK` stays in bank 0 (2026-10-04: the palette fades and the level start/restart
@@ -160,16 +164,40 @@ or git keeps the old one). Details of how the code does it belong in
 - **Palette module** (`src/engine/palette.c`) is the only code that writes palettes:
   loads, 4-step fades and flashes on both systems; GBC fade steps by masked shifts of
   RGB555 (multiplying took 2 frames per step).
-- **GBC palettes:** background 0 the level, 1 the band, 2 the HUD (`hud` set: #E0F8D0
-  #88C070 #346856 #081820, 2026-10-10, **Proposed**); sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
+- **GBC palettes:** background 0-3 the level's tileset (its palettes in the set's order,
+  so a tile's attribute is its tileset palette, no remapping), 4 the band, 5 the HUD
+  (`hud` set: #E0F8D0 #88C070 #346856 #081820, 2026-10-10, **Proposed**), 6-7 free (the
+  boss art, M8). Was 0 level, 1 band, 2 HUD until a tileset needed 4 (2026-10-10,
+  **Proposed**). Sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
   2 the enemies (bots, chasers, KERNEL's packets), 3 the lifts: the style guide's three
   sprite palettes in order (player, red, gold; `server_room` set through
   `tools/gbconvert.py`), 2026-10-10, owner.
+- **A palette per tile, not per map cell** (2026-10-10, **Proposed**): `tools/tiled2c.py`
+  reads each tile's palette from the indexed tileset PNG (color index / 4) into
+  `<tileset>_tileset_palette[]`, copied to WRAM at level load (256 bytes) like the
+  collision table. A streamed column looks up its 13 attributes as it is read and, on GBC
+  only, writes them to VRAM bank 1 with its tiles (about 2 more lines in VBlank, 11
+  outside it); a gate row or a pickup writes its cell's attribute too. An attribute map
+  per level would double the map data for no gain: the palette never differs between two
+  uses of a tile.
 - **Brighter palettes on GBA**, chosen at boot (`_is_GBA`). No GBC double-speed mode.
   **Proposed.**
 - **Art pipeline:** Claude Design → `tools/gbconvert.py` → png2asset (ART_PIPELINE.md);
   every palette light to dark; no background tile flips.
-- **Placeholders until M5:** the greybox tileset and band (drawn by scripts).
+- **Placeholders until each level's art pass:** the greybox tileset and band (drawn by
+  scripts), in levels 2-5 and the test rooms.
+- **Server Room art** (2026-10-10, **Proposed**): redrawn by hand on the 8×8 grid from
+  the owner's Gemini starter art (mock-up, band, object sheet; not on a pixel grid, so
+  used as references). Green riveted machine blocks with a striped top lip (a 16-tile
+  Tiled terrain set, plus a vent plate), a blue truss catwalk (one-way), red and gold
+  wiring (hazard), racks, pipes, cable trays and terminals behind the play lane in
+  shades 0-2 only, a gold and black striped shutter for the gate (gray slats read as a
+  ladder), a 2×4 elevator that opens at level complete (closed gray, open lit green), a
+  floppy disk for the fragment; 68 tiles, the band 16. No light plates in the fill: on
+  DMG they read as holes.
+- **Background tiles** (2026-10-10, **Proposed**): the tileset from 0 and its band after
+  it (tileset at most 128, band 32), the font 160-208, the HUD 209-218 (was 64-73, which
+  capped a tileset at 64 tiles), KERNEL 219-236.
 - **HUD and font** (2026-10-10): redrawn from Gemini starter art. The HUD is 2 tile rows
   (Gemini's was 30 px tall): light boxes for the lives and the count, which the code
   writes, a heart and a floppy icon in the frame, a riveted strip below; 10 tiles. One

@@ -83,14 +83,24 @@ screen rows 3–15. `collision_ring[32 * 16]` in WRAM holds the collision of the
 background-map columns (`RING_INDEX(tile_x, tile_y)`, `tile_y` in screen rows).
 `level_stream_update(camera_x)` draws each column that enters the view, both directions:
 its ring column at once, its tiles at the start of the next update (`level_stream_flush`,
-first in `main_game_loop`: straight into VRAM while VBlank lasts, else `set_bkg_tiles`). Tile types: `COLLISION_NONE`, `SOLID`, `ONE_WAY`, `HAZARD`,
+first in `main_game_loop`: straight into VRAM while VBlank lasts, else `set_bkg_tiles`),
+and on GBC their palettes into VRAM bank 1 right after them. Tile types: `COLLISION_NONE`, `SOLID`, `ONE_WAY`, `HAZARD`,
 `COLLECTIBLE` (a fragment), `EXIT`. `LEVEL_COLLISION_AT(level, x, y)` (a macro, pass plain
 variables) returns a tile's type; outside the level or in a HUD row it is `NONE`.
 Collected fragments are a bitset, so they stay gone when their column is drawn again.
 
+Each level points at its tileset's `TilesetData` (`level_data.h`, written by
+`tools/tiled2c.py`): the art and the band (png2asset, their own banks), and per tile the
+collision type and the GBC palette. `level_load` copies it to `current_tileset`, loads
+the tiles from 0 and the band's after them, and `level_stream_start` copies the two
+per-tile tables to WRAM (`tile_collision`, `tile_palette`). `level_show_tile` writes one
+cell with its palette (a pickup, a gate row, the opened elevator).
+
 Fragments, gates and the exit are tile objects in Tiled: `draw_column` puts their marker
 tiles over the map (a closed gate fills its column from its bottom row up to row 3) with
-their object's collision. `current_level` holds the play state: `gates[]`, `section`
+their object's collision. A tileset with an elevator has the closed one in the map
+around the exit marker (its bottom-left tile); `level_complete` draws the open one there
+(`exit_open` in `TilesetData`). `current_level` holds the play state: `gates[]`, `section`
 (0 = A), fragments and collected per section. `section.c` opens the current gate when the
 player walks into it with the quota: one row every 2 frames, the next section starts, the
 camera gets a left limit just past the gate, and a restart puts the player right of it.
@@ -169,9 +179,9 @@ status.
 ## Memory map
 
 - **Background tiles** (GBDK uses `0x8800` addressing, so background tiles 128–255 share
-  memory with sprite tiles 128–255): the level's from 0, the HUD frame 64–73, KERNEL's
-  from 78 (level 5), the font 160–208 (1-bit, loaded in color 3 on 0; the HUD's digits
-  are the font's).
+  memory with sprite tiles 128–255): the level's tileset from 0 and its band right after
+  (together at most 160), the font 160–208 (1-bit, loaded in color 3 on 0; the HUD's
+  digits are the font's), the HUD frame 209–218, KERNEL's 219–236 (level 5).
 - **Sprite tiles:** the player 0–67 (all 10 frames), the bot 68–75, the chaser 76–83,
   the lift 84–89, KERNEL's packet 90–97 (`src/actor/actor.h`), the pause label 98–107.
   The player is
@@ -183,6 +193,8 @@ status.
   `prepare_gameboy.c`, `game_flow.c`, `menu.c`, `title_menu.c`, `progress.c`, `story.c`.
   png2asset's metasprite tables are banked data too; the actors' are
   written by hand in bank 0.
-- **GBC palettes:** background 0 the level, 1 the band, 2 the HUD; sprite 0 the player,
-  1 the player while invincible, 2 the enemies, 3 the lifts. The title and menu screens put
-  every cell on background 0 with the grays (`palette_use_grays`).
+- **GBC palettes:** background 0–3 the level's tileset, 4 the band, 5 the HUD; sprite 0
+  the player, 1 the player while invincible, 2 the enemies, 3 the lifts. The title and
+  menu screens put every cell on background 0 with the grays (`palette_use_grays`); the
+  game over and level complete text puts the play area on background 0.
+- **WRAM per-tile tables:** `tile_collision` and `tile_palette`, 256 bytes each.

@@ -9,7 +9,7 @@ from gamelib import palette_lumas
 pytestmark = pytest.mark.both_modes   # the mode changes the result: run both in the quick tier too
 
 BAND_LAST_LINE, HUD_FIRST_LINE = 23, 128        # src/engine/screen.h
-BAND_TILE_BASE, BAND_TILE_COUNT = 8, 8          # level_manager.c, src/graphics/greybox_band.h
+BAND_TILE_BASE, BAND_TILE_COUNT = 8, 8          # greybox level: after the 8 tileset tiles (level_manager.c draw_band)
 
 
 def scroll_per_line(game) -> list:

@@ -1,15 +1,23 @@
 """Level 1, the Server Room (levels/level_1.tmj): a replay plays it from the start to the
-exit elevator without losing a life, within the frame budget and the sprites-per-line limit.
+exit elevator without losing a life, within the frame budget and the sprites-per-line limit,
+and the elevator opens.
 
 The route is a list of Pilot moves (gamelib.py) that watch the player, so it survives
 small layout changes. x values are world pixels: Tiled's x, or column * 8. Bots are
 named by the left edge of their patrol rectangle in Tiled.
 """
 
+import sys
+from pathlib import Path
+
 import pytest
 
 from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_COMPLETE, LINES_PER_FRAME, Pilot
 from test_frame_budget import FRAME_LINE_LIMIT
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
+import tiled2c  # noqa: E402
 
 SPRITES_PER_LINE = 10   # the hardware draws at most 10 sprites on one screen line
 
@@ -109,4 +117,20 @@ def test_level_1_can_be_finished(game, route, start_delay):
     assert game.u8("_lag_frames") == 0, f"lag frames; the worst update ended at line {worst}"
     assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
     assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
+    assert_elevator_opens(game)
+
+
+def assert_elevator_opens(game) -> None:
+    """At level complete the closed elevator around the exit (its bottom-left tile) turns
+    into the tileset's open one, with its palettes on GBC."""
+    level = tiled2c.load_level(ROOT / "levels" / "level_1.tmj")
+    exit_tile = next(e for e in level.entities if e.kind == "exit")
+    column, row = exit_tile.x // 8, exit_tile.y // 8
+    cells = [(column + i % 2, row - 3 + i // 2) for i in range(tiled2c.ELEVATOR_TILES)]
+    game.frames(2)
+    shown = [game.bkg_tile(x, y) for x, y in cells]
+    assert shown == level.tileset.named("exit_open"), f"elevator tiles {shown}"
+    if game.mode == "cgb":
+        attributes = [game.bkg_attribute(x, y) for x, y in cells]
+        assert attributes == [level.tileset.palette[t] for t in shown]
 

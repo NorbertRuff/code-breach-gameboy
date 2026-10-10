@@ -2,15 +2,18 @@
 fades and flashes on DMG and GBC (docs/CGB_PLAN.md sections 3 and 5)."""
 
 import re
+import sys
 from pathlib import Path
 
 import pytest
 
-from gamelib import COREGAMELOOP, read_symbol
+from gamelib import COREGAMELOOP, LEVEL_1, read_symbol
 
 pytestmark = pytest.mark.both_modes   # the mode changes the result: run both in the quick tier too
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "tools"))
+import tiled2c  # noqa: E402
 PALETTE_WRITES = re.compile(r"\b(BGP_REG|OBP0_REG|OBP1_REG|BCPS_REG|BCPD_REG|OCPS_REG|OCPD_REG"
                             r"|set_bkg_palette|set_sprite_palette)\b")
 
@@ -35,7 +38,7 @@ def test_losing_a_life_fades_out_and_back_in_step_by_step(game):
     colors_before = game.gbc_colors() if game.mode == "cgb" else None
     states = [background_palette_state(game)]
     game.lose_life()
-    for _ in range(60):
+    for _ in range(90):
         game.frames(1)
         if background_palette_state(game) != states[-1]:
             states.append(background_palette_state(game))
@@ -81,17 +84,37 @@ def rom_palette(game, symbol: str) -> list:
     return [raw[i] | raw[i + 1] << 8 for i in range(0, 8, 2)]
 
 
+@pytest.mark.level(LEVEL_1)
+def test_streamed_level_cells_use_their_tiles_palettes(game):
+    # GBC: every map cell on screen, in the columns drawn at the start and those streamed
+    # in while running right, has its tile's palette from the tileset.
+    if game.mode != "cgb":
+        return
+    palette = tiled2c.load_level(ROOT / "levels" / "level_1.tmj").tileset.palette
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.place_player(300, 119)              # on the open floor before gate A
+    game.frames(10)
+    camera_before = game.camera_x()
+    game.pyboy.button_press("right")
+    game.frames(60)
+    game.pyboy.button_release("right")
+    first = game.camera_x() // 8
+    wrong = [(x, y) for x in range(first, first + 21) for y in range(3, 16)
+             if game.bkg_attribute(x, y) != palette[game.bkg_tile(x, y)]]
+    assert game.camera_x() > camera_before + 32 and not wrong, f"cells with another palette than their tile's: {wrong}"
+
+
 def test_band_and_hud_use_their_own_gbc_palettes(game):
-    # GBC background palette 0: the level, 1: the band (rows 0-2), 2: the HUD window.
+    # GBC background palettes 0-3: the level's tileset, 4: the band (rows 0-2), 5: the HUD window.
     if game.mode != "cgb":
         return
     game.start_on_open_ground()
     colors = game.gbc_colors()
-    assert colors[4:8] == rom_palette(game, "_greybox_band_palettes")
-    assert colors[8:12] == rom_palette(game, "_hud_palettes")
+    assert colors[16:20] == rom_palette(game, "_greybox_band_palettes")
+    assert colors[20:24] == rom_palette(game, "_hud_palettes")
     memory = game.pyboy.memory
     band = [memory[1, 0x9800 + row * 32 + col] for row in range(3) for col in range(32)]
     level_row = [memory[1, 0x9800 + 3 * 32 + col] for col in range(32)]
     window_base = 0x9C00 if game.reg("LCDC") & 0x40 else 0x9800
     hud = [memory[1, window_base + row * 32 + col] for row in range(2) for col in range(20)]
-    assert set(band) == {1} and set(level_row) == {0} and set(hud) == {2}
+    assert set(band) == {4} and set(level_row) == {0} and set(hud) == {5}

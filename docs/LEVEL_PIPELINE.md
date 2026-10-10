@@ -7,9 +7,10 @@ Level 1 was `for` loops in `level_1_server_room_init`. Five levels need a visual
 editor, a data format in ROM, and maps wider than one 256 px background.
 
 **Files:** maps in `levels/*.tmj`, tilesets in `graphics/tilesets/*.tsx` next to their
-PNG, generated C in `src/levels/`, the data format in `src/level/level_data.h`. Until the
-Server Room art (M5), levels use the greybox tileset drawn by
-`tools/greybox_tileset.py`.
+PNG, generated C in `src/levels/`, the data format in `src/level/level_data.h`. Level 1
+uses the Server Room tileset (`server_room.tsx`); the others still use the greybox
+tileset drawn by `tools/greybox_tileset.py` until their art passes. A level's band is
+`graphics/bands/<tileset>_band.png`.
 
 ## 1. Options compared
 
@@ -33,8 +34,14 @@ Python and fits our collision and palette needs exactly.
   (`graphics/tilesets/server_room.png`, the output of `gbconvert.py`).
 - **Per-tile custom property `collision`**: `solid`, `one_way` or `hazard`. Empty means
   no collision.
-- **Palettes are not set by hand.** `gbconvert.py` already knows each tile's palette.
-- **Terrain sets** for ground and wall edges, so painting picks the right edge tiles.
+- **Palettes are not set by hand.** The converter reads each tile's palette from the
+  indexed PNG `gbconvert.py` wrote.
+- **Terrain sets** for ground and wall edges, so painting picks the right edge tiles: the
+  Server Room's "machine" set (edge type) has a tile for each combination of exposed
+  sides; the vent plate is a rarer variant of the fill.
+- **The exit elevator:** a tileset with tiles named `elevator_1` to `_8` (2×4, row by
+  row) and `exit_open_1` to `_8` needs the closed elevator painted around the exit marker,
+  which is `elevator_7` (bottom left); the game draws the open one at level complete.
 - **Map size:** 13 tiles tall: screen rows 3–15. Rows 0–2 are the parallax band and
   rows 16–17 the HUD, neither part of the Tiled map. At least 20 tiles wide.
   Horizontal scrolling only.
@@ -78,8 +85,7 @@ Runs from `make levels` and writes `src/levels/<map name>.c` and `.h`, plus
 | `<name>_map[]` | Tile index per map cell, row-major, 13 rows (screen rows 3–15) |
 | `<name>_entities[]` | `{type, x, y, param, speed}` sorted by X, so entities spawn as the camera reaches them. A cursor walks the list. Coordinates per type are in `level_data.h`. |
 | `<name>` (`LevelData`) | Width, player start, fragment count, entity count, `section_start[]` (index of each section's first entity, so a checkpoint restart only resets the cursor), pointers to the map and entities |
-| `<tileset>_tileset_collision[]` | One collision type per tileset tile, from the `collision` property |
-| GBC attribute map | Planned for M4, with the palette module |
+| `<tileset>_tileset` (`TilesetData`) | The tileset's art and band (png2asset symbols), and per tile a collision type (the `collision` property) and a GBC palette (from the PNG); the fragment, gate and exit marker tiles; the open elevator's 8 tiles (0 without one). `LevelData` points at it. |
 
 All of it is banked ROM data (`BANKREF`, `#pragma bank 255`): the level in one bank, its
 tileset table in another, both picked by autobank.
@@ -119,7 +125,9 @@ The converter fails the build when:
 - a lift isn't 24 px wide on the grid, has a solid tile in its columns from 4 rows above
   its highest place down to its lowest (the platform and the body riding it), or is less
   than 16 px from another lift;
-- the tileset has more unique tiles than the budget in [ART_PIPELINE.md](ART_PIPELINE.md).
+- the tileset has more tiles than the budget in [ART_PIPELINE.md](ART_PIPELINE.md), or a
+  tile mixes palettes;
+- the exit isn't in the closed elevator, when the tileset has one.
 
 It warns when an enemy's patrol range has no ground under it, and when a pit in the
 bottom row is narrower than 3 tiles (the 2-tile-wide body walks across it).
@@ -130,9 +138,8 @@ The background map in VRAM is 32×32 tiles and wraps around. As the camera moves
 column about to come into view is read into a 13-byte buffer and written with
 `set_bkg_tiles()` (section 3; `set_bkg_submap()` was the first plan, see DECISIONS.md).
 A column draw takes about 30-40 screen lines, so one column per frame fits the frame
-budget. On GBC the band and HUD attributes are written once per level; the streamed
-columns keep palette 0 until the M5 tilesets bring a palette per tile, and then the
-attribute column is written with the tile column. GBDK ships a large-map scrolling
+budget. On GBC the band and HUD attributes are written once per level; a streamed
+column's attributes, its tiles' palettes, are written right after its tiles. GBDK ships a large-map scrolling
 example that shows the pattern. The "Drawing Large Maps" notes in GAME_DESIGN.md describe
 the same technique.
 

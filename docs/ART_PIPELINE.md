@@ -36,11 +36,13 @@ The ROM must work on DMG, so all tiles live in VRAM bank 0: 384 tiles in three b
 | Block | Tiles | Used for |
 |---|---|---|
 | Sprite-only (`0x8000`) | 128 | Player (68, all 10 frames), current level's enemies and objects (about 40), pause label (10), spare |
-| Shared (`0x8800`) | 128 | HUD frame and font (about 60), the rest goes to level tiles |
-| Background-only (`0x9000`) | 128 | Level tileset |
+| Shared (`0x8800`) | 128 | Background tiles 128–255: the rest of the level tiles (to 159), the font (160–208), the HUD frame (209–218), KERNEL (219–236, level 5) |
+| Background-only (`0x9000`) | 128 | Background tiles 0–127: the level tileset, then its band |
 
-So a level tileset gets about **190 unique tiles**. Screens without a level, like the
-title, can use all 256 background tiles.
+So a level tileset gets **128 tiles** (every cell of its sheet, `tools/tiled2c.py`
+checks) and its band **32** (`gbconvert.py` budget), 160 together. Moving the font up
+would free about 20 more. Screens without a level, like the title, can use all 256
+background tiles.
 
 ## 3. Claude Design workflow
 
@@ -113,7 +115,7 @@ Design.
 | Sprites | `-spr8x16 -keep_palette_order -sw W -sh H -px X -py Y -b 255` |
 | Actor sheets (enemies, the lift) | `-spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255`: tiles only, in sheet order (each 8 px column's top, then bottom); the metasprites are written by hand in `src/actor/` |
 | Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` |
-| Level tilesets | `-map -noflip -keep_palette_order -tiles_only -b 255`. Maps come from the level converter ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)). |
+| Level tilesets | `-map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255`: one tile per sheet cell, in sheet order, so Tiled's tile ids are the VRAM tiles. Maps, and each tile's palette (from the indexed PNG), come from the level converter ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)). |
 | Parallax bands (256×24 px) | `-map -noflip -keep_palette_order -b 255`: tiles and a 32×3 map, drawn into rows 0–2 with a tile offset |
 
 ## 6. Asset list for the full game
@@ -127,11 +129,11 @@ Design.
 | KERNEL's data packet (L5) | 16×16 | Flicker (2) | Done (2026-10-10) |
 | Enemies for L2–L4 | 16×16 or 16×32 | One or two types per level | Not started |
 | Boss (L5) | Large | Built from background tiles or a metasprite within 10 sprites per line | Not designed |
-| Collectibles | 8×8 or 16×16 | Code fragment, bug report, debug tool, AI core, security protocol | Hand-coded diamond tile |
-| Level objects | 16×32 | Security gate (closed, opening, open; shows the quota), exit elevator (doors closed and open) | Not started |
-| Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Not started |
-| Parallax bands | 32×3 tiles each | One per level theme, wraps around; decoration only | Greybox placeholder (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`, 8 tiles) |
-| Tilesets | ≤ 190 tiles each | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Placeholder city background |
+| Collectibles | 8×8 tiles in the level tileset | Code fragment, bug report, debug tool, AI core, security protocol | Code fragment (a floppy) in the Server Room tileset (2026-10-10); greybox diamond elsewhere |
+| Level objects | Tiles in the level tileset | Security gate (a striped shutter column between rails, opened a row at a time), exit elevator (2×4 tiles, closed and open) | Server Room done (2026-10-10) |
+| Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Server Room wiring (top and fill, 2026-10-10); level 1 has no hazards |
+| Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room done (2026-10-10, 16 tiles); greybox placeholder for levels 2-5 |
+| Tilesets | ≤ 128 tiles each, with a `.tsx` | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Server Room done (2026-10-10): `graphics/tilesets/server_room.png`, 68 tiles in an 80-cell sheet, machine terrain set in Tiled |
 | HUD and font | 59 tiles | Frame (heart, floppy icon, riveted strip), A–Z, 0–9, punctuation | Done (2026-10-10): `graphics/hud/hud.png`, `graphics/font/font.png` |
 | Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Old `splashscreen.c`, unused `apexLogo.png` |
 

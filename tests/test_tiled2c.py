@@ -1,6 +1,7 @@
 """tools/tiled2c.py: the committed level files, the level data in the ROM, and the rules
 a level must follow (docs/LEVEL_PIPELINE.md)."""
 
+import json
 import struct
 import sys
 from pathlib import Path
@@ -173,3 +174,21 @@ def test_narrow_pit_is_a_warning():
     assert any("pit at columns 15-16 is 2 wide" in w for w in convert(tmj).warnings)
     tmj["layers"][0]["data"][12 * 20 + 17] = EMPTY
     assert not any("pit at" in w for w in convert(tmj).warnings)
+
+
+def test_exit_needs_the_closed_elevator_when_the_tileset_has_one():
+    # The game opens the elevator around the exit marker: the map must hold the closed one.
+    path = ROOT / "levels" / "level_1.tmj"
+    tmj = json.loads(path.read_text(encoding="utf-8"))
+    tileset = tiled2c.load_tileset(ROOT / "graphics" / "tilesets" / "server_room.tsx")
+    elevator_top = tileset.named("elevator")[0] + 1
+    tmj["layers"][0]["data"] = [EMPTY if gid == elevator_top else gid for gid in tmj["layers"][0]["data"]]
+    with pytest.raises(tiled2c.LevelError, match="needs the closed elevator"):
+        tiled2c.convert("level_1", tmj, tileset, firstgid=1)
+
+
+def test_each_tile_gets_its_palette_from_the_png():
+    tileset = tiled2c.load_tileset(ROOT / "graphics" / "tilesets" / "server_room.tsx")
+    palette_of = dict(zip(tileset.names, tileset.palette))
+    assert (palette_of["top"], palette_of["rack_top_l"], palette_of["catwalk"], palette_of["hazard_top"]) == (0, 1, 2, 3)
+    assert set(tiled2c.load_tileset(GREYBOX_TSX).palette) == {0}
