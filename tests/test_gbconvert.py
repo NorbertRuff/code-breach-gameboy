@@ -1,6 +1,7 @@
 """tools/gbconvert.py: the art converter (docs/ART_PIPELINE.md section 4), on small
 generated pictures."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -114,8 +115,9 @@ def test_palettes_must_be_light_to_dark(tmp_path):
 
 def test_project_palettes_load():
     path = ROOT / "graphics" / "palettes.json"
-    assert len(load_palettes(path, "greybox", "bg")[0]) == 4
-    assert len(load_palettes(path, "greybox", "sprite")[0]) == 3
+    for set_name in json.loads(path.read_text(encoding="utf-8")):
+        assert len(load_palettes(path, set_name, "bg")[0]) == 4
+        assert len(load_palettes(path, set_name, "sprite")[0]) == 3
 
 
 def test_previews_show_gbc_colors_and_dmg_grays():

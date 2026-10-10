@@ -4,7 +4,7 @@
 #include <gb/gb.h>
 #include "pause.h"
 
-#define PAUSE_FIRST_TILE 44   // sprite tiles after the bot's (40-43)
+#define PAUSE_FIRST_TILE 72   // sprite tiles after the bot's (68-71)
 #define PAUSE_LETTERS 5
 #define PAUSE_LEFT 60         // screen px: the label's 40 px centered on 160
 #define PAUSE_TOP 8           // in the parallax band, where no bot goes: at most 7 sprites a line

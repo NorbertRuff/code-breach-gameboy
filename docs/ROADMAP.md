@@ -31,7 +31,7 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 - Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
   bumps; colors on GBC).
-- Claude Design style guide (M5).
+- Claude Design style guide (M5): palettes are in; the character look and sprite sheets are next.
 - Try the M7 menus in Emulicious and on hardware: the title menu, a password from a level
   complete screen typed back in (`python tools/password.py` lists them), the level select,
   game over CONTINUE and QUIT, the boot screen and the elevator log screens. Agree or
@@ -86,9 +86,10 @@ Done when the game runs in color on GBC and unchanged on DMG. Steps in
 
 Done when level 1 looks like the final game in both modes.
 
-- [ ] **(owner)** Claude Design style guide: palettes and character look.
+- [ ] **(owner)** Claude Design style guide: palettes and character look. Palettes for
+      all five levels in `graphics/palettes.json` (2026-10-05).
 - [x] `tools/gbconvert.py` with previews ([ART_PIPELINE.md](ART_PIPELINE.md)). Built and
-      tested 2026-10-04; `graphics/palettes.json` waits for the style guide's palettes.
+      tested 2026-10-04.
 - [ ] Player sprite with all animations.
 - [ ] Security bot enemy.
 - [ ] Server Room tileset with Tiled terrain sets. Swap it in for the greybox tileset.

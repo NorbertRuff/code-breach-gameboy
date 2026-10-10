@@ -1,6 +1,6 @@
 #include "lift.h"
 
-#define LIFT_FIRST_TILE 54   // sprite tiles after the pause label's (44-53)
+#define LIFT_FIRST_TILE 82   // sprite tiles after the pause label's (72-81)
 #define LIFT_TILE_COUNT 2
 #define LIFT_PAUSE_FRAMES 30   // 0.5 s at each end of its travel
 

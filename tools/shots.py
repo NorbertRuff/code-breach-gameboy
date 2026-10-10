@@ -190,6 +190,7 @@ def run(mode: str, rom: Path) -> None:
     rec.shot("game_over_flash")
     game.frames(120)
     rec.shot("game_over_wait")
+    game.answer_game_over()
     game.wait_for_state(COREGAMELOOP, timeout=600)
     game.frames(20)
     rec.shot("after_game_over")

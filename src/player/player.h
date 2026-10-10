@@ -35,7 +35,17 @@
 #define PLAYER_PALE_PALETTE 1      // GBC sprite palette while invincible
 
 #define ANIMATION_FRAME_LENGTH 4   // frames per run animation frame
-#define JUMP_POSE_FRAME 3
+#define IDLE_BREATH_BIT 32         // idle frames swap every 32 frames (about 0.5 s)
+
+// Frames of graphics/player/programmer.png
+#define IDLE_FRAME        0
+#define IDLE_BREATH_FRAME 1
+#define RUN_FIRST_FRAME   2
+#define RUN_LAST_FRAME    5
+#define JUMP_FRAME        6
+#define FALL_FRAME        7
+#define HURT_FRAME        8
+#define DEATH_FRAME       9
 
 typedef struct {
     uint16_t x;                  // body center, world, 1/32 px

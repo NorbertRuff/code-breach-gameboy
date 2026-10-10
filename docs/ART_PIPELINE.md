@@ -83,8 +83,8 @@ Input: an exported PNG plus its entry in `graphics/assets.json`:
 
 `graphics/palettes.json` holds the palette sets, each with `bg` palettes (4 colors) and
 `sprite` palettes (3 colors; index 0 is transparent), every palette light to dark, as hex
-colors. Today it has only the `greybox` set (the DMG grays); the style guide adds the
-real sets.
+colors. It has the `greybox` set (the DMG grays) and one set per level from the style
+guide: `server_room`, `code_testing_lab`, `ai_research_wing`, `network_hub`, `mainframe`.
 
 1. Shrink the whole-number upscale (for example 4×) with nearest-neighbor: to the
    entry's `size` when given, else at the largest scale that fits. Fail if the pixel grid

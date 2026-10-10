@@ -24,7 +24,6 @@ const uint8_t player_struct_size = sizeof(Player);
 #define RIGHT_COLUMN(x) TILE_OF((x) + SPRITE_RIGHT_W * SUBPIXELS)
 #define FEET_ROW(y)     TILE_OF(y)
 
-#define RUN_LAST_FRAME 4   // run cycle: frames 1-4; frame 0 is standing
 
 // Starts the player standing still, facing right, at a world position in pixels.
 void player_init(Player* player, uint16_t start_x_px, uint16_t start_y_px)
@@ -300,17 +299,18 @@ static void check_touched_tiles(Player* p)
     }
 }
 
-// Picks the sprite frame: jump pose in the air, run cycle while moving, standing otherwise.
+// Picks the sprite frame: jump or fall pose in the air, run cycle while moving,
+// breathing idle otherwise.
 static void update_animation(Player* p)
 {
     if (!p->on_ground) {
-        p->draw_frame = JUMP_POSE_FRAME;
+        p->draw_frame = (p->velocity_y < 0) ? JUMP_FRAME : FALL_FRAME;
     } else if (!p->velocity_x) {
-        p->draw_frame = 0;
+        p->draw_frame = (++p->animation_frame_count & IDLE_BREATH_BIT) ? IDLE_BREATH_FRAME : IDLE_FRAME;
+    } else if (++p->animation_frame_count >= ANIMATION_FRAME_LENGTH) {
         p->animation_frame_count = 0;
-    } else if (++p->animation_frame_count == ANIMATION_FRAME_LENGTH) {
-        p->animation_frame_count = 0;
-        p->draw_frame = (p->draw_frame >= RUN_LAST_FRAME) ? 1 : p->draw_frame + 1;
+        if (p->draw_frame < RUN_FIRST_FRAME || p->draw_frame >= RUN_LAST_FRAME) p->draw_frame = RUN_FIRST_FRAME;
+        else p->draw_frame++;
     }
 }
 
