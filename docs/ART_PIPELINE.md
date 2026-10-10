@@ -115,7 +115,7 @@ Design.
 |---|---|
 | Sprites | `-spr8x16 -keep_palette_order -sw W -sh H -px X -py Y -b 255` |
 | Actor sheets (enemies, the lift) | `-spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255`: tiles only, in sheet order (each 8 px column's top, then bottom); the metasprites are written by hand in `src/actor/` |
-| Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` (one palette: no `-use_map_attributes`). The title is two PNGs, rows 0-13 and 14-17, so its 204 tiles fit around the font: tiles 0-158 and 209-253 |
+| Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` (one palette: no `-use_map_attributes`). The title's 139 tiles go from 0, its warning triangle's 23 (`title_warning.png`, one palette) after the font, from 209 |
 | Level tilesets | `-map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255`: one tile per sheet cell, in sheet order, so Tiled's tile ids are the VRAM tiles. Maps, and each tile's palette (from the indexed PNG), come from the level converter ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)). |
 | Parallax bands (256×24 px) | `-map -noflip -keep_palette_order -b 255`: tiles and a 32×3 map, drawn into rows 0–2 with a tile offset |
 
@@ -136,11 +136,11 @@ Design.
 | Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room (16 tiles) and Code Testing Lab (22) done (2026-10-10); greybox placeholder for levels 3-5 |
 | Tilesets | ≤ 128 tiles each, with a `.tsx` | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Server Room done (2026-10-10): `graphics/tilesets/server_room.png`, 68 tiles in an 80-cell sheet, machine terrain set in Tiled. Code Testing Lab done (2026-10-10): `code_testing_lab.png`, 69 tiles in an 80-cell sheet, same tile ids for the shared objects, "panel" terrain set |
 | HUD and font | 59 tiles | Frame (heart, floppy icon, riveted strip), A–Z, 0–9, punctuation | Done (2026-10-10): `graphics/hud/hud.png`, `graphics/font/font.png` |
-| Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Title done (2026-10-10): `apexLogo.png` as `graphics/start_screen/title_top.png` and `title_bottom.png`; the others are text screens in the game font |
+| Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Title done (2026-10-10): `graphics/start_screen/title.png` and the blinking `title_warning.png`, 4 palettes; the others are text screens in the game font |
 
 ## 7. Existing art
 
 | File | Use |
 |---|---|
 | `graphics/player/programmer.png` | The final player sheet (SOURCES.md). Palette light → dark since 2026-10-03 (review G1). |
-| `graphics/start_screen/apexLogo.png` | The owner's title picture, the source of `title_top.png` and `title_bottom.png` (crop at row 112, then `gbconvert.py`). |
+| `graphics/start_screen/apexLogo.png` | The owner's first title picture, kept out of the build. |

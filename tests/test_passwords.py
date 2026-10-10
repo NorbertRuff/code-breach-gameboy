@@ -1,7 +1,7 @@
 """Passwords and the game flow around them (roadmap M7, DECISIONS.md "Saves"): the format
 in tools/password.py, the same as src/game_state/progress.c; the title menu, the password
-screen and the level select (title_menu.c); QUIT on the game over menu; the boot screen of
-a new game (story.c).
+screen and the level select (title_menu.c); QUIT on the game over menu; the title's blinking
+warning (start_screen.c); the boot screen of a new game (story.c).
 The password on the level complete screen is checked in test_level_2.py."""
 
 import sys
@@ -13,6 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 import password  # noqa: E402
 
 LCDC_WINDOW_ON = 0x20
+WARNING_CENTER = (9, 8)      # a map cell of the warning triangle on the title's monitor
+WARNING_OFF_TILE = 209       # its dark tile, after the font (start_screen.c)
 
 
 def open_title_menu(game) -> None:
@@ -78,19 +80,26 @@ def test_continue_takes_a_password_then_a_level(game):
     assert game.u8("_level_index") == LEVEL_2 and game.lives() == 3
 
 
-def test_quit_after_game_over_goes_to_the_title_and_a_new_game(game):
-    # QUIT: the title screen, without the HUD window. NEW GAME types the boot screen's
-    # three lines (docs/STORY.md), then starts level 1 with full lives and no progress.
+def test_quit_after_game_over_goes_to_the_blinking_title_and_a_new_game(game):
+    # QUIT: the title screen, without the HUD window, its warning triangle swapping on and
+    # off every 30 frames, then on under the menu. NEW GAME types the boot screen's three
+    # lines (docs/STORY.md), then starts level 1 with full lives and no progress.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.load_level(LEVEL_2)
     game.set_lives(1)
     game.lose_life()
     game.answer_game_over(quit=True)
-    game.wait_for_state(TITLE_SCREEN_STATE, timeout=300)
-    game.frames(100)
+    game.wait_for_text(5, 14, "PRESS START")
     assert not game.reg("LCDC") & LCDC_WINDOW_ON
+    shown = set()
+    for _ in range(60):
+        game.frames(1)
+        shown.add(game.bkg_tile(*WARNING_CENTER))
+    assert len(shown) == 2 and WARNING_OFF_TILE in shown
     game.tap("start")
     game.wait_for_text(7, 13, "NEW GAME")
+    game.frames(60)
+    assert game.bkg_tile(*WARNING_CENTER) == (shown - {WARNING_OFF_TILE}).pop()
     game.tap("start")
     game.wait_for_text(6, 10, "LOCKDOWN")
     assert [game.text(6, row, 10) for row in (6, 8)] == ["ANOMALY   ", "STAFF #042"]

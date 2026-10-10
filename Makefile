@@ -200,8 +200,8 @@ assets:
 	$(PNG2ASSET) graphics/objects/lift_platform.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/lift_platform.c
 	$(PNG2ASSET) graphics/enemies/data_packet.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/data_packet.c
 	$(PNG2ASSET) graphics/hud/hud.png -map -noflip -keep_palette_order -b 255 -o src/graphics/hud.c
-	$(PNG2ASSET) graphics/start_screen/title_top.png -map -noflip -keep_palette_order -b 255 -o src/graphics/title_top.c
-	$(PNG2ASSET) graphics/start_screen/title_bottom.png -map -noflip -keep_palette_order -b 255 -o src/graphics/title_bottom.c
+	$(PNG2ASSET) graphics/start_screen/title.png -map -noflip -keep_palette_order -use_map_attributes -b 255 -o src/graphics/title.c
+	$(PNG2ASSET) graphics/start_screen/title_warning.png -map -noflip -keep_palette_order -b 255 -o src/graphics/title_warning.c
 	$(PNG2ASSET) graphics/font/font.png -map -bpp 1 -noflip -keep_duplicate_tiles -tiles_only -b 255 -o src/graphics/font.c
 
 # tools/tiled2c.py output is committed too. Run this after saving a map in Tiled.

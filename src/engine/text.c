@@ -5,6 +5,9 @@
 
 #define MAX_LINE 20   // characters across the screen
 
+static const char font_chars[] = FONT_CHARS;
+_Static_assert(sizeof(font_chars) - 1 == FONT_CHAR_COUNT, "FONT_CHAR_COUNT must match FONT_CHARS");
+
 // Loads the font's 1-bit tiles into background tile memory: ink in color 3 (darkest),
 // the rest color 0 (lightest).
 void text_load_font(void)
@@ -17,10 +20,9 @@ void text_load_font(void)
 // doesn't have as a space.
 static uint8_t char_tile(char c)
 {
-    static const char chars[] = FONT_CHARS;
     if (c >= 'a' && c <= 'z') c -= 'a' - 'A';
-    for (uint8_t i = 0; chars[i]; i++) {
-        if (chars[i] == c) return FONT_FIRST_TILE + i;
+    for (uint8_t i = 0; font_chars[i]; i++) {
+        if (font_chars[i] == c) return FONT_FIRST_TILE + i;
     }
     return TEXT_SPACE_TILE;
 }

@@ -157,7 +157,9 @@ or git keeps the old one). Details of how the code does it belong in
   flow moved out, about 730 bytes).
 - **Screen text** in the game's own font (`src/engine/text.c`); `printf` took 2.6 KB of bank 0.
 - **SDCC pitfall:** `?:` passed straight as a function argument can compile wrong
-  (`head_row` is a function for this).
+  (`head_row` is a function for this). `sizeof` of a string literal leaves the string in
+  the ROM of each function that uses it: `FONT_CHAR_COUNT` is a number, checked against
+  the font's characters in `text.c` (2026-10-10, 100 bytes of bank 0).
 
 ## Color and graphics
 
@@ -206,10 +208,15 @@ or git keeps the old one). Details of how the code does it belong in
   the band (desks, racks and benches under a ceiling pipe) 22. The map keeps its layout
   and every cell's collision; the props were placed by a script, so the owner can repaint
   them in Tiled.
-- **Title screen** (2026-10-10, **Proposed**): the owner's `apexLogo.png` as it is, in
-  its 4 greens on GBC (grays on DMG). "Press START" is part of the picture and no longer
-  blinks: a text-free copy of those 24 tiles has no room next to the font the menu needs
-  (204 tiles of the 207 free). START opens NEW GAME / CONTINUE in a light box over it.
+- **Title screen** (2026-10-10, **Proposed**): redrawn by hand at 1× on the 8×8 grid from
+  the owner's Gemini starter art (a server corridor, the programmer from behind, his head turned
+  to a monitor; the "APEX [LAB] / CODE BREACH" logo), 139 tiles from 0. A warning triangle on the
+  monitor (6×5 tiles, 23 more after the font) blinks by a tile-map swap every 30 frames,
+  the same on DMG and GBC, and stays on under the menu. "PRESS START" is printed with the
+  font below the monitor, where START's NEW GAME / CONTINUE box covers it. 4 palettes on
+  GBC (`title` set: scene and racks, walls and monitor, the programmer, the triangle and
+  LEDs), a palette per map cell from png2asset's attribute map; on DMG the 4 grays by
+  palette index. Replaces the owner's `apexLogo.png` as it was.
 - **Background tiles** (2026-10-10, **Proposed**): the tileset from 0 and its band after
   it (tileset at most 128, band 32), the font 160-208, the HUD 209-218 (was 64-73, which
   capped a tileset at 64 tiles), KERNEL 219-236.

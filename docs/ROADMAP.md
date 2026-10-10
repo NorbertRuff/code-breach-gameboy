@@ -14,12 +14,13 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
   text. New since the owner's last check: the M7 menus and story, level 4, level 5 and the
   ending, and since 2026-10-10 the final player sprite (10 frames, GBC colors from the
   style guide), the bot, chaser, lift and packet sprites, the HUD and font, and level 1's
-  tileset, band, gate and elevator, level 2's art and the title screen from the owner's
-  logo. Next: the owner's playthrough; level 3's art pass.
+  tileset, band, gate and elevator, level 2's art and the new title screen with its
+  blinking warning. Next: the owner's playthrough; level 3's art pass.
 - **Tests:** `make test` 239 tests in about 20 s; `make test-full` 356 in about 25 s.
-- **Memory:** bank 0 has 585 bytes free (KERNEL's packet actor and the boss and ending
+- **Memory:** bank 0 has 638 bytes free (KERNEL's packet actor and the boss and ending
   states are in it; the tileset loading and GBC attribute streaming took 380; moving the
-  title flow to a ROM bank gave 31 back); WRAM uses
+  title flow to a ROM bank gave 31 back; the new title took about 47, and dropping
+  `sizeof(FONT_CHARS)` gave 100 back); WRAM uses
   1,820 of 4,096 bytes.
 - **Frame budget** (worst update on DMG, line of the 140 allowed; average): level 1 127
   (79), level 2 111 (67), level 3 132 (90; 139 on GBC, the tightest), level 4 110 (70),
@@ -45,10 +46,13 @@ A fixed bug leaves this list; its regression test keeps the number.
   background tiles, GBC palettes and palette-per-tile decisions (DECISIONS.md). Repaint
   or decorate in Tiled with the "machine" terrain set (`graphics/tilesets/server_room.tsx`).
 - Level 2's Code Testing Lab art on DMG and GBC (tileset, band, the recolored gate and
-  elevator) and the title screen (the logo in its greens on GBC, "Press START" no longer
-  blinking, the menu box over it): agree or change the **Proposed** Code Testing Lab art
-  and title screen decisions (DECISIONS.md). Repaint or move the props in Tiled with the
+  elevator): agree or change the **Proposed** Code Testing Lab art decision
+  (DECISIONS.md). Repaint or move the props in Tiled with the
   "panel" terrain set (`graphics/tilesets/code_testing_lab.tsx`).
+- The new title screen on DMG and GBC: the redrawn corridor, programmer and logo, the
+  warning triangle blinking on the monitor (on and off every half second, steady under
+  the menu), "PRESS START" in the font: agree or change the **Proposed** title screen
+  decision (DECISIONS.md).
 - The new bot, chaser, lift and packet on DMG and GBC (2 frames every 8 frames, the lift
   still): agree or change the **Proposed** enemy sprite decision (DECISIONS.md).
 - The player's 10 frames on DMG and GBC (idle breathing, jump, fall, the hurt and death
@@ -123,8 +127,10 @@ Done when level 1 looks like the final game in both modes.
 - [x] Security gate and exit elevator art (Server Room, 2026-10-10).
 - [x] HUD frame and font (2026-10-10). **(owner)** Check them on hardware; agree or change
       the **Proposed** HUD palette and HUD decisions (DECISIONS.md).
-- [x] Title screen from `apexLogo` (2026-10-10); `splashscreen.c`, `press_start.png` and
-      the unused `background.png` and `Font.png` removed. **(owner)** Check it on hardware.
+- [x] Title screen redrawn from Gemini starter art with a blinking warning triangle
+      (2026-10-10; `apexLogo.png` kept out of the build); `splashscreen.c`,
+      `press_start.png` and the unused `background.png` and `Font.png` removed.
+      **(owner)** Check it on hardware.
 - [x] Parallax band art for the Server Room (32×3 tiles, wraps; 2026-10-10).
 - [x] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md)
       (2026-10-10: the last, `background.png`, deleted unused).
