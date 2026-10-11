@@ -17,6 +17,7 @@
 #   make music      regenerate src/music/*.c from the hUGETracker songs in music/
 #   make sounds     regenerate src/sound/effects.c from the effect list sounds/effects.txt
 #   make demo       build, then record the title screen demo's clips from the level replays
+#   make video      build, then record screenshots/gameplay.gif (and release/code-breach.mp4 with ffmpeg)
 #   make preview    draw every level to tests/out/levels/ and check it can be finished
 #   make clean      delete obj/
 #
@@ -87,7 +88,7 @@ endif
 OBJS := $(addprefix $(OBJDIR)/,$(OBJNAMES))
 vpath %.c $(sort $(dir $(CSOURCES)))
 
-.PHONY: all rebuild run release test test-full shots goldens budget venv usage assets levels music sounds demo preview clean
+.PHONY: all rebuild run release test test-full shots goldens budget venv usage assets levels music sounds demo video preview clean
 
 all: $(ROM)
 
@@ -179,6 +180,11 @@ levels:
 # for up to 30 s. Run this after a change that alters how a level plays.
 demo: $(ROM)
 	$(PYTHON) tools/record_demo.py $(ROM) -o src/game_state/demo_clips.h
+
+# A short gameplay video from the demo clips: the README's GIF, and an MP4 with the music
+# when ffmpeg is on PATH.
+video: $(ROM)
+	$(PYTHON) tools/record_video.py $(ROM)
 
 # tools/uge2c.py output is committed too. Run this after changing a song in music/.
 music:

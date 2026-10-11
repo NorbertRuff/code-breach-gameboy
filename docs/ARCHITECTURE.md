@@ -293,6 +293,8 @@ level's start always play the same way.
   banked code reads them without `WITH_BANK`. Bank 0 holds only the call in `main.c`.
 - `tests/test_demo.py` plays every clip out; when a change makes a level play
   differently, it fails until `make demo` records the clips again.
+- `make video` (`tools/record_video.py`) records a few seconds of each clip, after the
+  title, as the README's GIF and an MP4 with the music (PyBoy's sound, ffmpeg).
 
 ## Saves: passwords
 

@@ -9,6 +9,8 @@ a programmer locked inside. Collect the code fragments (floppy disks) to open ea
 security gate, ride the elevator down through five floors, and upload the patch into the
 mainframe AI, KERNEL.
 
+![Gameplay: the title screen, then a few seconds of each level and the KERNEL fight](screenshots/gameplay.gif)
+
 | | | |
 |---|---|---|
 | ![Title screen](screenshots/title.png) | ![Level 1, Server Room](screenshots/level_1.png) | ![Level 2, Code Testing Lab](screenshots/level_2.png) |
