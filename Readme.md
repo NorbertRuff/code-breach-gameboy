@@ -29,8 +29,9 @@ On the original Game Boy:
   gate with your fragments kept; game over lets you continue from that section.
 - **Passwords** instead of saves: every level complete screen shows one, and CONTINUE on
   the title takes you back.
-- Music and sound effects by Tronimal, parallax backgrounds, fades, and a little story
-  told on the elevator rides.
+- Music and sound effects by Tronimal, parallax backgrounds, fades, a little story told
+  on the elevator rides, and a demo that plays itself when the title screen waits a
+  minute.
 
 ## Controls
 
@@ -93,9 +94,9 @@ effects, and the passwords. The reasons behind each choice are in
 
 ## Credits
 
-- **Code, design and art:** Norbert Ruff, with [Claude Code](https://claude.com/claude-code)
-  writing the code. Art redrawn by hand on the 8×8 grid from references made with Claude
-  Design and Gemini, faces finished in Aseprite.
+- **Code, design and art:** Handcrafted by Norbert Ruff in 2024-2025, using tutorials like [laroldsjubilantjunkyard.com](https://laroldsretrogameyard.com/) the in 2026 resurrected with [Claude Code](https://claude.com/claude-code)
+  Art redrawn by hand on the 8×8 grid from references made with Claude
+  Design and Gemini, finished in Aseprite.
 - **Music:** Tronimal, [Game Boy Music Pack](https://yogi-tronimal.itch.io/game-boy-music-pack)
   and [Game Boy Music Pack #2](https://yogi-tronimal.itch.io/game-boy-music-pack-2), CC BY 4.0.
 - **Sound effects:** Tronimal, [GBFX](https://yogi-tronimal.itch.io/gbfx) and

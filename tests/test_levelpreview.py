@@ -3,18 +3,16 @@ frame, the reachability check agrees with the measured jump metrics, and it repo
 can't be reached."""
 
 import copy
-import sys
 from pathlib import Path
 
 import pytest
 
 from test_jump_metrics import FLOOR_Y, MAX_CLIMB_HELD, MAX_GAP_RUNNING, PITS, WALLS
+import levelpreview
+import physics
+import tiled2c
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import levelpreview  # noqa: E402
-import physics  # noqa: E402
-import tiled2c  # noqa: E402
 
 GREYBOX = tiled2c.load_level(ROOT / "levels" / "greybox_test.tmj")
 TEST_JUMPS = tiled2c.load_level(ROOT / "levels" / "test_jumps.tmj")

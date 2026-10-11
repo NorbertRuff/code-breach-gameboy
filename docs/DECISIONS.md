@@ -80,12 +80,17 @@ decisions are in the git history.
   light, song "Closing", then a credits screen until START, then the title.
 - **Boss:** "KERNEL" on one screen, drawn with background tiles.
 - **Fades** between screens and on level load (owner likes them).
+- **Demo on the title screen** (owner, 2026-10-11): after a minute without a press, a clip
+  of the next level plays (levels in turn), up to 30 s or a second before its end; any
+  button goes back to the title. The clips are the replay tests' buttons, recorded by
+  `make demo`: 638 bytes for all five, where a recorded video or a scripted bot would
+  need far more. The game has no randomness, so the same buttons replay the same way.
 
 ## Levels
 
 - **Length:** 3 sections, 120-160 tiles, 4-6 minutes on a first play. Level 1 is 174 and
   level 2 170 tiles (owner kept both).
-- **Editor:** Tiled 1.12 + `tools/tiled2c.py`; text sketches via `tools/sketch2tmj.py`.
+- **Editor:** Tiled 1.12 + `tools/tiled2c.py` (the text-sketch tool was removed at the release).
 - **Map:** 13 rows (screen rows 3-15) under a 3-row parallax band (decoration only) and
   above the 2-row HUD; up to 255 tiles wide.
 - **Rules the converter checks:** pits at least 3 tiles wide (the 16 px body walks across

@@ -7,19 +7,14 @@ small layout changes. x values are world pixels: Tiled's x, or column * 8. Bots 
 named by the left edge of their patrol rectangle in Tiled.
 """
 
-import sys
 from pathlib import Path
 
 import pytest
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_COMPLETE, LINES_PER_FRAME, Pilot
-from test_frame_budget import FRAME_LINE_LIMIT
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_COMPLETE, Pilot
+import tiled2c
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import tiled2c  # noqa: E402
-
-SPRITES_PER_LINE = 10   # the hardware draws at most 10 sprites on one screen line
 
 
 def section_a(pilot: Pilot) -> None:
@@ -113,10 +108,7 @@ def test_level_1_can_be_finished(game, route, start_delay):
     play_level_1(Pilot(game), low_route=(route == "low"))
     assert game.state() == LEVEL_COMPLETE and game.lives() == 3
     assert game.level().section_collected == [4, 3, 4]
-    worst = max(lines)
-    assert game.u8("_lag_frames") == 0, f"lag frames; the worst update ended at line {worst}"
-    assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
-    assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
+    game.assert_within_limits(lines, sprites_per_line)
     assert_elevator_opens(game)
 
 

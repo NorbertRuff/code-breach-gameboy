@@ -5,11 +5,7 @@ them in lag_frames (src/main.c). The route test also measures how many screen li
 update takes, to keep a margin for what M3 adds (entities, parallax) and M6 (music).
 """
 
-from gamelib import COREGAMELOOP, LEVEL_COMPLETE, LINES_PER_FRAME
-
-# The worst update may end this many lines after VBlank starts, of LINES_PER_FRAME. The
-# rest is a margin: PyBoy's timing is close to the hardware's, but not exact.
-FRAME_LINE_LIMIT = 140
+from gamelib import COREGAMELOOP, LEVEL_COMPLETE
 
 # Through levels/greybox_test.tmj from the start to the exit without losing a life, as
 # (frames, buttons held). Fragment pickups, the head bump, the gates opening and the
@@ -41,9 +37,7 @@ def test_greybox_route_stays_within_the_frame_budget(game):
     lines = game.track_frame_lines()
     game.play_route(GREYBOX_ROUTE)
     assert game.state() == LEVEL_COMPLETE and game.lives() == 3, "the route no longer finishes the level"
-    worst = max(lines)
-    assert game.u8("_lag_frames") == 0, f"lag frames; the worst update ended at line {worst}"
-    assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
+    game.assert_within_limits(lines)
 
 
 def test_lag_counter_counts_the_frames_without_an_update(game):

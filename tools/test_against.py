@@ -8,8 +8,8 @@ commit without the fix and pass on the working tree.
 
 The commit is exported with "git archive" (read-only: no checkout, no branch change)
 into a temporary folder, built there with this repo's gbdk/, and the tests in the
-working tree run against that build (APEXLAB_OBJ). Works for commits from M0 on, which
-build obj/ApexLab.sym. Exit code: pytest's (non-zero means some test failed there).
+working tree run against that build (APEXLAB_OBJ). Exit code: pytest's (non-zero means
+some test failed there).
 """
 
 from __future__ import annotations
@@ -45,15 +45,9 @@ def main() -> int:
         gbdk = (ROOT / "gbdk").as_posix() + "/"
         build = subprocess.run(["make", f"GBDK_HOME={gbdk}", "all", "savetest"],
                                cwd=folder, capture_output=True, text=True)
-        if build.returncode != 0:            # older Makefiles may lack "savetest"
-            build = subprocess.run(["make", f"GBDK_HOME={gbdk}", "all"],
-                                   cwd=folder, capture_output=True, text=True)
-        if build.returncode != 0 or not (folder / "obj" / "ApexLab.gb").exists():
+        if build.returncode != 0:
             print(build.stdout[-2000:], build.stderr[-2000:])
             print(f"build of {rev} failed")
-            return 3
-        if not (folder / "obj" / "ApexLab.sym").exists():
-            print(f"{rev} has no obj/ApexLab.sym (commits before M0): tests can't read symbols")
             return 3
 
         env = dict(os.environ, APEXLAB_OBJ=str(folder / "obj"))

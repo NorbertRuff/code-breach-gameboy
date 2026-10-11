@@ -6,44 +6,36 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 
 ## Status (2026-10-11)
 
-- **Playable from start to end, in final art:** levels 1-5 (KERNEL, the boss, is level
-  5), then the ending and the credits; music and sound effects; passwords, the title menu,
-  the level select and the game over menu; the story text; the testing cheats (A + SELECT
-  and A + B while paused). The owner played it end to end on 2026-10-11 and agreed the
-  levels, difficulty, checkpoints, the level 3-5 art and KERNEL's face. Next: the release
-  build and the rest of M9; the owner's hardware pass.
-- **Visual Polish (2026-10-11, owner):** dual-palette HUD (chassis + ruby heart & gold floppy disk),
-  distinct electric cyan chaser drone sprite palette, multi-palette parallax band depth across all
-  5 levels (Server Room emerald LEDs, Code Testing cyan oscilloscopes, AI Research violet neural pulses,
-  Network Hub amber router LEDs, Mainframe crimson tape reels), and retro green phosphor CRT terminal
-  palette for story boot and elevator logs on GBC.
-- **Tests:** `make test` 244 tests in about 30 s; `make test-full` 366 in about 60 s (it builds `make release` first).
-- **Memory:** bank 0 has 401 bytes free; WRAM uses 1,823 of 4,096 bytes.
-- **Frame budget** (worst update on DMG, line of the 140 allowed; average): level 1 127
-  (79), level 2 111 (67), level 3 132 (90; 139 on GBC, the tightest), level 4 110 (70),
-  level 5 110 (72), greybox route 125 (80). KERNEL's own update about 8 lines, up to 25
-  when it writes tiles. Lifts cost about 10 lines on average where they are; the music
-  step about 9, up to 18; a streamed column's write 2 in VBlank, 4 with its GBC palettes.
+- **Done:** levels 1-5 (KERNEL, the boss, is level 5), the ending and the
+  credits, music and sound effects, passwords, the title menu, the level select, the
+  game over menu, the story text, the cheats (A held + SELECT or B while paused), and the
+  title screen demo. The owner played it end to end on a real Game Boy Color (2026-10-11).
+  M9 is done apart from the DMG hardware pass and a look at the demo on hardware.
+- **Tests:** `make test` 237 tests in about 15 s; `make test-full` 359 in about 21 s (it
+  builds `make release` first).
+- **Memory:** bank 0 has 382 bytes free (42 at its end, after the startup code); WRAM
+  uses 1,831 of 4,096 bytes.
+- **Frame budget** (worst update on DMG, line of the 140 allowed): level 1 127, level 2
+  111, level 3 132 (134 on GBC, the tightest), level 4 110, level 5 110, greybox route
+  125. KERNEL's own update about 8 lines, up to 25 when it writes tiles. Lifts cost about
+  10 lines on average where they are; the music step about 9, up to 18; a streamed
+  column's write 2 in VBlank, 4 with its GBC palettes.
 
 ## Bugs
 
-Open bugs, numbered on from the audit's 22 ([archive/PROJECT_STATE.md](archive/PROJECT_STATE.md)).
-A fixed bug leaves this list; its regression test keeps the number.
+Open bugs, numbered on from the audit's 22 (2026-10-02, in the git history). A fixed bug
+leaves this list; its regression test keeps the number.
 
 - None open.
 
 ## Waiting for the owner
 
-- **Hardware pass on DMG and GBC** with `release/ApexLab.gb` (`make release`), the last
-  check before the release (Emulicious
-  playthrough done 2026-10-11): streaming, one-way shelves, spikes, pits, respawn, head
-  bumps; every level's art and colors; the player's 10 frames, the bots, chasers, lifts
-  and packets; the HUD and font; the title screen; a password typed back in
-  (`python tools/password.py` lists them), the level select, game over CONTINUE and QUIT;
-  KERNEL and the ending; the cheats.
-- **The Proposed decisions left** in DECISIONS.md (the rest agreed 2026-10-11): the GBC
-  palette layout (0-3 the level, 4 band base, 5 HUD chassis, 6 HUD accents, 7 band accent) and
-  the HUD and font art.
+- **Hardware pass on the original Game Boy (DMG)** with `release/ApexLab.gb` (`make
+  release`); the GBC pass is done (2026-10-11). Every level's shades, the HUD, the title
+  and the story screens in 4 grays.
+- **The demo on hardware:** leave the title screen alone for a minute; a clip of level 1
+  plays, any button goes back; the next minute shows level 2, and so on.
+- **The GitHub release:** commit, push, and attach `release/ApexLab.gb` to a release.
 - Optional: repaint or move props in Tiled with each level's terrain set
   (`graphics/tilesets/*.tsx`).
 
@@ -57,11 +49,11 @@ layouts depend on the jump, and levels are designed with plain blocks first.
 - **M0, toolchain and test loop:** Makefile with MBC5 + autobank and banked assets, ROM
   layout checks, PyBoy harness, CI, save-persistence test ROM.
 - **M1, bug fixes:** the audit's bugs fixed with regression tests; review pass and its
-  quick wins ([archive/REVIEW.md](archive/REVIEW.md)).
+  quick wins (2026-10-03).
 - **M2, physics and level loading:** sub-pixel physics with coyote time, jump buffer and
   corner correction; camera; tile collision; Tiled levels with `tools/tiled2c.py`; the
   collision ring and column streaming; `tools/levelpreview.py` with the reachability check.
-  Jump metrics in [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 4.
+  Jump metrics in [LEVELS.md](LEVELS.md) section 4.
 - **M3, level 1 and gameplay objects:** actors, gates with quotas and checkpoints, the
   exit, HUD, pause and level-select cheat, parallax band and screen splits, lives rules,
   frame budget work, level 1 greybox (owner pass: keep as is), style pass.
@@ -69,8 +61,7 @@ layouts depend on the jump, and levels are designed with plain blocks first.
 
 ## M4 — Game Boy Color support
 
-Done when the game runs in color on GBC and unchanged on DMG. Steps in
-[CGB_PLAN.md](CGB_PLAN.md) section 7. Can run alongside M2 and M3.
+Done when the game runs in color on GBC and unchanged on DMG. Can run alongside M2 and M3.
 
 - [x] `src/engine/platform.c`: `is_cgb`. (M0)
 - [x] `src/engine/palette.c`: load, fade, flash for both systems. No other file writes
@@ -151,16 +142,14 @@ One level at a time: the new mechanic, the brief, the greybox loop, the art pass
 replay test that finishes it.
 
 - [x] Level 2, Code Testing Lab: one-way platforms, Down + A drops through, fast bots.
-      Greybox done and kept after the owner's hardware pass ([LEVEL_DESIGN.md](LEVEL_DESIGN.md)
-      section 7); art pass done 2026-10-10 (Code Testing Lab tileset and band).
+      Greybox done and kept after the owner's hardware pass; art pass done 2026-10-10 (Code Testing Lab tileset and band).
       **(owner)** Check it on hardware.
 - [x] Level 3, AI Research Wing: vertical movers and chasers. Lifts done 2026-10-04
       (`src/actor/lift.c`), chasers done (`src/actor/chaser.c`), both tested in
-      `levels/test_movers.tmj`; greybox built ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7)
-      with a replay test; owner played it (2026-10-11). Art pass done 2026-10-11 (AI
+      `levels/test_movers.tmj`; greybox built with a replay test; owner played it (2026-10-11). Art pass done 2026-10-11 (AI
       Research Wing tileset and band). **(owner)** Check it on hardware.
-- [x] Level 4, Network Hub: hazards. Greybox built 2026-10-05 (`levels/level_4.tmj`,
-      [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7) with a replay test; owner played it
+- [x] Level 4, Network Hub: hazards. Greybox built 2026-10-05 (`levels/level_4.tmj`)
+      with a replay test; owner played it
       (2026-10-11). Art pass done 2026-10-11 (Network Hub). **(owner)** Check it on hardware.
 - [x] Level 5, Mainframe: the KERNEL boss. Built 2026-10-05 from the approved design
       (`levels/level_5.tmj`, `src/game_state/kernel.c`, `tests/test_boss.py`);
@@ -172,7 +161,8 @@ them (2026-10-11). The hardware checks are under "Waiting for the owner".
 
 ## M9 — Polish and release
 
-- [ ] **(owner)** Full playthrough on DMG and GBC.
+- [x] **(owner)** Full playthrough on a real GBC (2026-10-11). The DMG pass is under
+      "Waiting for the owner".
 - [x] No lag frames in any level, at most 10 sprites per line: each level's replay test
       (`tests/test_level_1.py` to `test_level_4.py`, `test_boss.py`) checks both.
 - [x] Difficulty and checkpoint tuning: the owner's playthrough found them good as built
@@ -188,14 +178,20 @@ them (2026-10-11). The hardware checks are under "Waiting for the owner".
       - [x] **Chaser enemy color differentiation:** Chasers use Sprite Palette 4 (electric cyan/teal `#D0F8F8 #2090A8 #082028`), standing out distinctly from red Patrol Bots (Palette 2).
       - [x] **Multi-palette parallax band depth:** Background Palette 7 assigned as `BAND_ACCENT_PALETTE` across all 5 levels (Level 1 Server Room emerald LEDs, Level 2 Code Testing Lab cyan oscilloscopes, Level 3 AI Research Wing violet neural pulses, Level 4 Network Hub amber router LEDs, Level 5 Mainframe crimson tape reels).
       - [x] **Retro green phosphor CRT terminal palette:** Used on GBC for boot screen and elevator logs (`palette_use_terminal()`).
-- [ ] GitHub README (what it is, controls and cheats, how to build, playing on hardware,
-      credits), screenshots, and the licence files: MIT for code, CC BY 4.0 for art
-      (owner, 2026-10-11). Public on GitHub only.
-- [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;
-      nothing copied from Mario or other commercial games.
-- [ ] Write the final "how it works" document from DECISIONS.md and SOURCES.md: boot,
-      main loop, tiles and sprites, banking, collision, physics, palettes and fades,
-      parallax, audio, saves.
+- [x] GitHub README (`Readme.md`: what it is, controls and cheats, how to play and build,
+      credits), screenshots in `screenshots/`, `LICENSE` (MIT, code) and `LICENSE-ART`
+      (CC BY 4.0, art and levels) (2026-10-11).
+- [x] Asset check (2026-10-11): every asset in SOURCES.md is the owner's own, redrawn by
+      hand, or CC BY / public domain and credited; the player sprite is the owner's own
+      work (owner). The old placeholder screenshot is gone.
+- [x] The final "how it works" document: `docs/ARCHITECTURE.md`, from DECISIONS.md and
+      SOURCES.md (2026-10-11).
+- [x] Clean-up before the release (2026-10-11): dead code and helpers, the finished
+      working docs (plans, research, level briefs, archive), the text-sketch tool, and
+      repeated tests removed; 17 docs became 9.
+- [x] Demo on the title screen (2026-10-11, owner): a minute without a press plays a clip
+      of the next level, recorded from the replay tests (`make demo`,
+      `tests/test_demo.py`).
 
 **Parked ideas** (not planned; the owner may pick them up): chasers that charge (faster
 than the player once they see them); a live glitch flicker on KERNEL's face (about 1

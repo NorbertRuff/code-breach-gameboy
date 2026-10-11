@@ -1,25 +1,23 @@
 """Random play: random buttons for a while (pause and the level-select cheat included),
 checking after every gameplay frame that nothing breaks. Fixed seeds, so a failure
 replays the same way: run the seed again with the printed frame. A scan of a few hundred
-seeds found bugs 21 and 22 (docs/archive/PROJECT_STATE.md)."""
+seeds found bugs 21 and 22 (the 2026-10-02 audit, in the git history)."""
 
 import random
-import sys
 from pathlib import Path
 
 import pytest
 
 from gamelib import (COREGAMELOOP, GAMEPLAY_END, GAMEPLAY_START, HUD_DIGIT_TILE_BASE, LEVEL_1,
                      LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST, LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, MAX_ACTORS, PAUSED,
-                     read_symbol)
+                     SPRITES_PER_LINE, read_symbol)
+from test_streaming import COLLISION
+import tiled2c
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import tiled2c  # noqa: E402
 
 LEVEL_MAPS = {LEVEL_1: "level_1", LEVEL_2: "level_2", LEVEL_3: "level_3", LEVEL_4: "level_4", LEVEL_GREYBOX_TEST: "greybox_test", LEVEL_TEST_JUMPS: "test_jumps",
               LEVEL_TEST_MOVERS: "test_movers"}
-COLLISION = {"": 0, "solid": 1, "one_way": 2, "hazard": 3}
 MARKER_COLLISION = {"fragment": 4, "gate": 1, "exit": 5, "player_start": 0}   # level_stream.c
 
 FRAMES = 1500
@@ -62,8 +60,8 @@ def problems(game) -> list:
     found = []
     if game.solid_tiles_overlapped():
         found.append(f"the body is inside {game.solid_tiles_overlapped()}")
-    if game.sprites_on_busiest_line() > 10:
-        found.append("more than 10 sprites on a line")
+    if game.sprites_on_busiest_line() > SPRITES_PER_LINE:
+        found.append(f"more than {SPRITES_PER_LINE} sprites on a line")
     if not min(left_limit, last_camera_x) <= camera <= last_camera_x:
         found.append(f"camera at {camera}, left limit {left_limit}, level end {last_camera_x}")
     if len(game.actors()) > MAX_ACTORS or not 1 <= game.lives() <= 3:

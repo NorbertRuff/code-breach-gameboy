@@ -5,7 +5,7 @@
 #include <gb/cgb.h>
 #include <stdint.h>
 
-// The only module that writes palettes, on both systems (docs/CGB_PLAN.md section 5):
+// The only module that writes palettes, on both systems (docs/ARCHITECTURE.md, "Palettes and fades"):
 // palette.c (bank 0) and palette_effects.c (a ROM bank). A fade darkens the background
 // (and the HUD window) in steps from normal to black.
 #define PALETTE_NORMAL 0

@@ -4,13 +4,8 @@ screen and the level select (title_menu.c); QUIT on the game over menu; the titl
 warning (start_screen.c); the boot screen of a new game (story.c).
 The password on the level complete screen is checked in test_level_2.py."""
 
-import sys
-from pathlib import Path
-
 from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, TITLE_SCREEN_STATE
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
-import password  # noqa: E402
+import password
 
 LCDC_WINDOW_ON = 0x20
 WARNING_CENTER = (9, 8)      # a map cell of the warning triangle on the title's monitor
@@ -83,7 +78,7 @@ def test_continue_takes_a_password_then_a_level(game):
 def test_quit_after_game_over_goes_to_the_blinking_title_and_a_new_game(game):
     # QUIT: the title screen, without the HUD window, its warning triangle swapping on and
     # off every 30 frames, then on under the menu. NEW GAME types the boot screen's three
-    # lines (docs/STORY.md), then starts level 1 with full lives and no progress.
+    # lines (src/game_state/story.c), then starts level 1 with full lives and no progress.
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.load_level(LEVEL_2)
     game.set_lives(1)

@@ -1,4 +1,4 @@
-// KERNEL, the boss of level 5 (docs/LEVEL_DESIGN.md section 7, "Level 5 design"). Not
+// KERNEL, the boss of level 5 (GAME_DESIGN.md, "Level 5: KERNEL"). Not
 // per-frame code but kernel_update: in a ROM bank, to keep bank 0 free.
 #pragma bank 255
 

@@ -1,14 +1,13 @@
 """tools/fxhammer2c.py: the committed effect files, and how FX Hammer steps become sound
 register bytes (fxhammer2data.py in untoxa/VGM2GBSFX is the reference)."""
 
-import sys
 from pathlib import Path
 
 import pytest
 
+import fxhammer2c
+
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import fxhammer2c  # noqa: E402
 
 PICK_LIST = ROOT / "sounds" / "effects.txt"
 

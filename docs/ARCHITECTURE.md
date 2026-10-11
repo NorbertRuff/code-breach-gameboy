@@ -60,7 +60,9 @@ States are in `src/utils.h`:
 - `INTRO_CREDITS_STATE` → `TITLE_SCREEN_STATE` → `GAMEPLAY_START` → `COREGAMELOOP` → `GAMEPLAY_END` / `LEVEL_COMPLETE`.
 - `TITLE_SCREEN_STATE` (`run_title_screen`, then `title_menu`) returns once a level is
   chosen: NEW GAME (progress reset, the boot screen, level 1) or CONTINUE (the password
-  screen, then the level select). B on an empty password shows the title again.
+  screen, then the level select). B on an empty password shows the title again. After
+  `DEMO_IDLE_FRAMES` (a minute) without a press it returns 0 instead, and `demo_start`
+  sets up the demo (see "The demo").
 - `COREGAMELOOP` ↔ `PAUSED` on START ("PAUSE" in sprites over the parallax band). While
   paused, with A held, SELECT loads the next level (`LEVEL_SELECT_CHEAT`) and B toggles
   `no_death_cheat` (`NO_DEATH_CHEAT`).
@@ -277,6 +279,21 @@ the right shades on both.
   unmutes the channels after the last (the pattern of VGM2GBSFX's music manager).
 - `make soundtest` builds `obj/soundtest.gb` with every effect and every song of both
   music packs, and renders each to a WAV (`tools/render_sounds.py`).
+
+## The demo (`src/game_state/demo.c`)
+
+A minute on the title screen without a press starts the demo: the next level in turn
+loads as usual, and in each gameplay update `demo_play_input` puts the clip's buttons in
+place of the joypad's, before `main_game_loop` reads them. A real press, or the clip's
+end, fades back to the title. The game has no randomness, so the same buttons from a
+level's start always play the same way.
+- The clips are the replay tests' buttons (`tests/test_level_*.py`, `test_boss.py`),
+  recorded per update by `tools/record_demo.py` (`make demo`): up to 30 s, or a second
+  before the exit (KERNEL: before the last upload), as (buttons, updates) pairs.
+- `demo_clips.h` is included by `demo.c` only, so the clips share its ROM bank and the
+  banked code reads them without `WITH_BANK`. Bank 0 holds only the call in `main.c`.
+- `tests/test_demo.py` plays every clip out; when a change makes a level play
+  differently, it fails until `make demo` records the clips again.
 
 ## Saves: passwords
 

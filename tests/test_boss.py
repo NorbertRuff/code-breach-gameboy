@@ -1,14 +1,11 @@
-"""Level 5, KERNEL (src/game_state/kernel.c, docs/LEVEL_DESIGN.md section 7): a replay
+"""Level 5, KERNEL (src/game_state/kernel.c, GAME_DESIGN.md, "Level 5: KERNEL"): a replay
 beats it without losing a life, within the frame budget and the sprites-per-line limit, and
 goes on through the ending and the credits to the title; packets warn before they fall; an
 upload needs Up held; a lost life keeps the uploads, a game over clears them."""
 
 import pytest
 
-from gamelib import (BOSS_HIT, COREGAMELOOP, ENDING, LEVEL_5, LINES_PER_FRAME, TITLE_SCREEN_STATE,
-                     Pilot)
-from test_frame_budget import FRAME_LINE_LIMIT
-from test_level_1 import SPRITES_PER_LINE
+from gamelib import COREGAMELOOP, ENDING, LEVEL_5, TITLE_SCREEN_STATE, Pilot
 
 PHASE_FRAMES = "Fkernel$phase_frames$0_0$0"     # kernel.c's statics, in the .sym file
 VOLLEY_FRAMES = "Fkernel$volley_frames$0_0$0"
@@ -116,10 +113,7 @@ def test_kernel_can_be_beaten_then_the_ending_goes_to_the_title(game, start_dela
     frame_lines = game.track_frame_lines()
     sprites_per_line = game.track_sprites_per_line()
     beat_kernel(KernelPilot(game))
-    worst = max(frame_lines)
-    assert game.u8("_lag_frames") == 0, f"lag frames; the worst update ended at line {worst}"
-    assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
-    assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
+    game.assert_within_limits(frame_lines, sprites_per_line)
     game.wait_for_text(2, 8, "LOCKDOWN LIFTED")
     game.tap("start")
     game.wait_for_text(0, 14, "THANKS FOR PLAYING!")

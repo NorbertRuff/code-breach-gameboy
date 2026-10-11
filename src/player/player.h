@@ -14,7 +14,7 @@
 #define SPRITE_RIGHT_W  7   // pixels from x to the right edge
 #define SPRITE_HEAD_OFFSET 31  // pixels from y up to the top row
 
-// Running, in 1/32 px per frame (RESEARCH.md 2.2).
+// Running, in 1/32 px per frame (docs/SOURCES.md, "Jump values").
 #define RUN_SPEED_MAX     48   // 1.5 px/f
 #define RUN_ACCEL          8   // full speed in 6 frames
 #define RUN_DECEL          6   // stop in 8 frames

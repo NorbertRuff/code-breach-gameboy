@@ -1,19 +1,17 @@
 """The palette module (src/engine/palette.c): the only code that writes palettes, with
-fades and flashes on DMG and GBC (docs/CGB_PLAN.md sections 3 and 5)."""
+fades and flashes on DMG and GBC (docs/ARCHITECTURE.md, "Palettes and fades")."""
 
 import re
-import sys
 from pathlib import Path
 
 import pytest
 
 from gamelib import COREGAMELOOP, LEVEL_1, read_symbol
+import tiled2c
 
 pytestmark = pytest.mark.both_modes   # the mode changes the result: run both in the quick tier too
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import tiled2c  # noqa: E402
 PALETTE_WRITES = re.compile(r"\b(BGP_REG|OBP0_REG|OBP1_REG|BCPS_REG|BCPD_REG|OCPS_REG|OCPD_REG"
                             r"|set_bkg_palette|set_sprite_palette)\b")
 

@@ -18,12 +18,12 @@
 #   make levels     regenerate src/levels/*.c from the Tiled maps in levels/
 #   make music      regenerate src/music/*.c from the hUGETracker songs in music/
 #   make sounds     regenerate src/sound/effects.c from the effect list sounds/effects.txt
+#   make demo       build, then record the title screen demo's clips from the level replays
 #   make soundtest  build obj/soundtest.gb, every GBFX/GBFX2 effect and every song of the
 #                   music packs, and render each to a WAV in tests/out/sounds/
 #   make preview    draw every level to tests/out/levels/ and check it can be finished
 #   make clean      delete obj/
 #
-# RELEASE=1 turns on slower, size-optimizing compilation (about 4x compile time).
 # OBJDIR=<folder> builds into another folder, e.g. for a variant with EXTRA_CFLAGS.
 #
 
@@ -60,7 +60,7 @@ EMULICIOUS := emulicious/Emulicious.jar
 # Tests use the project venv when it exists, otherwise python from PATH (as in CI).
 PYTHON ?= $(call fixpath,$(if $(wildcard $(VENV_PY)),$(VENV_PY),python))
 
-# Cartridge (docs/CGB_PLAN.md section 1): MBC5 without RAM (progress is kept in
+# Cartridge (docs/ARCHITECTURE.md, "The cartridge and the build"): MBC5 without RAM (progress is kept in
 # passwords, docs/DECISIONS.md "Saves"), ROM size picked automatically, GBC-enhanced
 # header that still runs on DMG, cartridge title.
 CART_TYPE  := 0x19
@@ -86,10 +86,6 @@ CFLAGS   := -Wf-MMD -Wf-Wp-MP -I$(HUGEDRIVER) $(EXTRA_CFLAGS)
 # -autobank: place data and code marked "#pragma bank 255" into ROM banks.
 LDFLAGS  := -autobank -Wb-ext=.rel -Wm-yS -Wl-l$(HUGEDRIVER)/hUGEDriver.lib $(CART_FLAGS)
 
-ifdef RELEASE
-CFLAGS += -Wf--max-allocs-per-node50000
-endif
-
 # All .c files under src/, sorted so autobank places them the same way on every build.
 rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 CSOURCES  := $(sort $(call rwildcard,$(SRCDIR),*.c))
@@ -108,7 +104,7 @@ SOUND_PACKS := sounds/GBFX.sav sounds/GBFX2.sav
 MUSIC_PACKS := music/packs/game_boy_music_pack_1.zip music/packs/game_boy_music_pack_2.zip
 SAVETEST_VARIANTS := $(OBJDIR)/savetest_mbc1.gb $(OBJDIR)/savetest_mbc3.gb
 
-.PHONY: all rebuild run release test test-full shots goldens budget venv savetest soundtest soundtest-link usage assets levels music sounds preview clean
+.PHONY: all rebuild run release test test-full shots goldens budget venv savetest soundtest soundtest-link usage assets levels music sounds demo preview clean
 
 all: $(ROM)
 
@@ -131,9 +127,9 @@ rebuild:
 run: $(ROM)
 	java -jar $(EMULICIOUS) $(ROM)
 
-# The ROM for the flashcart and itch.io: the same build as obj/ (the tests skip the intro
+# The ROM for the flashcart and GitHub: the same build as obj/ (the tests skip the intro
 # and title, so obj/ does too), with them on. Its objects stay in release/obj/; make clean
-# leaves release/ alone. Not the RELEASE=1 compile option above.
+# leaves release/ alone.
 release:
 	$(MAKE) OBJDIR=release/obj EXTRA_CFLAGS=-DSKIP_INTRO_AND_START=0
 	$(call COPY,release/obj/$(PROJECTNAME).gb,release/$(PROJECTNAME).gb)
@@ -221,9 +217,14 @@ assets:
 	$(PNG2ASSET) graphics/font/font.png -map -bpp 1 -noflip -keep_duplicate_tiles -tiles_only -b 255 -o src/graphics/font.c
 
 # tools/tiled2c.py output is committed too. Run this after saving a map in Tiled.
-# A level that breaks a rule (docs/LEVEL_PIPELINE.md) stops with a message.
+# A level that breaks a rule (docs/LEVELS.md section 6) stops with a message.
 levels:
 	$(PYTHON) tools/tiled2c.py $(wildcard levels/*.tmj) -o src/levels
+
+# The demo's clips (tools/record_demo.py), committed too: each level's replay test, played
+# for up to 30 s. Run this after a change that alters how a level plays.
+demo: $(ROM)
+	$(PYTHON) tools/record_demo.py $(ROM) -o src/game_state/demo_clips.h
 
 # tools/uge2c.py output is committed too. Run this after changing a song in music/.
 music:

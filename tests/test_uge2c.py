@@ -3,14 +3,13 @@
 
 import struct
 import zipfile
-import sys
 from pathlib import Path
 
 import pytest
 
+import uge2c
+
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import uge2c  # noqa: E402
 
 SONGS = sorted((ROOT / "music").glob("*.uge"))
 

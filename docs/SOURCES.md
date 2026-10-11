@@ -55,6 +55,8 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT), camera locks; Itay Keren, "Scroll Back" | `src/engine/camera.c` | In use |
 | A gate that retracts one row at a time when it opens | Game-feel research ("bars retract one tile every 3 frames") | `src/level/section.c`, `level_stream.c` `level_open_gate_row` | In use |
 
+| Demo from recorded buttons: the joypad's buttons per update, replayed from the level's start | The attract mode of arcade and console games; own design for recording the test pilots' buttons | `src/game_state/demo.c`, `tools/record_demo.py` | In use |
+
 ## Testing
 
 | Technique | Source | Used in | Status |
@@ -63,7 +65,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Forcing DMG mode with PyBoy's own DMG boot ROM; waiting for the cartridge entry point | Own finding in PyBoy's `core/mb.py` and `core/bootrom.py` | `tests/gamelib.py` `boot()` | In use |
 | Save power-cycle test: stop with `ram_file`, boot again with it | struktured-labs/quintra `scripts/test_suspend.py` (MPL-2.0, idea only) | `tests/test_savetest.py` | In use |
 | ROM layout checks: `_HOME` below `0x4000`, header bytes, checksums | quintra `scripts/check_rom_layout.py`, `check_cartridge.py` (idea only) | `tests/test_rom.py` | In use |
-| Known bugs as strict expected failures; regression tests checked against the old build | Own convention | `tests/test_known_bugs.py`, `tests/test_regressions.py` | In use |
+| Known bugs as strict expected failures; regression tests checked against the old build | Own convention | `tests/test_regressions.py` (`test_known_bugs.py` when a bug is open) | In use |
 | Replaying from one frame with `save_state` / `load_state` | PyBoy 2.7.0 docs | `tests/gamelib.py` `save`, `load`; `tests/test_physics.py` | In use |
 | Golden screenshots: render a screen and compare it pixel for pixel with a stored picture, rewritten on purpose (`make goldens`) | Snapshot testing, a common test technique; PyBoy 2.7.0 `screen.image` | `tests/test_golden.py` | In use |
 | Level replays as moves that watch the game (run to x, jump, follow a bot) instead of fixed frame counts | Own design, after frame-exact routes broke with small layout changes | `tests/gamelib.py` `Pilot`, `tests/test_level_1.py` | In use |

@@ -46,6 +46,7 @@ make budget     # screen lines per part of a gameplay update (tools/frame_budget
 make levels     # Tiled maps in levels/ -> src/levels/
 make music      # hUGETracker songs in music/ -> src/music/
 make sounds     # effect picks in sounds/effects.txt -> src/sound/effects.c
+make demo       # the title demo's clips from the level replays -> src/game_state/demo_clips.h
 make soundtest  # obj/soundtest.gb with every GBFX/GBFX2 effect, and a WAV of each in tests/out/sounds/
 make assets     # PNGs in graphics/ -> src/graphics/ (read png2asset's output for "not recognized")
 make preview    # draw every level to tests/out/levels/ and check everything can be reached
@@ -53,8 +54,8 @@ make savetest   # the cartridge RAM test ROMs (make OBJDIR=flashcart savetest ke
 make usage, make rebuild, make clean, make venv
 ```
 
-Generated files (`src/levels/`, `src/music/`, `src/graphics/`, `src/sound/effects.*`) are
-committed with their sources; tests fail when they are out of date. For a one-off build variant use
+Generated files (`src/levels/`, `src/music/`, `src/graphics/`, `src/sound/effects.*`,
+`src/game_state/demo_clips.h`) are committed with their sources; tests fail when they are out of date. For a one-off build variant use
 `make OBJDIR=<scratch folder> EXTRA_CFLAGS=-D...`, never the normal `obj/`.
 
 ## Tests
@@ -64,7 +65,7 @@ builds `make release`). Details in
 `docs/TESTING.md`. Mark a test `both_modes` only when DMG and GBC can differ (palettes,
 screens, hardware); extra start times and seeds get `full`. A fixed bug gets a regression
 test in `tests/test_regressions.py` that fails on the old code (`tools/test_against.py`);
-an open bug can be an `xfail` test in `tests/test_known_bugs.py`. Don't add a test that
+an open bug can be an `xfail` test in `tests/test_known_bugs.py` (create it when needed). Don't add a test that
 repeats what another one checks. Failing tests save screenshots to `tests/out/`.
 
 ## Records: one home per fact

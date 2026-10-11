@@ -21,8 +21,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_GREYBOX_TEST, LINES_PER_FRAME, Game, Pilot, boot  # noqa: E402
-from test_frame_budget import FRAME_LINE_LIMIT, GREYBOX_ROUTE  # noqa: E402
+from gamelib import (COREGAMELOOP, FRAME_LINE_LIMIT, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5,  # noqa: E402
+                     LEVEL_GREYBOX_TEST, LINES_PER_FRAME, Game, Pilot, boot)
+from test_frame_budget import GREYBOX_ROUTE  # noqa: E402
 from test_level_1 import play_level_1  # noqa: E402
 from test_level_2 import play_level_2  # noqa: E402
 from test_level_3 import play_level_3  # noqa: E402

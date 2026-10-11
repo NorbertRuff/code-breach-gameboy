@@ -30,13 +30,15 @@ Pillow, NumPy). `make test` uses `.venv` when it exists, otherwise `python` from
 
 ## Files
 
-- `pytest.ini`: test folder, strict expected failures, the markers.
+- `pytest.ini`: test folder, `tools/` on the import path, strict expected failures, the
+  markers.
 - `tests/conftest.py`: the tiers, and the fixtures `game` (one booted ROM, in the greybox
   level or the one `@pytest.mark.level(...)` names), `rom_dir`, `rom_bytes`.
 - `tests/gamelib.py`: `boot()`, the `Game` helper class, `Pilot` (level replays), the
-  struct mirrors and constants copied from the C headers.
+  struct mirrors and constants copied from the C headers, the limits
+  (`FRAME_LINE_LIMIT`, `SPRITES_PER_LINE`) and `Game.assert_within_limits` for replays.
 - `tests/test_*.py`: each file's docstring says what it covers. `test_regressions.py`
-  holds one test per fixed bug; `test_known_bugs.py` open bugs as expected failures.
+  holds one test per fixed bug; open bugs go in `test_known_bugs.py` (create it when needed).
 
 ## How PyBoy is set up
 
@@ -66,8 +68,7 @@ Pillow, NumPy). `make test` uses `.venv` when it exists, otherwise `python` from
   behind the camera's left limit, columns aren't drawn. `start_on_open_ground()` puts the
   player at x = 156 in the greybox level (and picks up the fragment that opens gate A).
 - **Levels:** tests start in `levels/greybox_test.tmj`; `@pytest.mark.level(LEVEL_1)`
-  picks another, `game.load_level(...)` restarts in one. `game.rom_level_index()` maps
-  level numbers for builds from before level 2. Test geometry lives in Tiled levels.
+  picks another, `game.load_level(...)` restarts in one. Test geometry lives in Tiled levels.
 - **Rendered frames:** `game.tick(render=True)`; then `pyboy.screen.tilemap_position_list`
   gives the scroll per line. A frame shows the scroll and sprites of the update before it.
   PyBoy's first rendered frame after unrendered ones starts the window one line early.
@@ -93,10 +94,9 @@ Pillow, NumPy). `make test` uses `.venv` when it exists, otherwise `python` from
 - **A fixed bug gets a regression test** that fails on the last commit's build:
   `.venv/Scripts/python.exe tools/test_against.py HEAD tests/test_regressions.py -k <name>`.
   It builds the commit in a temporary folder and runs today's tests against it
-  (`APEXLAB_OBJ`). Struct reads give no answer on builds from before M2 (commit
-  `4d93eb2`). The `fix-bug` skill walks through it.
-- **An open bug can be an expected failure** in `test_known_bugs.py`
-  (`xfail_strict = true`): fixing it fails the run until the test moves to
+  (`APEXLAB_OBJ`). The `fix-bug` skill walks through it.
+- **An open bug can be an expected failure** in `tests/test_known_bugs.py` (create the file
+  for it; `xfail_strict = true`): fixing it fails the run until the test moves to
   `test_regressions.py`.
 - **Build variants:** `make OBJDIR=<folder> EXTRA_CFLAGS=-D...`, never in `obj/`.
   `make release` is one: `release/ApexLab.gb` with the intro and title on, the ROM for the

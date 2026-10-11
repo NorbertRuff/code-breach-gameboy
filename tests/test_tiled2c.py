@@ -1,18 +1,16 @@
 """tools/tiled2c.py: the committed level files, the level data in the ROM, and the rules
-a level must follow (docs/LEVEL_PIPELINE.md)."""
+a level must follow (docs/LEVELS.md section 6)."""
 
 import json
 import struct
-import sys
 from pathlib import Path
 
 import pytest
 
 from gamelib import read_symbol
+import tiled2c
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import tiled2c  # noqa: E402
 
 GREYBOX_TSX = ROOT / "graphics" / "tilesets" / "greybox.tsx"
 EMPTY, SOLID, GATE, EXIT, FRAGMENT, START = 1, 2, 5, 6, 7, 8   # gids, firstgid 1

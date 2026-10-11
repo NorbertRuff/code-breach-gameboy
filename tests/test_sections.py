@@ -1,12 +1,12 @@
-"""Sections, gates, checkpoints and the exit (roadmap M3, docs/LEVEL_DESIGN.md section 2),
+"""Sections, gates, checkpoints and the exit (roadmap M3, GAME_DESIGN.md, "Rules"),
 in levels/greybox_test.tmj: gate A at column 33 and gate B at column 50, both with a
 quota of 1 and their bottom tile on row 14; the exit at column 62."""
 
 from gamelib import (COLLISION_NONE, COLLISION_SOLID, COREGAMELOOP, HUD_DIGIT_TILE_BASE,
                      HUD_SLASH_TILE, LEVEL_COMPLETE, LEVEL_SIZE, SPRITE_RIGHT_W)
-from test_streaming import MARKER_TILE
+from test_streaming import MAP_TOP_ROW, MARKER_TILE
 
-GATE_A, GATE_BOTTOM_ROW, MAP_TOP_ROW = 33, 14, 3
+GATE_A, GATE_BOTTOM_ROW = 33, 14
 GATE_A_X = GATE_A * 8
 CHECKPOINT_A = (GATE_A_X + 8 + 8, 119)     # body just past the gate, feet on its bottom row
 GATE_ROWS = range(MAP_TOP_ROW, GATE_BOTTOM_ROW + 1)

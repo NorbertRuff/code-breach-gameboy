@@ -5,9 +5,7 @@ Pilot moves and the x values; a lift is named by its center x (Tiled x + 12)."""
 
 import pytest
 
-from gamelib import COREGAMELOOP, LEVEL_3, LEVEL_COMPLETE, LINES_PER_FRAME, Pilot
-from test_frame_budget import FRAME_LINE_LIMIT
-from test_level_1 import SPRITES_PER_LINE
+from gamelib import COREGAMELOOP, LEVEL_3, LEVEL_COMPLETE, Pilot
 
 L1, L2, L3, L4, L5, L6, L7, L8 = 76, 188, 252, 380, 716, 972, 1076, 1164   # lift centers
 
@@ -84,7 +82,4 @@ def test_level_3_can_be_finished(game, start_delay):
     play_level_3(Pilot(game))
     assert game.state() == LEVEL_COMPLETE and game.lives() == 3
     assert game.level().section_collected[:3] == [5, 5, 3], "not every fragment collected"
-    worst = max(frame_lines)
-    assert game.u8("_lag_frames") == 0, f"lag frames; the worst update ended at line {worst}"
-    assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
-    assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
+    game.assert_within_limits(frame_lines, sprites_per_line)

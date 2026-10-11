@@ -13,6 +13,7 @@
 #include "./sound/sound.h"
 
 #include "./game_state/game_flow.h"
+#include "./game_state/demo.h"
 #include "./game_state/game_over.h"
 #include "./game_state/kernel.h"
 #include "./game_state/intro_credits.h"
@@ -194,7 +195,7 @@ void main(void)
             current_game_state = TITLE_SCREEN_STATE;
             break;
         case TITLE_SCREEN_STATE:
-            run_title_screen();
+            if (!run_title_screen()) demo_start();
             current_game_state = GAMEPLAY_START;
             break;
         case GAMEPLAY_START:
@@ -203,6 +204,13 @@ void main(void)
             break;
         case COREGAMELOOP:
         {
+            // In the demo the clip's buttons play; a press or the clip's end goes back to
+            // the title.
+            if (demo_playing && demo_play_input(&joypad_current)) {
+                palette_fade_out(SCREEN_FADE_FRAMES);
+                current_game_state = TITLE_SCREEN_STATE;
+                break;
+            }
             // Every VBlank that passes during the update is a lag frame.
             uint8_t start_time = (uint8_t)sys_time;
             main_game_loop();

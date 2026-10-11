@@ -2,16 +2,14 @@
 (src/sound/sound.c) plays every effect of the GBFX and GBFX2 packs to its end, and every
 song of the music packs plays."""
 
-import sys
 from pathlib import Path
 
 import pytest
 
 from gamelib import boot, read_symbol
+import fxhammer2c
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import fxhammer2c  # noqa: E402
 
 PACKS = [ROOT / "sounds" / "GBFX.sav", ROOT / "sounds" / "GBFX2.sav"]
 

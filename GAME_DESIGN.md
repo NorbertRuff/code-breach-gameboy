@@ -45,6 +45,8 @@ the next level, or hold A and press B to turn no-death on or off.
 - **The level ends** at the lab elevator after section C.
 - **The HUD** shows the lives and the fragments against the current section's quota
   (`02/03`); in section C, against all of its fragments.
+- **Demo:** a minute on the title screen without a press plays a clip of the next level
+  by itself; any button goes back to the title.
 - **Passwords** keep progress (no battery save): 4 letters, shown at level complete and
   game over. CONTINUE on the title screen asks for one, then offers every level reached,
   with the `100%` marks.

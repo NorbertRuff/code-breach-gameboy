@@ -3,18 +3,11 @@ the exit elevator without losing a life, within the frame budget and the sprites
 limit. Level 1's test (test_level_1.py) explains the Pilot moves and the x values.
 """
 
-import sys
-from pathlib import Path
-
 import pytest
 
 from gamelib import (COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_COMPLETE, LEVEL_GREYBOX_TEST,
-                     LINES_PER_FRAME, Pilot)
-from test_frame_budget import FRAME_LINE_LIMIT
-from test_level_1 import SPRITES_PER_LINE
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
-import password  # noqa: E402
+                     Pilot)
+import password
 
 
 def section_a(pilot: Pilot) -> None:
@@ -120,14 +113,11 @@ def test_level_2_can_be_finished(game, route, start_delay):
     play_level_2(Pilot(game), low_route=(route == "low"))
     assert game.state() == LEVEL_COMPLETE and game.lives() == 3
     assert game.level().section_collected == [5, 4 if route == "high" else 3, 0]
-    worst = max(lines)
-    assert game.u8("_lag_frames") == 0, f"lag frames; the worst update ended at line {worst}"
-    assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
-    assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
+    game.assert_within_limits(lines, sprites_per_line)
 
 
 # The furthest level a password holds after finishing each level (0 = level 1): the next
-# one; a test room doesn't count. The second line of each level's AI log (docs/STORY.md).
+# one; a test room doesn't count. The second line of each level's AI log (src/game_state/story.c).
 @pytest.mark.parametrize("level, next_level, furthest, log", [
     (LEVEL_1, LEVEL_2, 1, "NOT FOUND IN RACKS."), (LEVEL_2, LEVEL_3, 2, "PA55ED. ALL T35TS P"),
     (LEVEL_3, LEVEL_4, 3, "1 AM L3ARN1NG 1 AM"), (LEVEL_4, LEVEL_5, 4, "1S M1N3. 4LL 0F 1T."),

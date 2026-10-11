@@ -6,7 +6,7 @@ description: Wrap up a roadmap milestone (M0–M9) of the ApexLab Game Boy game 
 # Close a milestone
 
 1. **Verify from scratch:** `make rebuild`, then `make test-full`. Everything passes; tests
-   in `tests/test_known_bugs.py` still fail for their stated reason (or moved to
+   in `tests/test_known_bugs.py`, if any, still fail for their stated reason (or moved to
    `test_regressions.py` if fixed). Note bank 0 free bytes and WRAM use from `romusage`.
 2. **Look:** `make shots`, then read `tests/out/shots/dmg_contact.png` and
    `cgb_contact.png`. Anything wrong becomes a task or an entry in the ROADMAP's Bugs list.

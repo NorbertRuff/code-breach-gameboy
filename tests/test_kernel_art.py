@@ -4,12 +4,11 @@ has them, and share the palette of the tiles they replace, because KERNEL writes
 and the GBC attributes stay as the map set them."""
 
 import re
-import sys
 from pathlib import Path
 
+import tiled2c
+
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import tiled2c  # noqa: E402
 
 FACE_X, FACE_Y, MAP_TOP_ROW = 6, 3, 3                   # kernel.c, screen tiles
 TERMINALS = ((1, 14), (18, 7), (9, 14))

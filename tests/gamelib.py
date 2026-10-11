@@ -35,6 +35,10 @@ REGISTERS = {
 # Screen timing (Pan Docs): VBlank starts at line 144, and a frame has 154 lines.
 VBLANK_LINE = 144
 LINES_PER_FRAME = 154
+# The worst update may end this many lines after VBlank starts, of LINES_PER_FRAME. The
+# rest is a margin: PyBoy's timing is close to the hardware's, but not exact.
+FRAME_LINE_LIMIT = 140
+SPRITES_PER_LINE = 10   # the hardware draws at most 10 sprites on one screen line
 
 # Mirror of the Player struct in src/player/player.h, in field order. SDCC does not pad
 # structs on the Game Boy CPU, and multi-byte values are little endian.
@@ -88,8 +92,6 @@ RING_ROWS = 16
 TILE_SIZE = 8
 COLLISION_NONE = 0
 COLLISION_SOLID = 1
-COLLISION_ONE_WAY = 2
-COLLISION_HAZARD = 3
 
 # The patrol bot's two 8x16 sprites in each walk frame (src/actor/actor.h, bot.c).
 BOT_FRAME_TILES = ({68, 70}, {72, 74})
@@ -178,27 +180,11 @@ class Game:
         pyboy.hook_register(None, "_player_draw", self._at_player_draw, None)
         # The game starts in level 1; most tests play the greybox test level. main() runs
         # once, after the C globals are set, so the first GAMEPLAY_START loads `level`.
-        # Builds from before level 1 (tools/test_against.py) number the levels otherwise
-        # and start in the greybox level anyway: leave those alone.
-        if self.has_symbol("_level_1"):
-            pyboy.hook_register(None, "_main", self._set_level_index, level)
-
-    def has_symbol(self, symbol: str) -> bool:
-        try:
-            self.pyboy.symbol_lookup(symbol)
-            return True
-        except ValueError:
-            return False
-
-    def rom_level_index(self, level: int) -> int:
-        """A LEVEL_* index in this build's numbering: each game level a build doesn't
-        have yet (2 to 5) puts its test rooms one index lower."""
-        missing = sum(not self.has_symbol(f"_level_{n}") for n in (2, 3, 4, 5))
-        return level - missing if level >= LEVEL_GREYBOX_TEST else level
+        pyboy.hook_register(None, "_main", self._set_level_index, level)
 
     def _set_level_index(self, level: int) -> None:
         _, addr = self.pyboy.symbol_lookup("_level_index")
-        self.pyboy.memory[addr] = self.rom_level_index(level)
+        self.pyboy.memory[addr] = level
 
     def _at_player_draw(self, _context) -> None:
         """The frame's update is done: apply waiting writes, then copy the struct."""
@@ -272,9 +258,6 @@ class Game:
     def u8(self, symbol: str) -> int:
         return read_symbol(self.pyboy, symbol)[0]
 
-    def u16(self, symbol: str) -> int:
-        return int.from_bytes(read_symbol(self.pyboy, symbol, 2), "little")
-
     def state(self) -> int:
         return self.u8("_current_game_state")
 
@@ -296,8 +279,7 @@ class Game:
         if not count:
             return []                           # PyBoy refuses an empty memory slice
         raw = read_symbol(self.pyboy, "_actors", ACTOR_SIZE * count)
-        types = {name: self.pyboy.symbol_lookup(f"_{name}_type")[1] if self.has_symbol(f"_{name}_type") else None
-                 for name in ("bot", "chaser", "lift", "packet")}
+        types = {name: self.pyboy.symbol_lookup(f"_{name}_type")[1] for name in ("bot", "chaser", "lift", "packet")}
         actors = []
         for i in range(count):
             values = struct.unpack_from(ACTOR_FORMAT, raw, i * ACTOR_SIZE)
@@ -418,6 +400,16 @@ class Game:
         self.at_update_end(at_update_end)
         return lines
 
+    def assert_within_limits(self, frame_lines: list, sprites_per_line: list = None) -> None:
+        """Fail on a lag frame, an update that ended past FRAME_LINE_LIMIT, or a screen line
+        with more than SPRITES_PER_LINE sprites (lists from track_frame_lines and
+        track_sprites_per_line)."""
+        worst = max(frame_lines)
+        assert self.u8("_lag_frames") == 0, f"lag frames; the worst update ended at line {worst}"
+        assert worst <= FRAME_LINE_LIMIT, f"the worst update ended at line {worst} of {LINES_PER_FRAME}"
+        if sprites_per_line is not None:
+            assert max(sprites_per_line) <= SPRITES_PER_LINE, f"{max(sprites_per_line)} sprites on one screen line"
+
     def at_update_end(self, callback) -> None:
         """Call callback(None) whenever the game starts waiting for VBlank. PyBoy allows one
         hook per address, so the trackers share this one."""
@@ -468,8 +460,7 @@ class Game:
     def load_level(self, index: int) -> None:
         """Wait for gameplay, then restart in another level (LEVEL_*)."""
         self.wait_for_state(COREGAMELOOP, timeout=300)
-        _, addr = self.pyboy.symbol_lookup("_level_index")
-        self.pyboy.memory[addr] = self.rom_level_index(index)
+        self._set_level_index(index)
         self.set_state(GAMEPLAY_START)
         self.frames(1)
         self.wait_for_state(COREGAMELOOP)
@@ -564,12 +555,6 @@ class Game:
         path = self.out_dir / f"{safe}_{name}.png"
         self.pyboy.screen.image.save(path)
         return path
-
-    def screen_colors(self) -> int:
-        """Number of distinct colors in the current frame (renders one frame)."""
-        self.tick(render=True)
-        pixels = self.pyboy.screen.ndarray[:, :, :3].reshape(-1, 3)
-        return len({tuple(p) for p in pixels})
 
 
 class Pilot:

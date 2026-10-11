@@ -7,7 +7,7 @@ surfaces the player can stand on (green: reached, red: not), and for each reache
 the jump that first got there. Then it reports what can't be reached and exits with 1.
 "make preview" runs it on every level.
 
-How the check works (docs/LEVEL_PIPELINE.md, section 5):
+How the check works (docs/LEVELS.md, section 5):
 - A surface is a run of x positions where the body can stand on one tile row.
 - From the start, it tries jumps from every reached surface with the game's own physics
   (tools/physics.py): tapped, medium and full jumps, left, right or straight up, from

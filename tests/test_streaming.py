@@ -4,20 +4,18 @@ The visible columns of the background map and of the collision ring must always 
 the Tiled map, while the camera scrolls past the 256 px of one background map and back.
 """
 
-import sys
 from pathlib import Path
 
-from gamelib import COREGAMELOOP, GAMEPLAY_END
+from gamelib import COREGAMELOOP
+import tiled2c
+from tiled2c import MAP_TOP_ROW
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import tiled2c  # noqa: E402
 
 LEVEL = tiled2c.load_level(ROOT / "levels" / "greybox_test.tmj")
 COLLISION = {"": 0, "solid": 1, "one_way": 2, "hazard": 3}
 SOLID, COLLECTIBLE, EXIT = 1, 4, 5
 MARKER_TILE = {c: i for i, c in LEVEL.tileset.classes.items()}
-MAP_TOP_ROW = 3
 FRAGMENTS = {(e.x // 8, e.y // 8) for e in LEVEL.entities if e.kind == "fragment"}
 GATE_CELLS = {(e.x // 8, row) for e in LEVEL.entities if e.kind == "gate"
               for row in range(MAP_TOP_ROW, e.y // 8 + 1)}

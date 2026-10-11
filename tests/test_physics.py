@@ -122,15 +122,6 @@ def test_down_and_a_on_solid_ground_jumps(game):
     assert jumped_within(game, 4), "Down + A on solid ground did not jump"
 
 
-def test_hazard_tile_costs_a_life(game):
-    game.start_on_open_ground()
-    game.place_player(336, 119)
-    lives = game.lives()
-    game.hold("right", 30)
-    assert game.lives() == lives - 1
-
-
-
 # Sprite frames of graphics/player/programmer.png (src/player/player.h).
 IDLE_FRAMES = {0, 1}
 RUN_FRAMES = {2, 3, 4, 5}
@@ -162,7 +153,8 @@ def test_animation_breathes_jumps_falls_and_runs(game):
     assert frames_seen(game, 20) == RUN_FRAMES
 
 
-def test_a_hit_holds_the_hurt_pose_and_the_last_life_the_death_pose(game):
+def test_a_hazard_hit_costs_a_life_and_holds_the_hurt_or_death_pose(game):
+    # Walk right into the spikes at x 368: the hurt pose, or the death pose on the last life.
     game.start_on_open_ground()
     start = game.save()
     for lives, pose in ((3, HURT_FRAME), (1, DEATH_FRAME)):
@@ -175,5 +167,6 @@ def test_a_hit_holds_the_hurt_pose_and_the_last_life_the_death_pose(game):
             if game.lives() != lives:
                 break
         game.pyboy.button_release("right")
+        assert game.lives() == lives - 1
         game.frames(10)
         assert game.player().draw_frame == pose

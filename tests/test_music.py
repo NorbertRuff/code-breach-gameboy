@@ -2,14 +2,12 @@
 interrupt below the parallax band, and sound effects take their channels from the music
 until they end (src/sound/music.c, src/sound/sound.c)."""
 
-import sys
 from pathlib import Path
 
 from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_COMPLETE, PAUSED, TITLE_SCREEN_STATE
+import fxhammer2c
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
-import fxhammer2c  # noqa: E402
 
 BAND_SPLIT_LINE = 23        # src/engine/screen.h: BAND_LAST_LINE
 

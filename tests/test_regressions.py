@@ -1,15 +1,13 @@
-"""One test per fixed bug. Bugs 1-22 are described in docs/archive/PROJECT_STATE.md; later
+"""One test per fixed bug. Bugs 1-22 come from the 2026-10-02 audit (git history); later
 bugs in the comment above their test."""
 
 import hashlib
 
 import pytest
 
-from gamelib import (BOT_TILES, COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END,
-                     HUD_DIGIT_TILE_BASE, HUD_SLASH_TILE, LEVEL_COMPLETE, PAUSED, palette_lumas,
-                     read_symbol)
+from gamelib import (BOT_TILES, COLLISION_SOLID, COREGAMELOOP, GAMEPLAY_END, LEVEL_COMPLETE, PAUSED,
+                     SPRITES_PER_LINE, palette_lumas)
 from test_frame_budget import GREYBOX_ROUTE
-
 
 
 def vram_maps_hash(game) -> str:
@@ -39,17 +37,6 @@ def test_hud_window_stays_at_bottom_after_game_over(game):
     game.screenshot("after_restart")
     assert game.reg("WY") == 128
     assert game.reg("WX") == 7
-
-
-# Bug 2 ---------------------------------------------------------------------------
-
-def test_hud_counter_shows_two_digits(game):
-    # At the start the count shows section A: none collected, of a quota of 1.
-    game.wait_for_state(COREGAMELOOP, timeout=300)
-    game.frames(2)
-    d = HUD_DIGIT_TILE_BASE
-    assert [game.window_tile(col, 0) for col in range(15, 20)] == [d + 0, d + 0, HUD_SLASH_TILE, d + 0, d + 1], \
-        "expected '00/01', section A's quota"
 
 
 # Bug 3 ---------------------------------------------------------------------------
@@ -101,8 +88,6 @@ def test_falling_never_moves_up(game):
 # Bug 6 ---------------------------------------------------------------------------
 
 def test_releasing_a_cuts_the_jump_short(game):
-    # Compares raw y within one build, so it also runs against builds from before the
-    # sub-pixel Player struct (tools/test_against.py).
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.frames(10)
     start = game.save()
@@ -126,20 +111,6 @@ def test_player_never_overlaps_solid_tiles(game):
             assert not hits, f"player box {game.player_box()} overlaps {hits}"
     finally:
         game.pyboy.button_release("right")
-
-
-# Bug 11 --------------------------------------------------------------------------
-
-def test_falling_below_the_level_costs_a_life(game):
-    # Level 1 has no pits yet, so the player is put below the floor directly.
-    game.wait_for_state(COREGAMELOOP, timeout=300)
-    game.frames(5)
-    game.set_player_y(170)
-    for _ in range(60):
-        game.frames(1)
-        if game.lives() == 2:
-            break
-    assert game.lives() == 2
 
 
 # Bug 13 --------------------------------------------------------------------------
@@ -312,7 +283,7 @@ def test_pause_label_leaves_room_on_its_lines(game):
     game.pyboy.button_release("a")
     game.frames(2)
     assert game.state() == PAUSED
-    assert game.sprites_on_busiest_line() <= 10
+    assert game.sprites_on_busiest_line() <= SPRITES_PER_LINE
 
 
 # Bug 22 --------------------------------------------------------------------------

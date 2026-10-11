@@ -6,20 +6,20 @@ by `tools/tiled2c.py`. How the game loads, streams and collides with them is in
 
 ## 1. Adding or changing a level
 
-1. **Draw it.** Open `levels/level_N.tmj` in Tiled, or start from a text sketch:
-   `tools/sketch2tmj.py sketch.txt -o levels/level_N.tmj` (the legend is in the script's
-   docstring; `--from-tmj levels/<map>.tmj` prints a map as a sketch). A sketch uses the
-   greybox tileset.
+1. **Draw it** in Tiled: open `levels/level_N.tmj`, or copy one as a start. A first
+   layout can use the greybox tileset, then the level's own (`graphics/tilesets/`).
 2. **`make levels`** writes `src/levels/<map>.c/.h` and `<tileset>_tileset.c/.h`. The
    output is committed; `tests/test_tiled2c.py` fails when it is older than the maps.
    A map that breaks a rule (section 6) stops the build with a message.
-3. **`make preview`** draws every level to `tests/out/levels/<name>.png` and fails when
+3. **`make demo`** records the title demo's clips again (a changed level plays
+   differently); `tests/test_demo.py` fails until it does.
+4. **`make preview`** draws every level to `tests/out/levels/<name>.png` and fails when
    something can't be reached (section 5).
-4. **A new level** also needs its entry in the tables in `src/level/level_manager.c` and
+5. **A new level** also needs its entry in the tables in `src/level/level_manager.c` and
    `level_manager.h`, its song in `src/sound/music.c`, its log line in
    `src/game_state/story.c`, and a replay test that finishes it (`tests/test_level_N.py`,
    with `Pilot` from `tests/gamelib.py`).
-5. Play it in Emulicious (`make run`; while paused, A held + SELECT skips to the next
+6. Play it in Emulicious (`make run`; while paused, A held + SELECT skips to the next
    level).
 
 Refer to places by tile column: the preview and Tiled's status bar both show them.

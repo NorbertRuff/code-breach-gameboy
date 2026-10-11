@@ -17,7 +17,7 @@ Conventions this follows are in `docs/TESTING.md`. The owner runs git; don't com
      with `game.background_is_black()`, `game.sprite_palettes()` and `game.gbc_colors()`.
      A test where DMG and GBC can differ gets `@pytest.mark.both_modes`; a bug on one
      system only gets `@pytest.mark.mode("cgb")` (or `"dmg"`).
-   - If the bug already has an `xfail` test in `tests/test_known_bugs.py`, move it to
+   - If the bug already has an `xfail` test in `tests/test_known_bugs.py` (if that file exists), move it to
      `test_regressions.py` and drop the marker.
 3. **See it fail** on the current code:
    `.venv/Scripts/python.exe -m pytest tests/test_regressions.py -k <test name>`

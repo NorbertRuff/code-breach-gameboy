@@ -4,6 +4,7 @@
 
 #include "start_screen.h"
 #include "menu.h"
+#include "demo.h"
 #include "title_menu.h"
 #include "../graphics/title.h"
 #include "../graphics/title_warning.h"
@@ -45,25 +46,32 @@ static void show_warning(void) NONBANKED
                                                  title_warning_map, WARNING_FIRST_TILE));
 }
 
-// Waits for START with the warning blinking, then leaves it on for the menu.
-static void wait_for_start(void)
+// Waits for START with the warning blinking, then leaves it on for the menu. Returns 1,
+// or 0 after DEMO_IDLE_FRAMES without a press, for the demo.
+static uint8_t wait_for_start(void)
 {
-    uint8_t frames = 0;
+    uint8_t blink_frames = 0;
     uint8_t on = 1;
+    uint16_t idle_frames = 0;
+    uint8_t pressed;
     menu_start_input();
-    while (!(menu_wait_press() & J_START)) {
-        if (++frames < WARNING_BLINK_FRAMES) continue;
-        frames = 0;
+    while (!((pressed = menu_wait_press()) & J_START)) {
+        if (pressed) idle_frames = 0;
+        else if (++idle_frames == DEMO_IDLE_FRAMES) return 0;
+        if (++blink_frames < WARNING_BLINK_FRAMES) continue;
+        blink_frames = 0;
         on = !on;
         if (on) show_warning();
         else fill_bkg_rect(WARNING_X, WARNING_Y, WARNING_W, WARNING_H, WARNING_OFF_TILE);
     }
     if (!on) show_warning();
+    return 1;
 }
 
 // Shows the title screen until START is pressed, then its menu; the title again after
-// backing out of the password screen. Returns with the level to start chosen.
-void run_title_screen(void) BANKED
+// backing out of the password screen. Returns 1 with the level to start chosen, or 0
+// when the demo should play. The screen is faded out either way.
+uint8_t run_title_screen(void) BANKED
 {
     music_play_title();
     do {
@@ -71,7 +79,11 @@ void run_title_screen(void) BANKED
         draw_title_picture();
         show_warning();
         text_print(PRESS_START_X, PRESS_START_Y, "PRESS START");
-        palette_fade_in(10);
-        wait_for_start();
+        palette_fade_in(SCREEN_FADE_FRAMES);
+        if (!wait_for_start()) {
+            palette_fade_out(SCREEN_FADE_FRAMES);
+            return 0;
+        }
     } while (!title_menu());
+    return 1;
 }
