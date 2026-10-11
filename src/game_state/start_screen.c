@@ -12,7 +12,6 @@
 #include "../engine/platform.h"
 #include "../engine/text.h"
 #include "../sound/music.h"
-#include "../utils.h"
 
 #define TITLE_ROWS (title_HEIGHT >> 3)
 #define WARNING_FIRST_TILE (uint8_t)(FONT_FIRST_TILE + FONT_CHAR_COUNT)   // after the font

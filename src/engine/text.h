@@ -14,6 +14,7 @@
 
 void text_load_font(void);
 void text_print(uint8_t x, uint8_t y, const char* text);
+void text_two_digit_tiles(uint8_t value, uint8_t* tiles);
 void text_print_two_digits(uint8_t x, uint8_t y, uint8_t value);
 
 #endif // TEXT_H

@@ -1,147 +1,85 @@
 # Art Pipeline
 
-Art is designed in Claude Design. A conversion script makes it fit the hardware, then
-`png2asset` turns it into C.
+How a picture becomes Game Boy data, and the rules it must follow so the same ROM looks
+right on the Game Boy Color (GBC) and the original Game Boy (DMG). The `add-asset` skill
+(`.claude/skills/add-asset/`) walks through it step by step.
 
 ```
-Claude Design  →  exported PNG  →  tools/gbconvert.py  →  graphics/<asset>.png  →  make assets  →  src/graphics/<asset>.c
-                                   (snap, check, preview)  (indexed, GB-ready)      (png2asset)
+drawing (PNG)  →  tools/gbconvert.py  →  graphics/<asset>.png  →  make assets  →  src/graphics/<asset>.c
+                  (snap, check, preview)  (indexed, committed)      (png2asset)      (committed)
 ```
 
 ## 1. Hardware rules
 
-Every asset must follow these. The script checks all of them.
+`tools/gbconvert.py` checks the art rules; tests check the code rules.
 
-| Rule | Value |
+| Rule | Why |
 |---|---|
-| Tile size | 8×8 px. Everything on screen is built from tiles. |
-| Colors per background tile | 4, all from one palette |
-| Colors per sprite tile | 3 + transparent (index 0) |
-| GBC palettes | 8 background + 8 sprite palettes |
-| DMG palettes | 1 background palette for all tiles, 2 sprite palettes |
-| Palette order | Index 0 lightest → index 3 darkest, in every palette. For sprites: 0 transparent, 1 lightest → 3 darkest. This makes the DMG show correct grays. |
-| Background flips | Not allowed. DMG cannot flip background tiles. Draw mirrored tiles as separate tiles. |
-| Sprite mode | 8×16. The 16×32 player is 4 hardware sprites (2 wide × 2 tall). |
-| Sprites per scanline | 10 at most. The player uses 2 per line and a 16 px enemy uses 2. Avoid more than 4 enemies at the same height. |
-| Sprites total | 40 |
-| Color depth | RGB555 (32 levels per channel). Pure hex colors, no anti-aliasing, no gradients. |
-| GBC screen | Per channel, values `$10–$1F` all look very bright on a real GBC, so keep mid and dark colors in `$00–$0F`. Colors look washed out compared with a PC monitor. Preview with SameBoy's color correction or `rgbgfx -C` (Pan Docs, Palettes). |
-| GBA | A second, brighter palette table per asset, loaded when `_is_GBA` is set ([CGB_PLAN.md](CGB_PLAN.md) section 8). |
-| Readability | Shades 0–1 behind the play lane; shade 3 for outlines, solid edges and hazards. On GBC, tile types get colors (red hazards, blue one-way, gold fragments), but each type also has a unique shape so it reads on DMG. |
+| **Tiles are 8×8.** A background tile has 4 colors from one palette; a sprite tile 3 colors plus transparent (index 0). | The hardware draws everything from tiles. |
+| **Every palette runs light to dark:** index 0 lightest, 3 darkest (sprites: 0 transparent, 1 lightest, 3 darkest). | The DMG has one background palette and two sprite palettes of 4 grays; with this order it shows the same picture in the right shades. `tests/test_screen.py` and `test_regressions.py` check it. |
+| **No background tile flips** (`png2asset -noflip`); draw mirrored tiles as separate tiles. Sprite flips are fine. | Background flip bits live in the GBC attribute map, which the DMG doesn't have. Sprite flips are in OAM on both. |
+| **GBC: 8 background and 8 sprite palettes,** colors in RGB555. No anti-aliasing or gradients. | The palette table size. |
+| **Keep mid and dark colors in `$00-$0F` per channel;** judge colors on a real GBC. | Values `$10-$1F` all look very bright on the GBC screen, which also looks less saturated than a PC monitor (Pan Docs, Palettes). |
+| **Give tile types a shape, not only a color:** red hazards, blue one-way platforms, gold fragments on GBC, each with its own outline. Shades 0-1 behind the play lane, shade 3 for outlines, solid edges and hazards. | It must read in 4 grays on the DMG. |
+| **Sprites in 8×16 mode,** at most 10 per screen line and 40 in total. The 16×32 player is 4 sprites (2 per line), a 16×16 enemy 2, the lift 3. | Hardware limits. |
+| **All tiles in VRAM bank 0.** GBC VRAM bank 1 holds only attributes (a palette per map cell), written behind `if (is_cgb)`. | The DMG has no bank 1; an attribute write there would land on the tile map. |
+| **Palettes are written only by `src/engine/palette.c`** (and `palette_effects.c`), which has a DMG and a GBC path for loads, fades and flashes. | `BGP_REG`/`OBP*_REG` do nothing in GBC mode, GBC palette registers do nothing on DMG. `tests/test_palette.py` fails on a palette write anywhere else. |
+| **No GBC-only features:** 8 KB of WRAM, no double speed, no HDMA, no gameplay that needs the GBC's background-over-sprite priority bit. | The DMG has none of them; the DMG sets the performance budget. |
 
-## 2. VRAM tile budget
+## 2. Tile budget
 
-The ROM must work on DMG, so all tiles live in VRAM bank 0: 384 tiles in three blocks.
+All tiles share VRAM bank 0: 384 tiles. Where each one goes is in
+[ARCHITECTURE.md](ARCHITECTURE.md), "Memory map". What that leaves for art:
 
-| Block | Tiles | Used for |
-|---|---|---|
-| Sprite-only (`0x8000`) | 128 | Player (68, all 10 frames), current level's enemies and objects (about 40), pause label (10), spare |
-| Shared (`0x8800`) | 128 | Background tiles 128–255: the rest of the level tiles (to 159), the font (160–208), the HUD frame (209–218); 219–255 free (KERNEL's tiles are in the mainframe tileset) |
-| Background-only (`0x9000`) | 128 | Background tiles 0–127: the level tileset, then its band |
+| Asset | Budget |
+|---|---|
+| Level tileset | 128 tiles (every cell of its sheet; `tools/tiled2c.py` checks) |
+| Parallax band | 32 tiles (256×24 px, wraps around) |
+| Sprite tiles | 128 in all: the player's 68, the actors' about 40, the pause label 10 |
+| A full screen without a level (title, endings) | Up to 256 background tiles; 207 when it prints text, around the font |
 
-So a level tileset gets **128 tiles** (every cell of its sheet, `tools/tiled2c.py`
-checks) and its band **32** (`gbconvert.py` budget), 160 together. Moving the font up
-would free about 20 more. Screens without a level can use all 256 background tiles, or
-the 207 around the font (0-159, 209-255) when they print text, like the title.
+## 3. Drawing
 
-## 3. Claude Design workflow
-
-1. **Style guide** (one Claude Design page):
-   - Per level: 4 background palettes of 4 colors each, ordered light → dark, each shown
-     next to its DMG gray version.
-   - Sprite palettes for the player, enemies and pickups.
-   - Character proportions on a pixel grid.
-   - The palettes are copied into `graphics/palettes.json`. That file is the color
-     source of truth for the script.
-2. **Mockups** at 160×144 for each level, to check composition and readability before
-   any tile work.
-3. **Sprite sheets** at native size on a grid: player frames 16×32, enemies 16×16. Only
-   style-guide colors.
-4. **Tilesets** on an 8×8 grid. Each tile uses one palette. For a level: ground top,
-   edges and fill, one-way platforms, walls, background props, hazards.
-
-Prompt wording that helps: "pixel art on an exact 8×8 grid, no anti-aliasing, no
-gradients, only these hex colors: …". Exports can be at any whole-number scale.
-
-**Base material and touch-ups.** The openly licensed tilesets, fonts and palettes in
-[RESEARCH.md](RESEARCH.md) section 4 can seed the designs (CC0 preferred; CC-BY items go
-into `CREDITS.md`). For hand fixes, Aseprite with the CC0 *Palette Guard* plugin flags
-tiles that break the 4-colors-from-one-palette rule while drawing. LibreSprite and
-Pixelorama are free alternatives. The Spriters Resource sheets are for study only, never
-for shipping.
+- **Colors come from `graphics/palettes.json`:** palette sets (`greybox`, `hud`, `title`,
+  one per level theme and one per band), each with `bg` palettes of 4 colors and `sprite`
+  palettes of 3, light to dark, as hex. It is the color source of truth for the script.
+- **Draw at 1× on an 8×8 grid** (exports at any whole-number scale are fine), only in the
+  set's colors, one palette per tile. Image generators don't keep to a pixel grid: use
+  their pictures as references and redraw the tiles.
+- **Touch-ups in Aseprite** on the indexed PNG in `graphics/`. Pick colors from the
+  palette row of the tile's palette: a black or white that looks the same in another row
+  breaks the one-palette-per-tile rule. The Palette Guard plugin (CC0) flags such tiles
+  while drawing.
+- `graphics/start_screen/apexLogo.png` is the owner's first title picture, kept but not
+  in the build.
 
 ## 4. `tools/gbconvert.py`
 
-Built on 2026-10-04 (M5), tested on generated pictures (`tests/test_gbconvert.py`) and
-checked end to end through png2asset. Run it as
-`.venv/Scripts/python.exe tools/gbconvert.py <asset> <exported.png>`.
-
-Input: an exported PNG plus its entry in `graphics/assets.json`:
-
-```json
-{ "programmer": { "type": "sprite", "palettes": "server_room", "budget": 48,
-                  "size": [80, 32], "out": "graphics/player/programmer.png" } }
+```
+.venv/Scripts/python.exe tools/gbconvert.py <asset> <exported.png>
 ```
 
-`graphics/palettes.json` holds the palette sets, each with `bg` palettes (4 colors) and
-`sprite` palettes (3 colors; index 0 is transparent), every palette light to dark, as hex
-colors. It has the `greybox` set (the DMG grays), one set per level from the style
-guide: `server_room`, `code_testing_lab`, `ai_research_wing`, `network_hub`, `mainframe`,
-a set per band (`<tileset>_band`), `hud` and `title`.
-
-1. Shrink the whole-number upscale (for example 4×) with nearest-neighbor: to the
-   entry's `size` when given, else at the largest scale that fits. Fail if the pixel grid
-   doesn't line up. Give the size: art drawn only with 2 px features also fits at half
-   its size.
-2. Snap each pixel to the nearest style-guide color. Report the share of changed pixels.
-   Fail above a threshold (start at 2%).
-3. For each 8×8 tile, check the color limit and that all colors come from one palette.
-   Record that palette.
-4. Count unique tiles (sprites may use flips, backgrounds may not). A pattern used in
-   two palettes is one tile: the palette lives in the attribute map or the sprite's
-   attributes, as png2asset stores it. Check the budget.
-5. Write an indexed PNG with palettes in groups of 4, each ordered light → dark. This
-   goes to `png2asset -keep_palette_order`. Sprite palettes get a filler color at index 0,
-   saved as transparent.
-6. Write previews to `tests/out/previews/`: `<asset>_cgb.png` and `<asset>_dmg.png` at 4×
-   with a tile grid. Print a short report.
-
-Errors name the tile position and the colors at fault, so they can be fixed in Claude
-Design.
+The asset's entry in `graphics/assets.json` gives its type (`bg` or `sprite`), palette
+set, tile budget, size in Game Boy pixels and output path. The script shrinks the export
+to 1×, snaps each pixel to the nearest palette color (fails above 2% changed), checks
+every tile's colors and palette, counts unique tiles against the budget, and writes the
+indexed PNG (palettes in groups of 4, light to dark) plus GBC and DMG previews to
+`tests/out/previews/`. Errors name the tile and the colors at fault. Tests:
+`tests/test_gbconvert.py`.
 
 ## 5. png2asset settings
 
+`make assets` runs png2asset on every PNG in `graphics/` (the flags are in the
+`Makefile`). Read its output: an unknown flag only prints "not recognized" and goes on.
+
 | Asset | Flags |
 |---|---|
-| Sprites | `-spr8x16 -keep_palette_order -sw W -sh H -px X -py Y -b 255` |
-| Actor sheets (enemies, the lift) | `-spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255`: tiles only, in sheet order (each 8 px column's top, then bottom); the metasprites are written by hand in `src/actor/` |
-| Full-screen images (title, endings) | `-map -noflip -keep_palette_order -use_map_attributes -b 255` (one palette: no `-use_map_attributes`). The title's 139 tiles go from 0, its warning triangle's 23 (`title_warning.png`, one palette) after the font, from 209 |
-| Level tilesets | `-map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255`: one tile per sheet cell, in sheet order, so Tiled's tile ids are the VRAM tiles. Maps, and each tile's palette (from the indexed PNG), come from the level converter ([LEVEL_PIPELINE.md](LEVEL_PIPELINE.md)). |
-| Parallax bands (256×24 px) | `-map -noflip -keep_palette_order -b 255`: tiles and a 32×3 map, drawn into rows 0–2 with a tile offset |
+| Player | `-sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255` |
+| Actor sheets (enemies, lift, packet) | `-spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255`: tiles in sheet order; the metasprites are written by hand in `src/actor/` |
+| Level tilesets | `-map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255`: one tile per sheet cell, so Tiled's tile ids are the VRAM tiles; maps and per-tile palettes come from `tools/tiled2c.py` ([LEVELS.md](LEVELS.md)) |
+| Parallax bands | `-map -noflip -keep_palette_order -use_map_attributes -b 255`: the base and accent palettes per cell |
+| HUD, title warning | `-map -noflip -keep_palette_order -b 255` |
+| Full screens (title) | `-map -noflip -keep_palette_order -use_map_attributes -b 255`; with one palette, no `-use_map_attributes` |
+| Font | `-map -bpp 1 -noflip -keep_duplicate_tiles -tiles_only -b 255` |
 
-## 6. Asset list for the full game
-
-| Asset | Size | Content | Status |
-|---|---|---|---|
-| Player (programmer) | 16×32 | Idle (2), run (4), jump up, fall, hurt, death | Done (2026-10-10): 10 frames, owner's design |
-| Security bot (levels 1–5) | 16×16 | Walk (2) | Done (2026-10-10) |
-| Chaser (L3) | 16×16 | Move (2) | Done (2026-10-10) |
-| Lift (L3, L5) | 24×16 | Left cap, middle, right cap | Done (2026-10-10) |
-| KERNEL's data packet (L5) | 16×16 | Flicker (2) | Done (2026-10-10) |
-| Enemies for L2–L4 | 16×16 or 16×32 | One or two types per level | Not started |
-| Boss (L5) | Large | Built from background tiles or a metasprite within 10 sprites per line | Not designed |
-| Collectibles | 8×8 tiles in the level tileset | Code fragment (a floppy) in every level, matching the HUD icon (owner, 2026-10-11) | Code fragment (a floppy) in every level tileset (levels 1-2 2026-10-10, 3-5 2026-10-11); greybox diamond in the test rooms |
-| Level objects | Tiles in the level tileset | Security gate (a striped shutter column between rails, opened a row at a time), exit elevator (2×4 tiles, closed and open) | Server Room done (2026-10-10); Code Testing Lab recolored from it, AI Research Wing (open: purple) and Network Hub (open: blue) from that (2026-10-11); level 5 has none |
-| Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Server Room wiring, Code Testing Lab sparking cables (top and fill, 2026-10-10), recolored for the AI Research Wing; Network Hub spikes and hanging cut-cable bundles, Mainframe corrupted floor (2026-10-11); levels 1-3 have no hazards |
-| Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room (16 tiles) and Code Testing Lab (22) done (2026-10-10); AI Research Wing (28), Network Hub (21) and Mainframe (17) done (2026-10-11) |
-| Tilesets | ≤ 128 tiles each, with a `.tsx` | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Server Room done (2026-10-10): `graphics/tilesets/server_room.png`, 68 tiles in an 80-cell sheet, machine terrain set in Tiled. Code Testing Lab done (2026-10-10): `code_testing_lab.png`, 69 tiles in an 80-cell sheet, same tile ids for the shared objects, "panel" terrain set. AI Research Wing (69 tiles, "plate"), Network Hub (72, "floor") and Mainframe (96 in a 112-cell sheet, "plate"; KERNEL's face at columns 1-7, rows 0-5) done (2026-10-11) |
-| HUD and font | 59 tiles | Frame (heart, floppy icon, riveted strip), A–Z, 0–9, punctuation | Done (2026-10-10): `graphics/hud/hud.png`, `graphics/font/font.png` |
-| Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Title done (2026-10-10): `graphics/start_screen/title.png` and the blinking `title_warning.png`, 4 palettes; the others are text screens in the game font |
-
-## 7. Existing art
-
-| File | Use |
-|---|---|
-| `graphics/player/programmer.png` | The final player sheet (SOURCES.md). Palette light → dark since 2026-10-03 (review G1). |
-| `graphics/start_screen/title.png` | The title picture, the source of truth since the owner's Aseprite pass (2026-10-10). Edit it there, then `gbconvert.py title graphics/start_screen/title.png` and `make assets`. Pick colors from the palette row of the tile's palette: blacks and whites that look the same in another row break the one-palette-per-tile rule. On the programmer (x 0-31, y 88-143) that is the 3rd row; the rack row above (y 80-87) takes only the hair's black and dark green. |
-| `graphics/start_screen/apexLogo.png` | The owner's first title picture, kept out of the build. |
+`-b 255` lets autobank pick each asset's ROM bank; code reads it with `WITH_BANK`.

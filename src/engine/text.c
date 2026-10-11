@@ -38,15 +38,25 @@ void text_print(uint8_t x, uint8_t y, const char* text)
     set_bkg_tiles(x, y, length, 1, tiles);
 }
 
-// Writes a value 0-99 as two digits from tile (x, y). Counts the tens by subtracting: the
-// CPU has no division.
+// Puts the two digit tiles of a value, capped at 99, into tiles[0] and tiles[1]. Counts
+// the tens by subtracting: the CPU has no division, and the library's takes about 6
+// screen lines.
+void text_two_digit_tiles(uint8_t value, uint8_t* tiles)
+{
+    uint8_t tens = 0;
+    if (value > 99) value = 99;
+    while (value >= 10) {
+        value -= 10;
+        tens++;
+    }
+    tiles[0] = FONT_DIGIT_TILE + tens;
+    tiles[1] = FONT_DIGIT_TILE + value;
+}
+
+// Writes a value 0-99 as two digits from tile (x, y).
 void text_print_two_digits(uint8_t x, uint8_t y, uint8_t value)
 {
-    char digits[3] = { '0', '0', 0 };
-    while (value >= 10 && digits[0] < '9') {
-        value -= 10;
-        digits[0]++;
-    }
-    digits[1] += value;
-    text_print(x, y, digits);
+    uint8_t tiles[2];
+    text_two_digit_tiles(value, tiles);
+    set_bkg_tiles(x, y, 2, 1, tiles);
 }

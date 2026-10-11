@@ -1,12 +1,10 @@
 # Decisions
 
-What was decided and why, one line each, grouped by topic. Decisions from 2026-10-02 to
-2026-10-04 with their full reasons, and the superseded ones, are in
-[archive/DECISIONS_2026-10.md](archive/DECISIONS_2026-10.md).
+What was decided and why, one line each, grouped by topic. Older wordings and superseded
+decisions are in the git history.
 
 **Keeping it:** add a decision to its section with the date and a short reason. Mark it
-**Proposed** until the owner agrees. When a decision changes, edit its line (the archive
-or git keeps the old one). Details of how the code does it belong in
+**Proposed** until the owner agrees. When a decision changes, edit its line (git keeps the old one). Details of how the code does it belong in
 [ARCHITECTURE.md](ARCHITECTURE.md), not here.
 
 ## Vision and process
@@ -17,9 +15,10 @@ or git keeps the old one). Details of how the code does it belong in
   on DMG (`-Wm-yc`), with GBDK-2020 4.5.0.
 - **Workflow:** Claude writes the code; the owner runs git, reviews and tests on hardware.
   Level design: Claude drafts (brief, greybox, preview), the owner reacts and playtests.
-- **Records:** one home per fact (CLAUDE.md, "Records"); DECISIONS and SOURCES feed the
-  final "how it works" document (M9). Condensed on 2026-10-04 at the owner's request,
-  because keeping 5-7 docs in step slowed every change.
+- **Records:** one home per fact (CLAUDE.md, "Records"). Condensed on 2026-10-04 at the
+  owner's request, because keeping 5-7 docs in step slowed every change. At the release
+  (2026-10-11, owner) ARCHITECTURE.md became the final "how it works" document, written
+  from DECISIONS and SOURCES, and the finished working docs were cut.
 - **No copied assets in the final game:** every asset original (owner or Claude Design)
   or openly licensed and credited.
 - **Order:** physics and level loading (M2) before color (M4) and art (M5): layouts
@@ -54,8 +53,7 @@ or git keeps the old one). Details of how the code does it belong in
   last section, against all its (bonus) fragments.
 - **Game over** shows "GAME OVER" in the play area with CONTINUE (restarts the section)
   and QUIT (Saves: Menus). **Level complete** shows the level's fragments ("100%" when
-  all) and the password, then START (or 5 s) goes on to the next level; after the last
-  level, level 1 again until the ending exists.
+  all) and the password, then START (or 5 s) goes on to the next level.
 - **Pause:** START freezes the game with "PAUSE" in the band; the music keeps playing.
   A + SELECT while paused loads the next level (cheat, `LEVEL_SELECT_CHEAT`).
 - **No-death cheat** (2026-10-11, owner asked for it for playtesting): A + B while paused
@@ -66,7 +64,7 @@ or git keeps the old one). Details of how the code does it belong in
   be held while paused, so a stray SELECT or B does nothing.
 - **No hard mode** (2026-10-05, owner): cut to keep the game small.
 - **Story:** "PATCH n/5"; each level's fragments compile into a patch uploaded in the boss
-  fight; the twist that staff #042 wrote the AI stays (STORY.md).
+  fight; the twist that staff #042 wrote the AI stays (GAME_DESIGN.md, "Story").
 - **Story screens** (2026-10-05): the boot screen (after NEW GAME) and the elevator log
   (after level complete) type their lines on a blank screen, a character every 4 frames,
   then wait for START or 5 s. Log 5 shows before the boss level. Agreed (owner's
@@ -74,14 +72,13 @@ or git keeps the old one). Details of how the code does it belong in
 - **Boss design approved** (2026-10-05, owner): 3 terminals and uploads (hold Up), one
   earlier idea per phase (packets, the lift, the corrupted floor), no spawned bots or purge
   sweep, a whole-screen shake, game over restarts phase 1, song "Terminate"
-  (LEVEL_DESIGN.md section 7). While building it (2026-10-05; agreed in the owner's
+  (GAME_DESIGN.md, "Level 5: KERNEL"). While building it (2026-10-05; agreed in the owner's
   playthrough, 2026-10-11): a terminal
   lights once the phase's first volley has fallen, and phase 2's extra packets stay left
-  of the lift (LEVEL_DESIGN.md, "Level 5 build notes").
+  of the lift.
 - **Ending** (2026-10-05; agreed in the owner's playthrough, 2026-10-11): "LOCKDOWN LIFTED" typed as the screen fades to
   light, song "Closing", then a credits screen until START, then the title.
-- **Boss:** "KERNEL" on one screen, drawn with background tiles (details in M8, reviewed by
-  the owner first).
+- **Boss:** "KERNEL" on one screen, drawn with background tiles.
 - **Fades** between screens and on level load (owner likes them).
 
 ## Levels
@@ -93,7 +90,7 @@ or git keeps the old one). Details of how the code does it belong in
   above the 2-row HUD; up to 255 tiles wide.
 - **Rules the converter checks:** pits at least 3 tiles wide (the 16 px body walks across
   a 2-tile pit); every checkpoint has 2 free columns right of its gate, with ground.
-- **Jump metrics are measured in the ROM and pinned by tests** (LEVEL_DESIGN.md section 4).
+- **Jump metrics are measured in the ROM and pinned by tests** (LEVELS.md section 4).
   Level 1 uses steps up to 2 and gaps up to 5; level 2 climbs up to 3 (one-way shelves 3-4
   above), gaps up to 6; only level 5 asks for maximum jumps.
 - **Bots:** a `speed` per bot in Tiled, 1 or 2 px per frame (2026-10-04, owner). A bot can
@@ -126,7 +123,7 @@ or git keeps the old one). Details of how the code does it belong in
   the GB Studio engine; the player is a 16×32 metasprite (4 sprites in 8×16 mode).
 - **Gravity:** light only while rising with A held, strong when falling or after A is
   released (jump cut), halved near the top of a held jump (apex hang). Values from
-  RESEARCH.md 2.2.
+  the sources in SOURCES.md ("Jump values").
 - **Coyote time 6 frames, jump buffer 5,** counted down after they are checked, so the
   number in `player.h` is the number the player gets. A new press of A is needed to jump.
 - **Corner correction:** a ceiling corner overlapping the head by up to 4 px is slid past,
@@ -277,7 +274,8 @@ or git keeps the old one). Details of how the code does it belong in
 - **Player sprite is final** (2026-10-10, owner): the owner's programmer, first based on
   a Mario sprite and then heavily redrawn, plus 5 frames drawn in its style (10 frames:
   idle 2, run 4, jump, fall, hurt, death). `graphics/player/programmer.png` and the
-  "ApexLab Hero Sprite Sheet" Claude Design canvas are the source of truth.
+  "ApexLab Hero Sprite Sheet" Claude Design canvas are the source of truth. The owner's own
+  work, cleared for the public release (owner, 2026-10-11).
 - **All player frames stay in VRAM** (68 sprite tiles, 2026-10-10): no per-frame tile
   copy, so no frame budget cost. Copying each frame's 8 tiles in VBlank is the fallback
   if tiles run out.

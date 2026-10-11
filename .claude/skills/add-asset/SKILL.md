@@ -5,7 +5,7 @@ description: Add or replace pixel art in the ApexLab Game Boy game (player and e
 
 # Add or replace an asset
 
-The rules come from `docs/ART_PIPELINE.md`; reasons are in `docs/CGB_PLAN.md`.
+The rules and their reasons are in `docs/ART_PIPELINE.md` section 1.
 
 1. **Check the record.** `docs/SOURCES.md`, Assets section: what this replaces and where
    it came from. Nothing copied from Mario or other commercial games may ship.
@@ -46,6 +46,6 @@ The rules come from `docs/ART_PIPELINE.md`; reasons are in `docs/CGB_PLAN.md`.
    Look at the `diff_*.png` pictures and both contact sheets (DMG and GBC). If the
    golden screenshots fail (`tests/test_golden.py`), look at the new pictures in
    `tests/out/`, then `make goldens`.
-8. **Update the records:** the Assets row in `docs/SOURCES.md` (origin, license, credit),
-   the asset list in `docs/ART_PIPELINE.md`, and a `CREDITS.md` entry for CC-BY material.
+8. **Update the records:** the Assets row in `docs/SOURCES.md` (origin, license, credit)
+   and a `CREDITS.md` entry for CC-BY material.
 9. **Report** with the before/after pictures and a suggested commit message.

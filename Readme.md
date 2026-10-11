@@ -1,163 +1,122 @@
-## <div style="color:#f59800" align="center">---| My Game boy Game |---</div>
+# ApexLab: Code Breach
 
-A GameBoy game made with C and the GBDK library.
+A platformer for the Game Boy, written in C with [GBDK-2020](https://github.com/gbdk-2020/gbdk-2020).
+One 128 KB ROM that plays in color on a Game Boy Color and in 4 shades on the original
+Game Boy, tested on real hardware with a flashcart.
 
-## Screenshots
+The AI security of the ApexLab programming facility has gone haywire. You are staff #042,
+a programmer locked inside. Collect the code fragments (floppy disks) to open each
+security gate, ride the elevator down through five floors, and upload the patch into the
+mainframe AI, KERNEL.
 
----
+| | | |
+|---|---|---|
+| ![Title screen](screenshots/title.png) | ![Level 1, Server Room](screenshots/level_1.png) | ![Level 2, Code Testing Lab](screenshots/level_2.png) |
+| ![Level 3, AI Research Wing](screenshots/level_3.png) | ![Level 4, Network Hub](screenshots/level_4.png) | ![Level 5, KERNEL](screenshots/kernel.png) |
 
----
+On the original Game Boy:
 
----
+![Level 1 on the original Game Boy](screenshots/level_1_dmg.png)
 
-## <div style="color:#f59800" align="center">---|💺Usage/Examples|---</div>
+## The game
 
-# <div style="color:#f59800" align="center">---|👨‍💻 Tech Stack|---</div>
+- **5 levels**, one new idea each: the Server Room (bots, pits, gates), the Code Testing
+  Lab (one-way shelves), the AI Research Wing (lifts and chasing drones), the Network Hub
+  (spikes and cut cables) and the Mainframe, where KERNEL waits.
+- **3 sections per level.** Each security gate needs a quota of fragments; extras are a
+  bonus. An opened gate is your checkpoint.
+- **Forgiving:** 3 lives, refilled every level. A lost life puts you back at the last
+  gate with your fragments kept; game over lets you continue from that section.
+- **Passwords** instead of saves: every level complete screen shows one, and CONTINUE on
+  the title takes you back.
+- Music and sound effects by Tronimal, parallax backgrounds, fades, and a little story
+  told on the elevator rides.
 
-# <div style="color:#f59800" align="center">---|📝 How to use|---</div>
+## Controls
 
-## <div style="color:#f59800" align="center">---|📥 Download|---</div>
+| Button | In the game |
+|---|---|
+| ← → | Run |
+| A | Jump (hold it to jump higher) |
+| ↓ + A | Drop through a thin platform |
+| ↑ | Upload the patch at a lit terminal (level 5) |
+| START | Pause |
 
-## <div style="color:#f59800" align="center">---|🕶️Run Locally|---</div>
+On the password screen the d-pad picks a letter, A types it and B erases one.
 
-Clone the project
+**Cheats** (for playtesting, they stay in): while paused, hold A and press SELECT to skip
+to the next level, or hold A and press B to turn no-death on or off.
 
-# <div style="color:#f59800" align="center">---|✍️ Contributing|---</div>
+## Play it
 
-Contributions, issues and feature requests are welcome!<br/>
-Give a ⭐️ if this project helped you!
+- **In an emulator:** download `ApexLab.gb` from the releases and open it in any Game Boy
+  emulator ([Emulicious](https://emulicious.net/), [SameBoy](https://sameboy.github.io/),
+  [mGBA](https://mgba.io/), ...). It runs in color in Game Boy Color mode.
+- **On a real Game Boy:** copy `ApexLab.gb` to a flashcart (EverDrive or a clone) and
+  start it. It's a plain MBC5 cartridge without save RAM, so any flashcart that runs
+  MBC5 games works. It was played through on a Game Boy Color with an EverDrive clone.
 
-# <div style="color:#f59800" align="center">---|🚀 About Me|---</div>
+## Build it
 
-<h2 align="center">Hi 👋, I'm Norbert</h2>
-<h3 align="center">A passionate developer from Apex Lab Hungary</h3>
+You need [GBDK-2020 4.5.0](https://github.com/gbdk-2020/gbdk-2020/releases/tag/4.5.0)
+unpacked into `gbdk/`, GNU Make and Python 3.13. On Windows, `make` works from
+PowerShell, cmd and Git Bash.
 
-```markdown
-- 💼 I’m working at Apex Lab 🚀
-- 🔭 I’m working on developing my front-end and back-end skills.
-- 🎓 I’ve learned programming at Codecool.
-- 👯 I’m looking for fun projects to contribute to.
-- 🥅 2023 Goals: Have fun and learn as much as I can.
-- 💬 I like to tinker with forgotten or not so popular technologies.
-- 🧗 I try to go beyond and push the bounds.
-- ⚡ Fun fact: I love old technology :raised_hands:
+```bash
+make release
 ```
 
-<div align="center">
+That builds `release/ApexLab.gb`. `make` builds the development ROM `obj/ApexLab.gb`
+(it skips the intro and title, for the tests). The tests need a Python environment:
 
-[![LinkedIn](https://img.shields.io/badge/-linkedin-blue?style=for-the-badge&logo=linkedin&logoColor=white&link=https://www.linkedin.com/in/ruff-norbert-6b167b204//)](https://www.linkedin.com/in/ruff-norbert-6b167b204/)
-[![Gmail Badge](https://img.shields.io/badge/-Mail-c14438?style=for-the-badge&logo=Gmail&logoColor=white&link=mailto:ruffnorbert88@gmail.com)](mailto:ruffnorbert88@gmail.com)
+```bash
+make venv
+```
 
-</div>
-    <h2><img src="https://media.giphy.com/media/cj87CxfRtrUifF3Ryk/giphy.gif" height="25"> My Github Stats</h2>
-<div align="center">
+```bash
+make test
+```
 
-[![](https://raw.githubusercontent.com/NorbertRuff/NorbertRuff/master/profile-summary-card-output/material_palenight/0-profile-details.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
-[![](https://raw.githubusercontent.com/NorbertRuff/NorbertRuff/master/profile-summary-card-output/material_palenight/1-repos-per-language.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
-[![](https://raw.githubusercontent.com/NorbertRuff/NorbertRuff/master/profile-summary-card-output/material_palenight/2-most-commit-language.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
-[![](https://raw.githubusercontent.com/NorbertRuff/NorbertRuff/master/profile-summary-card-output/material_palenight/3-stats.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
-[![](https://raw.githubusercontent.com/NorbertRuff/NorbertRuff/master/profile-summary-card-output/dracula/4-productive-time.svg)](https://github.com/vn7n24fzkq/github-profile-summary-cards)
+The tests run the ROM headless in [PyBoy](https://github.com/Baekalfen/PyBoy), in both
+Game Boy and Game Boy Color mode: they replay every level, check the physics, the
+palettes, the passwords and the frame budget, and compare screenshots.
 
-</div>
+## How it works
 
-## 🛠️
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the game runs on the hardware:
+ROM banking, streaming a wide level through a 32-tile map, the jump physics in integer
+math, the parallax screen splits, palettes and fades on both Game Boys, music and sound
+effects, and the passwords. The reasons behind each choice are in
+[docs/DECISIONS.md](docs/DECISIONS.md), where every idea and asset came from in
+[docs/SOURCES.md](docs/SOURCES.md). The rest of the docs are listed in
+[docs/README.md](docs/README.md).
 
-<div align="center">
-    <img src="https://www.codewars.com/users/NorbertRuff/badges/large" alt="codewars"/>
-</div>
+## Credits
 
-<table style="border-collapse: collapse; width: 100%;" border="1">
-    <tr>
-        <td valign="top">
-            <h2 align="center"> 💻 </h2>
-            <div align="center">
-                <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" height="25" alt="python">
-                <img src="https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white" height="25" alt="java">
-                <img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" height="25" alt="go">
-                <img src="https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white" height="25" alt="css">
-                <img src="https://img.shields.io/badge/HTML5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white" height="25" alt="html">
-                <img src="https://img.shields.io/badge/JavaScript-%23F7DF1E.svg?style=for-the-badge&logo=javascript&logoColor=black" height="25" alt="javascript">
-                <img src="https://img.shields.io/badge/TypeScript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" height="25" alt="typescript">
-                <img src="https://img.shields.io/badge/Markdown-000000?style=for-the-badge&logo=markdown&logoColor=white" height="25" alt="markdown">
-            </div>
-        </td>
-        <td valign="top">
-            <h2 align="center"> 🌐 </h2>
-            <div align="center">
-                <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" height="25" alt="react">
-                <img src="https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white" height="25" alt="nodejs">
-                <img src="https://img.shields.io/badge/GraphQL-E10098?style=for-the-badge&logo=graphql&logoColor=white" height="25" alt="graphql">
-                <img src="https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white" height="25" alt="Prisma">
-                <img src="https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB" height="25" alt="express">
-                <img src="https://img.shields.io/badge/svelte-%23f1413d.svg?style=for-the-badge&logo=svelte&logoColor=white" height="25" alt="svelte">
-                <img src="https://img.shields.io/badge/nestjs-%23E0234E?style=for-the-badge&logo=nestjs&logoColor=white" height="25" alt="nestjs">
-                <img src="https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white" height="25" alt="flask">
-                <img src="https://img.shields.io/badge/Thymeleaf-%23005C0F?style=for-the-badge&logo=Thymeleaf&logoColor=white" height="25" alt="thymeleaf">
-                <img src="https://img.shields.io/badge/jinja-white.svg?style=for-the-badge&logo=jinja&logoColor=black" height="25" alt="jinja">
-                <img src="https://img.shields.io/badge/-ApolloGraphQL-311C87?style=for-the-badge&logo=apollo-graphql" height="25" alt="graphql">
-                <img src="https://img.shields.io/badge/-Hasura-311C87?style=for-the-badge&logo=hasura" height="25" alt="hasura">
-            </div>
-        </td>
-        <td valign="top">
-            <h2 align="center"> 📚 </h2>
-            <div align="center">
-                <img src="https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white" height="25" alt="bootstrap">
-                <img src="https://img.shields.io/badge/styled--components-DB7093?style=for-the-badge&logo=styled-components&logoColor=white" height="25" alt="styled-components">
-                <img src="https://img.shields.io/badge/MUI-%230081CB.svg?style=for-the-badge&logo=mui&logoColor=white" height="25" alt="material-ui">
-                <img src="https://img.shields.io/badge/NPM-%23CB3837.svg?style=for-the-badge&logo=npm&logoColor=white" height="25" alt="npm">
-                <img src="https://img.shields.io/badge/yarn-%232C8EBB.svg?style=for-the-badge&logo=yarn&logoColor=white" height="25" alt="yarn">
-                <img src="https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white" height="25" alt="jest">
-                <img src="https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white" height="25" alt="eslint">
-                <img src="https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white" height="25" alt="postman">
-                <img src="https://img.shields.io/badge/-Swagger-%23Clojure?style=for-the-badge&logo=swagger&logoColor=white" height="25" alt="swagger">
-                <img src="https://img.shields.io/badge/chakra-%234ED1C5.svg?style=for-the-badge&logo=chakraui&logoColor=white" height="25" alt="chakra">
-                <img src="https://img.shields.io/badge/fitbit-00B0B9?style=for-the-badge&logo=fitbit&logoColor=white" height="25" alt="fitbit">
-            </div>
-        </td>
-        <td valign="top">
-            <h2 align="center"> ⚙ </h2>
-            <div align="center">
-                <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" height="25" alt="linux">
-                <img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" height="25" alt="ubuntu">
-                <img src="https://img.shields.io/badge/webstorm-3982CE?style=for-the-badge&logo=webstorm&logoColor=white&color=3982CE" height="25" alt="webstorm">
-                <img src="https://img.shields.io/badge/pycharm-3982CE?style=for-the-badge&logo=pycharm&logoColor=black&color=3982CE&labelColor=white" height="25" alt="pycharm">
-                <img src="https://img.shields.io/badge/IntelliJIDEA-3982CE.svg?style=for-the-badge&logo=intellij-idea&logoColor=white" height="25" alt="intellij">
-                <img src="https://img.shields.io/badge/GoLand-3982CE?&style=for-the-badge&logo=goland&logoColor=white" height="25" alt="Goland">
-                <img src="https://img.shields.io/badge/Atom-%2366595C.svg?style=for-the-badge&logo=atom&logoColor=white" height="25" alt="Atom">
-                <img src="https://img.shields.io/badge/Notepad++-90E59A.svg?style=for-the-badge&logo=notepad%2b%2b&logoColor=black" height="25" alt="notepad">
-                <img src="https://img.shields.io/badge/Visual%20Studio%20Code-0078d7?style=for-the-badge&logo=visual-studio-code&logoColor=white" height="25">
-            </div>
-        </td>
-        <td valign="top">
-            <h2 align="center"> 🗄️ </h2>
-            <div align="center">
-                <img src="https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white" height="25" alt="redis">
-                <img src="https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white" height="25" alt="postgresql">
-                <img src="https://img.shields.io/badge/circle%20ci-%23161616.svg?style=for-the-badge&logo=circleci&logoColor=white" height="25" alt="circleci">
-                <img src="https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white" height="25" alt="githubactions">
-                <img src="https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white" height="25" alt="aws">
-                <img src="https://img.shields.io/badge/heroku-%23430098.svg?style=for-the-badge&logo=heroku&logoColor=white" height="25" alt="heroku">
-                <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white" height="25" alt="docker">
-                <img src="https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white" height="25" alt="terraform">
-                <img src="https://img.shields.io/badge/bitbucket-%230047B3.svg?style=for-the-badge&logo=bitbucket&logoColor=white" height="25" alt="bitbucket">
-                <img src="https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white" height="25" alt="git">
-                <img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" height="25" alt="github">
-            </div>
-        </td>
-        <td valign="top">
-            <h2 align="center"> 🎨 </h2>
-            <div align="center">
-                <img src="https://aleen42.github.io/badges/src/photoshop.svg" height="25" alt="photoshop">
-                <img src="https://aleen42.github.io/badges/src/illustrator.svg" height="25" alt="illustrator">
-                <img src="https://aleen42.github.io/badges/src/dreamweaver.svg" height="25" alt="dreamweaver">
-                <img src="https://aleen42.github.io/badges/src/flash.svg" height="25" alt="flash">
-                <img src="https://aleen42.github.io/badges/src/after_effects.svg" height="25" alt="after effects">
-                <img src="https://aleen42.github.io/badges/src/premiere.svg" height="25" alt="premiere">
-            </div>
-        </td>
-    </tr>
-</table>
+- **Code, design and art:** Norbert Ruff, with [Claude Code](https://claude.com/claude-code)
+  writing the code. Art redrawn by hand on the 8×8 grid from references made with Claude
+  Design and Gemini, faces finished in Aseprite.
+- **Music:** Tronimal, [Game Boy Music Pack](https://yogi-tronimal.itch.io/game-boy-music-pack)
+  and [Game Boy Music Pack #2](https://yogi-tronimal.itch.io/game-boy-music-pack-2), CC BY 4.0.
+- **Sound effects:** Tronimal, [GBFX](https://yogi-tronimal.itch.io/gbfx) and
+  [GBFX2](https://yogi-tronimal.itch.io/gbfx2), CC BY 4.0.
+- **Music driver:** [hUGEDriver](https://github.com/SuperDisk/hUGEDriver) by SuperDisk,
+  public domain.
 
-<div align="center">
-    <p align="center"><img src="https://komarev.com/ghpvc/?username=NorbertRuff&label=visitors&color=0e75b6&style=for-the-badge" alt="prathmesh"/></p>
-</div>
+Every third-party item with its license and changes: [CREDITS.md](CREDITS.md).
+
+## License
+
+- The code (`src/`, `tools/`, `tests/`, the `Makefile`): [MIT](LICENSE).
+- The game's own art (`graphics/`) and levels (`levels/`):
+  [CC BY 4.0](LICENSE-ART).
+- The music and sound effects keep their own CC BY 4.0 license, and hUGEDriver is public
+  domain ([CREDITS.md](CREDITS.md)).
+
+## About me
+
+Hi, I'm Norbert, a developer at Apex Lab Hungary. I like to tinker with old technology;
+this game started as a way to learn C on the Game Boy.
+
+[![LinkedIn](https://img.shields.io/badge/-linkedin-blue?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ruff-norbert-6b167b204/)
+[![Gmail Badge](https://img.shields.io/badge/-Mail-c14438?style=for-the-badge&logo=Gmail&logoColor=white)](mailto:ruffnorbert88@gmail.com)

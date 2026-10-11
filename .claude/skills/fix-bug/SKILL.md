@@ -8,7 +8,7 @@ description: Fix a bug in the ApexLab Game Boy game test-first, and prove the te
 Conventions this follows are in `docs/TESTING.md`. The owner runs git; don't commit.
 
 1. **Record it.** Find the bug in the Bugs list of `docs/ROADMAP.md`. If it's new, add it
-   with the next number (bugs 1-22 are in `docs/archive/PROJECT_STATE.md`).
+   with the next number (bugs 1-22 come from the 2026-10-02 audit, in the git history; each has a test in `tests/test_regressions.py`).
 2. **Write the test first** in `tests/test_regressions.py`, under a `# Bug N ---` header,
    using the `Game` helpers in `tests/gamelib.py`.
    - Drive the game with input (`game.hold`, `game.press`). Write game state

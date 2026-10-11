@@ -73,18 +73,17 @@ repeats what another one checks. Failing tests save screenshots to `tests/out/`.
 - Where an idea, code or asset came from: `docs/SOURCES.md`; third-party assets also in
   `CREDITS.md`.
 - What's done, open, and the current numbers (tests, bank 0, frame budget): `docs/ROADMAP.md`.
-- How the code works: `docs/ARCHITECTURE.md`, updated only when the structure changes.
-- Level briefs and greybox notes: `docs/LEVEL_DESIGN.md`.
+- How the game works (the final explainer, from DECISIONS and SOURCES): `docs/ARCHITECTURE.md`,
+  updated when the structure changes.
+- Level rules, the Tiled setup and jump metrics: `docs/LEVELS.md`.
 
-Don't repeat a fact in a second doc; link to it. The final "how it works" document (M9) is
-written from DECISIONS and SOURCES. No copied art may remain in the final game (SOURCES.md
-lists what to replace). Old audits and reviews are in `docs/archive/`.
+Don't repeat a fact in a second doc; link to it. No copied art in the game (SOURCES.md,
+Assets). Earlier plans, research and reviews are in the git history only.
 
 Project skills (`.claude/skills/`): `fix-bug`, `add-asset` (pixel art from Claude Design),
 `close-milestone`. Before/after screenshots: `tools/shots.py --out <dir>` and
-`tools/compare_shots.py`. Research on
-techniques, licenses and tool flags: `docs/RESEARCH.md` (check a repo's license there
-before copying code).
+`tools/compare_shots.py`. Check a repo's license in SOURCES.md ("Reference code and
+licenses") before copying code.
 
 ## Code style (owner's rule)
 
@@ -110,7 +109,7 @@ The owner walks through every file and must be able to say what each part does:
   it in a local. When code misbehaves for no visible reason, read `obj/<file>.asm`.
 - **Window:** `move_win()` for absolute positions (`WX = 7` is the left edge).
 
-## GBC + DMG rules (`docs/CGB_PLAN.md`)
+## GBC + DMG rules (`docs/ART_PIPELINE.md` section 1)
 
 - `is_cgb` (`src/engine/platform.h`) guards every VRAM bank 1 / attribute write: on DMG it
   would overwrite the tile map.

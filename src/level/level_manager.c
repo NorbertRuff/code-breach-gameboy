@@ -63,28 +63,13 @@ void hud_update_lives(uint8_t lives)
     set_win_tiles(1, 0, 1, 1, &t_digit);
 }
 
-// Writes a value 0-99 as two digit tiles. Counts the tens by subtracting: the CPU has no
-// division, and the library's takes about 6 screen lines.
-static void write_two_digits(uint8_t value, uint8_t* tiles)
-{
-    uint8_t tens = 0;
-    while (value >= 10) {
-        value -= 10;
-        tens++;
-    }
-    tiles[0] = FONT_DIGIT_TILE + tens;
-    tiles[1] = FONT_DIGIT_TILE + value;
-}
-
 // Shows "NN/TT" fragments in the HUD's top-right five tiles, each value capped at 99.
 void hud_update_count(uint8_t collected, uint8_t total)
 {
     uint8_t tiles[5];
-    if (collected > 99) collected = 99;
-    if (total > 99) total = 99;
-    write_two_digits(collected, tiles);
+    text_two_digit_tiles(collected, tiles);
     tiles[2] = FONT_SLASH_TILE;
-    write_two_digits(total, tiles + 3);
+    text_two_digit_tiles(total, tiles + 3);
     set_win_tiles(15, 0, 5, 1, tiles);
 }
 

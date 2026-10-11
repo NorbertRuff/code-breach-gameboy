@@ -1,0 +1,18 @@
+ApexLab: Code Breach - art and levels
+
+Copyright (c) 2026 Norbert Ruff
+
+The game's own art (the files in graphics/ and the art data generated from them in
+src/graphics/) and its levels (levels/ and src/levels/) are licensed under the
+Creative Commons Attribution 4.0 International License (CC BY 4.0).
+
+You may share and adapt them for any purpose, as long as you give appropriate credit
+("ApexLab: Code Breach by Norbert Ruff"), link to the license, and indicate if changes
+were made.
+
+Summary: https://creativecommons.org/licenses/by/4.0/
+Full legal text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+Not covered by this license: the music (music/, src/music/) and sound effects (sounds/,
+src/sound/effects.c) by Tronimal, which are CC BY 4.0 under their author's own terms,
+and hUGEDriver (lib/hUGEDriver/), which is public domain. See CREDITS.md.

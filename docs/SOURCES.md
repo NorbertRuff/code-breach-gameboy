@@ -6,7 +6,7 @@ material for the final "how it works" document (roadmap M9) and for the credits.
 
 **Keep it current:** when code or an asset takes an idea from a tutorial, a repo, a
 document or a person, add a row here in the same change. Status is *in use* or
-*planned*. Licenses of reference repos are in [RESEARCH.md](RESEARCH.md) section 5.
+*planned*. Licenses of the reference repos are in "Reference code and licenses" below.
 
 ## Engine and hardware techniques
 
@@ -16,7 +16,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Autobank build flags (`-autobank -Wb-ext=.rel`, `-Wm-yoA`), MBC5 header (`-Wl-yt0x19`; `0x1B` with RAM + battery for the save test ROMs), GBC-compatible header (`-Wm-yc`), `.sym` output (`-Wm-yS`) | GBDK docs, toolchain settings; checked by the research agent on GBDK 4.5.0 | `Makefile` | In use |
 | One Makefile for PowerShell, cmd and Git Bash: force `cmd.exe` on Windows | Own finding (make picks `sh.exe` only when Git Bash is on PATH) | `Makefile` | In use |
 | Hardware detection `_cpu == CGB_TYPE`; guard VRAM bank 1 writes on DMG | GBDK docs (supported consoles), Pan Docs | `src/engine/platform.c` | In use |
-| Gray GBC palettes matching the DMG shades, attribute maps cleared at boot | Own design, from Pan Docs on CGB palettes and attributes | `src/engine/palette.c` `palette_init`, `src/engine/platform.c` | In use (until the M5 palettes) |
+| Gray GBC palettes matching the DMG shades, attribute maps cleared at boot | Own design, from Pan Docs on CGB palettes and attributes | `src/engine/palette.c` `palette_init`, `src/engine/platform.c` | Replaced by the level palettes (M5) |
 | Window HUD at an absolute position: `move_win(7, 128)`, `WX = 7` is the left edge | GBDK docs (`move_win`, `scroll_win` is relative), flozz/gameboy-examples example 08 | `level_manager.c` `set_hud_window_tiles` | In use |
 | Metasprites for the 16×32 player (4 hardware sprites in 8×16 mode), `move_metasprite_ex` / `move_metasprite_flipx` | GBDK docs, `metasprites.h`; Larold's metasprite tutorial | `player.c` `player_draw` | In use |
 | DMG fades by stepping `BGP_REG` (`0xE4 → 0xF9 → 0xFE → 0xFF`) | The project's early versions; same technique in flozz example 09 | `src/engine/palette.c` `palette_fade_to` | In use (DMG) |
@@ -34,16 +34,14 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Positions in 1/32 px; coyote time, jump buffer, hold-to-extend jump as small countdowns | GB Studio engine `gbvm/src/states/platform.c` (MIT) | `player.c` | In use |
 | Jump values: two gravities (jump cut), apex hang, coyote 6 frames, buffer 5 frames, corner correction | Kyle Pittman "Building a Better Jump" (GDC 2016); Celeste `Player.cs` (Maddy Thorson); SMBpedia movement data | `player.h`, `player.c` | In use |
 | Strong gravity on every fall, light gravity only while rising with A held | Super Mario Bros. (SMBpedia movement data) | `player.c` `choose_gravity` | In use |
-| Collision per axis; check points no more than 8 px apart along the box edge (here: every tile row and column the edge spans) | Larold's collision tutorial; RESEARCH.md 2.2 | `player.c` `move_x`, `move_y`, `column_has`, `area_has` | In use |
+| Collision per axis; check points no more than 8 px apart along the box edge (here: every tile row and column the edge spans) | Larold's collision tutorial | `player.c` `move_x`, `move_y`, `column_has`, `area_has` | In use |
 | Metasprite position in hardware sprite coordinates: screen origin at (8, 16), `DEVICE_SPRITE_PX_OFFSET_X/Y` | GBDK `gb/metasprites.h` and `gb/hardware.h`; Pan Docs, OAM | `player.c` `player_draw` | In use |
 | Jump only on a new press of A | Own fix (review P1); edge detection as in flozz example 02 | `input.c` | In use |
 | Spawn list sorted by X, read with a cursor, start index per section | BlackCastle `src/monster_data.c` (idea only), marioland-gbdk (idea only) | `tools/tiled2c.py`, `src/actor/actor.c` `actors_spawn`, `actors_reset` | In use |
 | Removing actors that are off screen | GB Studio engine `src/core/actor.c` (MIT): off-screen actors are deactivated (here: removed a screen behind the camera) | `src/actor/actor.c` `actors_update` | In use |
-| One table entry per actor type (update, art, hit box) instead of copied code per enemy | RESEARCH.md 2.4: BlackCastle's copied draw blocks as the counter-example | `src/actor/actor.c` `actor_types`, `src/actor/bot.c` `bot_type` | In use |
+| One table entry per actor type (update, art, hit box) instead of copied code per enemy | Research 2026-10-02: BlackCastle's copied draw blocks as the counter-example | `src/actor/actor.c` `actor_types`, `src/actor/bot.c` `bot_type` | In use |
 | Moving platforms move before the player, and carry a player who stood on them by the step they took; one-way, so the player jumps up through them | Common platformer practice (own implementation; no code copied) | `src/actor/lift.c`, `actors_move_lifts`, `src/player/player.c` `ride_lift` | In use |
 | Rebuild the sprite list every frame, then `hide_sprites_range` | zelda-gbdk `objects.c` (idea only); GBDK `metasprites` example | `main.c` `draw_sprites`, `src/actor/actor.c` `actors_draw` | In use |
-| Object pools with a free list, fixed sprite ranges | cuphead_gb `bullet_pool.c` (MIT) | Projectiles, particles | Planned (M3/M8) |
-| Boss drawn with background tiles, poses in the off-screen map, switched by scrolling | cuphead_gb README and maps (MIT) | KERNEL boss | Planned (M8) |
 | Sound effects over music: one at a time with a priority, its channels muted in `hUGE_mute_mask` until it ends | untoxa/VGM2GBSFX `musicmanager.c` (MIT); used the same way in GB Studio and CrossZGB | `src/sound/sound.c` (own C player, not VGM2GBSFX's) | In use |
 | Reading FX Hammer `.sav` files: effect channels at 0x300, 32 steps of 8 bytes per effect from 0x400, the note-to-frequency table, which registers a step writes | untoxa/VGM2GBSFX `utils/fxhammer2data.py` (MIT) | `tools/fxhammer2c.py` (rewritten for our step format) | In use |
 | hUGEDriver: `hUGE_init` with the song's bank switched in, `hUGE_dosound` once per frame from an interrupt, with the song's bank switched in | Larold's hUGEDriver tutorial; hUGEDriver `gbdk_example` (public domain) | `src/sound/music.c` (called from the band split in `src/engine/screen.c`) | In use |
@@ -52,10 +50,10 @@ document or a person, add a row here in the same change. Status is *in use* or
 | GBC attributes of a streamed column from a palette per tile, written to VRAM bank 1 (`VBK_REG`) right after its tiles | Pan Docs, "BG Map Attributes (CGB Mode only)"; GBDK `set_bkg_attributes`; the per-tile table is own design (DECISIONS.md) | `tools/tiled2c.py` `tile_palettes`, `src/level/level_stream.c` | In use |
 | A tile's palette read back from an indexed PNG: color index / 4 | Own design, from the PNG layout `tools/gbconvert.py` writes | `tools/tiled2c.py` | In use |
 | Tiled terrain set (edge type) for the machine blocks: one tile per combination of exposed sides | Tiled documentation, "Terrain" (Wang sets) | `graphics/tilesets/server_room.tsx` | In use |
-| Save header: magic value, version, size, checksum | CrossZGB `SRAM.c` (MIT); Larold's saving tutorial | Saves | Planned (M7); test ROM in use |
+| Save header: magic value, version, size, checksum | CrossZGB `SRAM.c` (MIT); Larold's saving tutorial | The save test ROMs only (the game uses passwords) | In use |
 | Counting lag frames with the VBlank counter: every VBlank during an update is a frame without one | GBDK docs, `sys_time` in `gb/gb.h` | `src/main.c` `lag_frames` | In use |
 | Look-ahead camera, deadzone, lock behind opened gates | GB Studio engine `src/core/camera.c` (MIT), camera locks; Itay Keren, "Scroll Back" | `src/engine/camera.c` | In use |
-| A gate that retracts one row at a time when it opens | Game-feel research, RESEARCH.md section 3 ("bars retract one tile every 3 frames") | `src/level/section.c`, `level_stream.c` `level_open_gate_row` | In use |
+| A gate that retracts one row at a time when it opens | Game-feel research ("bars retract one tile every 3 frames") | `src/level/section.c`, `level_stream.c` `level_open_gate_row` | In use |
 
 ## Testing
 
@@ -70,7 +68,7 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Golden screenshots: render a screen and compare it pixel for pixel with a stored picture, rewritten on purpose (`make goldens`) | Snapshot testing, a common test technique; PyBoy 2.7.0 `screen.image` | `tests/test_golden.py` | In use |
 | Level replays as moves that watch the game (run to x, jump, follow a bot) instead of fixed frame counts | Own design, after frame-exact routes broke with small layout changes | `tests/gamelib.py` `Pilot`, `tests/test_level_1.py` | In use |
 | Reading game state at a fixed point in the frame: copy the struct from a `hook_register` callback on `player_draw`; test writes to the player wait for the same point | Own finding (PyBoy frames end mid-update) | `tests/gamelib.py` `player()`, `place_player()` | In use |
-| Reachability by simulating jumps with a copy of the game's physics, from every reachable surface; jump arcs drawn from the simulated paths | Own design (the plan in LEVEL_DESIGN.md section 1, step 3) | `tools/levelpreview.py`, `tools/physics.py` | In use |
+| Reachability by simulating jumps with a copy of the game's physics, from every reachable surface; jump arcs drawn from the simulated paths | Own design | `tools/levelpreview.py`, `tools/physics.py` | In use |
 | Finding lag frames: count game-loop calls per frame with a PyBoy hook; time code by reading `LY` at function entries (114 CPU cycles per line) | Own method | `tests/gamelib.py` `track_frame_lines`, `tests/test_frame_budget.py`, `tools/frame_budget.py` | In use |
 | GitHub Actions: cached GBDK download, build, test | GitHub-hunt research (sample workflow); mdeclerk/Bananas (MIT) | `.github/workflows/build.yml` | In use |
 
@@ -79,15 +77,32 @@ document or a person, add a row here in the same change. Status is *in use* or
 | Idea | Source | Where | Status |
 |---|---|---|---|
 | Story: a programmer escapes ApexLab after the AI security goes haywire | Owner | GAME_DESIGN.md | In use |
-| Key-gated sections, fragment quota, gates as checkpoints, elevator exit | Owner decisions 2026-10-02; Donkey Kong '94 key-to-door idea (game-feel research) | LEVEL_DESIGN.md, `src/level/section.c` | In use |
-| 16×32 multi-sprite player | Owner (early decision, kept 2026-10-03) | `player.c`, ART_PIPELINE.md | In use |
-| "PATCH n/5" story tie-in, boot screen lines, AI log per elevator ride | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md, STORY.md, `src/game_state/story.c` | In use |
-| KERNEL boss concept | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md, LEVEL_DESIGN.md section 7, `src/game_state/kernel.c` | In use |
+| Key-gated sections, fragment quota, gates as checkpoints, elevator exit | Owner decisions 2026-10-02; Donkey Kong '94 key-to-door idea (game-feel research) | GAME_DESIGN.md, `src/level/section.c` | In use |
+| 16×32 multi-sprite player | Owner (early decision, kept 2026-10-03) | `player.c` | In use |
+| "PATCH n/5" story tie-in, boot screen lines, AI log per elevator ride | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md, `src/game_state/story.c` | In use |
+| KERNEL boss concept | Game-feel research suggestion, accepted by the owner | GAME_DESIGN.md, `src/game_state/kernel.c` | In use |
 | Hard mode after clearing (quota = all fragments) | Kirby's Dream Land extra mode (game-feel research), accepted by the owner | — | Cut (owner, 2026-10-05) |
 | 4-letter passwords with a check byte that refuses every single wrong letter | Owner decision (contents, 2026-10-04); own design for the encoding | `src/game_state/progress.c`, `tools/password.py` | In use |
-| Brighter palettes on GBA | Shantae's GBA enhancement (game-feel research), accepted by the owner | CGB_PLAN.md | Planned (M4) |
-| Readability: light shades behind the play lane, black outlines | GB Studio Central sprite style notes (game-feel research) | ART_PIPELINE.md | Planned (M5) |
-| Indexed PNG with palettes in groups of 4, light to dark, for `png2asset -keep_palette_order`; per-tile palettes in the attribute map | GBDK png2asset docs (`-keep_palette_order`, `-use_map_attributes`) | `tools/gbconvert.py` | In use (tool ready, art in M5) |
+| Brighter palettes on GBA | Shantae's GBA enhancement (game-feel research) | — | Cut (owner, 2026-10-11) |
+| Readability: light shades behind the play lane, black outlines | GB Studio Central sprite style notes (game-feel research) | Every level's art | In use |
+| Indexed PNG with palettes in groups of 4, light to dark, for `png2asset -keep_palette_order`; per-tile palettes in the attribute map | GBDK png2asset docs (`-keep_palette_order`, `-use_map_attributes`) | `tools/gbconvert.py` | In use |
+
+## Reference code and licenses
+
+Licenses as read on 2026-10-02. Code is copied only from MIT or public-domain sources;
+repos without a license were used for ideas only.
+
+| Repo | License | How it is used |
+|---|---|---|
+| chrismaltby/gbvm (GB Studio engine) | MIT | Physics countdowns, camera, actor removal (ideas, values) |
+| gbdk-2020/CrossZGB | MIT | Collision ring, save header (ideas) |
+| untoxa/VGM2GBSFX | MIT | FX Hammer layout and note table (rewritten, table copied; CREDITS.md) |
+| cuphead_gb | MIT code; art derived from Cuphead, never used | Ideas only |
+| flozz/gameboy-examples | WTFPL | Window HUD, fades, edge detection (ideas) |
+| struktured-labs/quintra | MPL-2.0 | Save and ROM layout test ideas only |
+| mdeclerk/Bananas | MIT | CI and PyBoy setup (ideas) |
+| untoxa/BlackCastle, zelda-gbdk, odrevet/marioland-gbdk | No license | Ideas only, no code |
+| hUGEDriver, hUGETracker (SuperDisk) | Public domain | Driver linked; the `.uge` format ported to `tools/uge2c.py` |
 
 ## Assets
 
@@ -97,7 +112,7 @@ games ships (decision 2026-10-03).
 
 | Asset | Origin | Status |
 |---|---|---|
-| `graphics/player/programmer.png` | Owner: first based on a Mario sprite, then heavily redrawn (owner, 2026-10-10); idle 2, jump, fall, hurt and death added in its style with Claude Design ("ApexLab Hero Sprite Sheet" canvas, 2026-10-05) | Final (owner, 2026-10-10) |
+| `graphics/player/programmer.png` | Owner: first based on a Mario sprite, then heavily redrawn (owner, 2026-10-10); idle 2, jump, fall, hurt and death added in its style with Claude Design ("ApexLab Hero Sprite Sheet" canvas, 2026-10-05) | Final (owner, 2026-10-10); the owner's own work, cleared for the public release (owner, 2026-10-11) |
 | `graphics/enemies/security_bot.png`, `chaser_drone.png`, `data_packet.png`, `graphics/objects/lift_platform.png` | The owner's reference pictures (2026-10-10), redrawn at 16×16 (the lift 24×16) in the style guide's sprite palettes with Claude Design ("ApexLab Enemy Sprites" canvas) | In use |
 | `graphics/tilesets/server_room.png` (level 1 tileset: machine blocks, catwalk, wiring hazard, racks, pipes, terminal, gate, elevator closed and open, floppy fragment) and `server_room.tsx` | Gemini starter, redrawn (2026-10-10): the owner's level mock-up and object sheet, shrunk to 1× (they were 12.5× and about 28×, not on a pixel grid) and used as references; every tile redrawn by hand on the 8×8 grid in the `server_room` palettes | In use |
 | `graphics/bands/server_room_band.png` (level 1 parallax band) | Gemini starter, redrawn (2026-10-10): the owner's band picture (racks under a ceiling with cables) redrawn at 256×24 in the `server_room_band` palette, 16 tiles | In use |
@@ -114,6 +129,6 @@ games ships (decision 2026-10-03).
 | `graphics/bands/mainframe_band.png` (level 5 parallax band) | Gemini starter, redrawn (2026-10-11): tape-reel mainframes under a truss, light panels, cables and cabinets, 256×24 in the `mainframe_band` palette, 17 tiles | In use |
 | Greybox tiles (`graphics/tilesets/greybox.png`, drawn by `tools/greybox_tileset.py`) | Project code | The test rooms only |
 | Greybox parallax band (`graphics/bands/greybox_band.png`, drawn by `tools/greybox_band.py`) | Project code | The test rooms only |
-| Music: `music/*.uge` (Tech, Neurotic Robonaut, Observing Jupiter, Decampment, Gone Missing, Delight); both packs in `music/packs/` for the sound test | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
+| Music: `music/*.uge` (Tech, Neurotic Robonaut, Observing Jupiter, Whirlwind, Terminate, Decampment, Gone Missing, Delight, Closing); both packs in `music/packs/` for the sound test | Tronimal, Game Boy Music Packs #1 and #2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |
 | hUGEDriver 6.1.3 (`lib/hUGEDriver/`) | SuperDisk, github.com/SuperDisk/hUGEDriver release, public domain | In use; credited in `CREDITS.md` |
 | Sound effects: `sounds/GBFX.sav`, `sounds/GBFX2.sav` (picks in `sounds/effects.txt`) | Tronimal, GBFX and GBFX2 (itch.io), CC BY 4.0 | In use; credited in `CREDITS.md` |

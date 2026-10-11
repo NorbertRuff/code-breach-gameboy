@@ -10,7 +10,6 @@
 #include "../engine/text.h"
 #include "../level/level_manager.h"
 #include "../sound/music.h"
-#include "../utils.h"
 
 #define MESSAGE_FRAMES 300   // a message stays 5 s, unless START is pressed sooner
 #define CONTINUE 0           // the game over choices: CONTINUE, then QUIT

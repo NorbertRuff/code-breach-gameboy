@@ -2,17 +2,15 @@
 
 | Document | What it covers |
 |---|---|
-| [../GAME_DESIGN.md](../GAME_DESIGN.md) | Story, levels, mechanics, visual style. What the game *is*. |
-| [ROADMAP.md](ROADMAP.md) | Status, open bugs, what waits for the owner, milestones M0–M9. What to do next. |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | How the code is put together: states, modules, physics, streaming, actors, screen splits, music, memory map. |
-| [DECISIONS.md](DECISIONS.md) | Project decisions with reasons and status. |
-| [SOURCES.md](SOURCES.md) | Where each technique, rule and asset came from, and where it's used. Kept current; feeds the final explainer and the credits. |
-| [RESEARCH.md](RESEARCH.md) | Findings from tutorials, GBDK docs, open-source games, game-feel sources, and licensed art and audio. Proposed plan changes P1–P7. |
-| [CGB_PLAN.md](CGB_PLAN.md) | Game Boy Color support that still runs on the original Game Boy. |
-| [TESTING.md](TESTING.md) | PyBoy test harness and the build → test → hardware loop. |
-| [ART_PIPELINE.md](ART_PIPELINE.md) | Hardware art rules, Claude Design workflow, conversion script, asset list. |
-| [LEVEL_DESIGN.md](LEVEL_DESIGN.md) | How we design levels together, level structure and rules, level briefs. |
-| [LEVEL_PIPELINE.md](LEVEL_PIPELINE.md) | Level editor comparison, Tiled setup, level converter, map streaming. |
-| [../CREDITS.md](../CREDITS.md) | Everything in the game someone else made (music, driver), with license and changes. |
-| [STORY.md](STORY.md) | Draft of the game's text: boot screen, level complete, the AI's log per elevator ride, ending. |
-| [archive/](archive/) | Finished documents kept for history: the 2026-10-02 audit with bugs 1-22 (`PROJECT_STATE.md`), the level 1 review of 2026-10-03 (`REVIEW.md`), early decisions. |
+| [../GAME_DESIGN.md](../GAME_DESIGN.md) | The game: story, controls, rules, the 5 levels and the boss, the look. |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | How it works: boot, main loop, tiles and sprites, banking, collision, physics, palettes and fades, parallax, audio, saves. |
+| [DECISIONS.md](DECISIONS.md) | What was decided and why. |
+| [SOURCES.md](SOURCES.md) | Where each technique, idea and asset came from, with licenses. |
+| [../CREDITS.md](../CREDITS.md) | Everything in the game someone else made (music, sound effects, driver), with license and changes. |
+| [ROADMAP.md](ROADMAP.md) | Status, open bugs and current numbers (tests, bank 0, frame budget). |
+| [TESTING.md](TESTING.md) | The PyBoy test harness, test tiers and conventions, hardware tests. |
+| [LEVELS.md](LEVELS.md) | Making levels: Tiled setup, level rules, jump metrics, the converter's checks and the reachability preview. |
+| [ART_PIPELINE.md](ART_PIPELINE.md) | Art for GBC and DMG: hardware rules, tile budget, `gbconvert.py`, png2asset settings. |
+
+Older plans, research notes, level briefs and reviews were removed before release; they
+are in the git history.

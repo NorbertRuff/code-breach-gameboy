@@ -8,8 +8,8 @@ stays the tool for manual debugging (breakpoints, VRAM viewer, source-level debu
 
 | Command | When | What runs |
 |---|---|---|
-| `make test` | After every change | The quick tier, in parallel (pytest-xdist): ROM tests in DMG mode, plus GBC where the mode changes the result. About 12 s. |
-| `make test-full` | Before a commit, at a milestone, in CI | Every ROM test in DMG and GBC mode, plus the tests marked `full` (extra replay start times and random-play seeds). About 15 s. |
+| `make test` | After every change | The quick tier, in parallel (pytest-xdist): ROM tests in DMG mode, plus GBC where the mode changes the result. |
+| `make test-full` | Before a commit, in CI | Every ROM test in DMG and GBC mode, plus the tests marked `full` (extra replay start times and random-play seeds). |
 
 A failing test saves a screenshot to `tests/out/` (emptied at the start of every run).
 The owner checks the ROM on the real DMG and GBC.

@@ -5,8 +5,8 @@
 
 uint8_t is_cgb;
 
-// Detects the hardware. On GBC, clears the color attributes: every map cell uses
-// palette 0 until the attribute maps (M4).
+// Detects the hardware. On GBC, clears the color attributes: every map cell starts on
+// palette 0.
 void platform_init(void)
 {
     is_cgb = (_cpu == CGB_TYPE);

@@ -10,7 +10,6 @@
 #include "./player/player.h"
 #include "./input/input.h"
 #include "./actor/actor.h"
-#include "./sound/music.h"
 #include "./sound/sound.h"
 
 #include "./game_state/game_flow.h"
