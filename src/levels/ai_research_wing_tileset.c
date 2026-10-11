@@ -97,7 +97,8 @@ static const uint8_t ai_research_wing_tileset_palette[80] = {
 
 const TilesetData ai_research_wing_tileset = {
     &__bank_ai_research_wing, ai_research_wing_tiles, ai_research_wing_TILE_COUNT, ai_research_wing_palettes, ai_research_wing_PALETTE_COUNT,
-    &__bank_ai_research_wing_band, ai_research_wing_band_tiles, ai_research_wing_band_TILE_COUNT, ai_research_wing_band_map, ai_research_wing_band_palettes,
+    &__bank_ai_research_wing_band, ai_research_wing_band_tiles, ai_research_wing_band_TILE_COUNT, ai_research_wing_band_map, ai_research_wing_band_map_attributes,
+    ai_research_wing_band_palettes, ai_research_wing_band_PALETTE_COUNT,
     ai_research_wing_tileset_collision, ai_research_wing_tileset_palette,
     39, 40, 49,
     { 3, 4, 19, 20, 35, 36, 51, 52 }

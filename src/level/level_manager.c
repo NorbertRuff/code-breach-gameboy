@@ -12,6 +12,7 @@
 #include "../levels/test_movers.h"
 #include "../engine/banking.h"
 #include "../engine/palette.h"
+#include "../engine/platform.h"
 #include "../engine/text.h"
 #include "../player/player.h"
 
@@ -25,7 +26,7 @@ static const TilesetData* tileset_header;
 const uint8_t level_struct_size = sizeof(Level);
 
 // Shows the HUD window at the bottom of the screen and loads its frame tiles and, on
-// GBC, its palette.
+// GBC, its palettes: the chassis and the heart/floppy accents.
 void set_hud_window_tiles(void)
 {
     SHOW_WIN;
@@ -33,9 +34,11 @@ void set_hud_window_tiles(void)
     WITH_BANK(hud, {
         set_win_data(HUD_TILE_BASE, hud_TILE_COUNT, hud_tiles);
         set_win_based_tiles(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, hud_map, HUD_TILE_BASE);
-        palette_set_bkg(HUD_PALETTE, 1, hud_palettes);
+        palette_set_bkg(HUD_PALETTE, hud_PALETTE_COUNT, hud_palettes);
     });
     palette_use_win(0, 0, hud_WIDTH >> 3, hud_HEIGHT >> 3, HUD_PALETTE);
+    palette_use_win(0, 0, 1, 1, HUD_ACCENT_PALETTE);
+    palette_use_win(14, 0, 1, 1, HUD_ACCENT_PALETTE);
 }
 
 // Loads the player's sprite tiles and palette, its pale copy for invincibility, and the
@@ -48,6 +51,7 @@ void set_programmer_metasprite(void)
         palette_set_sprite(0, 1, programmer_palettes);
         palette_set_sprite(ENEMY_PALETTE, 1, programmer_palettes + PALETTE_COLORS);
         palette_set_sprite(OBJECT_PALETTE, 1, programmer_palettes + 2 * PALETTE_COLORS);
+        palette_set_sprite(CHASER_PALETTE, 1, programmer_palettes + 3 * PALETTE_COLORS);
     });
     palette_set_pale_sprite(PLAYER_PALE_PALETTE, 0);
 }
@@ -111,7 +115,7 @@ static void load_tileset_art(void)
 
 // Draws the parallax band into rows 0-2 of the background map, once per level: its 32
 // columns wrap with the map, and streaming never writes these rows. Its tiles follow the
-// tileset's.
+// tileset's. Dual-palette on GBC when the band provides an accent palette.
 static void draw_band(void)
 {
     uint8_t base = current_tileset.tile_count;
@@ -119,8 +123,23 @@ static void draw_band(void)
         set_bkg_data(base, current_tileset.band_tile_count, current_tileset.band_tiles);
         set_bkg_based_tiles(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, current_tileset.band_map, base);
         palette_set_bkg(BAND_PALETTE, 1, current_tileset.band_palettes);
+        if (current_tileset.band_palette_count > 1) {
+            palette_set_bkg(BAND_ACCENT_PALETTE, 1, current_tileset.band_palettes + PALETTE_COLORS);
+        }
     });
     palette_use_bkg(0, 0, RING_COLUMNS, LEVEL_MAP_TOP_ROW, BAND_PALETTE);
+    if (is_cgb && current_tileset.band_palette_count > 1) {
+        WITH_ROM_BANK((uint8_t)(uint16_t)current_tileset.band_bank, {
+            VBK_REG = VBK_ATTRIBUTES;
+            const uint8_t* attr = current_tileset.band_attributes;
+            for (uint8_t y = 0; y < LEVEL_MAP_TOP_ROW; y++) {
+                for (uint8_t x = 0; x < RING_COLUMNS; x++, attr++) {
+                    if (*attr) set_bkg_tile_xy(x, y, BAND_ACCENT_PALETTE);
+                }
+            }
+            VBK_REG = VBK_TILES;
+        });
+    }
 }
 
 // The levels by index (LEVEL_1, ...): each header's ROM bank and address. A bank is the

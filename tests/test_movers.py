@@ -132,3 +132,15 @@ def test_a_chaser_stays_inside_its_range(game):
         game.place_player(x, FLOOR_FEET)
         game.frames(40)
     assert the_chaser(game).x == CHASER_MIN_X
+
+
+def test_a_chaser_uses_chaser_sprite_palette(game):
+    # GBC: a chaser uses CHASER_PALETTE (4) so it reads apart from red bots.
+    if game.mode != 'cgb':
+        return
+    game.wait_for_state(COREGAMELOOP, timeout=300)
+    game.place_player(CHASER_MAX_X - 16, SHELF_FEET)
+    game.frames(60)
+    oam = game.pyboy.memory[0xFE00:0xFEA0]
+    actor_palettes = [oam[i + 3] & 0x07 for i in range(16, 160, 4) if oam[i] != 0]
+    assert 4 in actor_palettes, f'chaser sprite did not use palette 4: {actor_palettes}'

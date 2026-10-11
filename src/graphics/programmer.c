@@ -9,10 +9,11 @@
 
 BANKREF(programmer)
 
-const palette_color_t programmer_palettes[12] = {
+const palette_color_t programmer_palettes[16] = {
 	RGB8(255,  0,255), RGB8(255,247,231), RGB8(239,198,173), RGB8( 24, 16, 33),
 	RGB8(255,  0,255), RGB8(222,231,239), RGB8(123, 33, 24), RGB8( 33,  8, 16),
-	RGB8(255,  0,255), RGB8(255,231,115), RGB8(123, 99,  0), RGB8( 41, 24,  0)
+	RGB8(255,  0,255), RGB8(255,231,115), RGB8(123, 99,  0), RGB8( 41, 24,  0),
+	RGB8(255,  0,255), RGB8(214,255,255), RGB8( 33,148,173), RGB8(  8, 33, 41)
 	};
 
 const uint8_t programmer_tiles[1088] = {

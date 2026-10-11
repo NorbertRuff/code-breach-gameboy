@@ -17,8 +17,8 @@ or git keeps the old one). Details of how the code does it belong in
   on DMG (`-Wm-yc`), with GBDK-2020 4.5.0.
 - **Workflow:** Claude writes the code; the owner runs git, reviews and tests on hardware.
   Level design: Claude drafts (brief, greybox, preview), the owner reacts and playtests.
-- **Records:** one home per fact (CLAUDE.md, "Records"); DECISIONS and SOURCES feed the
-  final "how it works" document (M9). Condensed on 2026-10-04 at the owner's request,
+- **Records:** one home per fact (CLAUDE.md, \"Records\"); DECISIONS and SOURCES feed the
+  final \"how it works\" document (M9). Condensed on 2026-10-04 at the owner's request,
   because keeping 5-7 docs in step slowed every change.
 - **No copied assets in the final game:** every asset original (owner or Claude Design)
   or openly licensed and credited.
@@ -52,11 +52,11 @@ or git keeps the old one). Details of how the code does it belong in
 - **Each level ends at a lab elevator** (the exit tile completes the level).
 - **HUD:** lives, and the current section's fragments against its quota (`02/03`); in the
   last section, against all its (bonus) fragments.
-- **Game over** shows "GAME OVER" in the play area with CONTINUE (restarts the section)
-  and QUIT (Saves: Menus). **Level complete** shows the level's fragments ("100%" when
+- **Game over** shows \"GAME OVER\" in the play area with CONTINUE (restarts the section)
+  and QUIT (Saves: Menus). **Level complete** shows the level's fragments (\"100%\" when
   all) and the password, then START (or 5 s) goes on to the next level; after the last
   level, level 1 again until the ending exists.
-- **Pause:** START freezes the game with "PAUSE" in the band; the music keeps playing.
+- **Pause:** START freezes the game with \"PAUSE\" in the band; the music keeps playing.
   A + SELECT while paused loads the next level (cheat, `LEVEL_SELECT_CHEAT`).
 - **No-death cheat** (2026-10-11, owner asked for it for playtesting): A + B while paused
   turns it on (pickup sound) or off (denied sound); hits don't count, and a fall restarts
@@ -65,7 +65,7 @@ or git keeps the old one). Details of how the code does it belong in
 - **The cheats stay in the release** (2026-10-11, owner), a little harder to enter: A must
   be held while paused, so a stray SELECT or B does nothing.
 - **No hard mode** (2026-10-05, owner): cut to keep the game small.
-- **Story:** "PATCH n/5"; each level's fragments compile into a patch uploaded in the boss
+- **Story:** \"PATCH n/5\"; each level's fragments compile into a patch uploaded in the boss
   fight; the twist that staff #042 wrote the AI stays (STORY.md).
 - **Story screens** (2026-10-05): the boot screen (after NEW GAME) and the elevator log
   (after level complete) type their lines on a blank screen, a character every 4 frames,
@@ -73,14 +73,14 @@ or git keeps the old one). Details of how the code does it belong in
   playthrough, 2026-10-11).
 - **Boss design approved** (2026-10-05, owner): 3 terminals and uploads (hold Up), one
   earlier idea per phase (packets, the lift, the corrupted floor), no spawned bots or purge
-  sweep, a whole-screen shake, game over restarts phase 1, song "Terminate"
+  sweep, a whole-screen shake, game over restarts phase 1, song \"Terminate\"
   (LEVEL_DESIGN.md section 7). While building it (2026-10-05; agreed in the owner's
   playthrough, 2026-10-11): a terminal
   lights once the phase's first volley has fallen, and phase 2's extra packets stay left
-  of the lift (LEVEL_DESIGN.md, "Level 5 build notes").
-- **Ending** (2026-10-05; agreed in the owner's playthrough, 2026-10-11): "LOCKDOWN LIFTED" typed as the screen fades to
-  light, song "Closing", then a credits screen until START, then the title.
-- **Boss:** "KERNEL" on one screen, drawn with background tiles (details in M8, reviewed by
+  of the lift (LEVEL_DESIGN.md, \"Level 5 build notes\").
+- **Ending** (2026-10-05; agreed in the owner's playthrough, 2026-10-11): \"LOCKDOWN LIFTED\" typed as the screen fades to
+  light, song \"Closing\", then a credits screen until START, then the title.
+- **Boss:** \"KERNEL\" on one screen, drawn with background tiles (details in M8, reviewed by
   the owner first).
 - **Fades** between screens and on level load (owner likes them).
 
@@ -104,12 +104,12 @@ or git keeps the old one). Details of how the code does it belong in
   before the player's update and carry a player standing on them; the player can jump up
   through one and drop through it. In Tiled a rectangle covers the area the platform
   sweeps; the converter checks a clear path (with room for the body) and 16 px between
-  lifts; the reachability check treats a lift as one-way tops on every row it passes.
-  Horizontal lifts and other speeds only if a level needs them.
+  lifts; the reachability check treats a lift as one-way tops on every row it passes.\n  Horizontal lifts and other speeds only if a level needs them.
 - **Chasers** (level 3, owner 2026-10-04): a bot that stands still until the player is
   within about 6 tiles on its floor (feet within 2 tiles of its own), then walks toward them
   at 1 px per frame (the player runs at 1.5), only inside its range. In Tiled an `enemy`
-  with `kind` = `chaser`; its own art (a hovering drone) since 2026-10-10.
+  with `kind` = `chaser`; its own art (a hovering drone) since 2026-10-10. Distinct electric
+  cyan sprite palette on GBC (2026-10-11).
 - **Level 1** (Server Room) greybox: kept as built after the owner's hardware pass
   (2026-10-04). **Level 2** (Code Testing Lab) greybox: built 2026-10-04, the low route
   needs the bridge's fragment for gate B; kept as built after the owner's hardware pass
@@ -123,7 +123,7 @@ or git keeps the old one). Details of how the code does it belong in
 ## Player physics
 
 - **Positions in 1/32 px (`uint16_t`), velocities `int8_t` in 1/32 px per frame,** as in
-  the GB Studio engine; the player is a 16×32 metasprite (4 sprites in 8×16 mode).
+  the GB Studio engine; the player is a 16\u00d732 metasprite (4 sprites in 8\u00d716 mode).
 - **Gravity:** light only while rising with A held, strong when falling or after A is
   released (jump cut), halved near the top of a held jump (apex hang). Values from
   RESEARCH.md 2.2.
@@ -134,14 +134,14 @@ or git keeps the old one). Details of how the code does it belong in
 - **Down + A drops through a one-way top** (2026-10-04, owner): the feet move 3 px into the
   one-way row (1 px let a lift going down catch them again); with anything solid under the
   feet it's a normal jump.
-- **Collision in tile coordinates** (a position's high byte is its tile): 44 → 24 lines per
+- **Collision in tile coordinates** (a position's high byte is its tile): 44 \u2192 24 lines per
   frame.
 - **`tools/physics.py` is a frame-exact copy** of the physics for the reachability check,
   compared with the ROM frame by frame.
 
 ## Engine
 
-- **Collision ring:** 32×16 bytes in WRAM, filled from the tileset's collision table
+- **Collision ring:** 32\u00d716 bytes in WRAM, filled from the tileset's collision table
   (copied to WRAM at level load) as columns stream in, both directions.
 - **Streaming:** columns are read into a 13-byte buffer; the collision goes in at once,
   the tiles at the start of the next update (`set_bkg_tiles` takes 11-14 lines per column,
@@ -183,13 +183,12 @@ or git keeps the old one). Details of how the code does it belong in
   loads, 4-step fades and flashes on both systems; GBC fade steps by masked shifts of
   RGB555 (multiplying took 2 frames per step).
 - **GBC palettes:** background 0-3 the level's tileset (its palettes in the set's order,
-  so a tile's attribute is its tileset palette, no remapping), 4 the band, 5 the HUD
-  (`hud` set: #E0F8D0 #88C070 #346856 #081820, 2026-10-10, **Proposed**), 6-7 free
-  (KERNEL only swaps tiles of the same palette, 2026-10-11). Was 0 level, 1 band, 2 HUD until a tileset needed 4 (2026-10-10,
-  **Proposed**). Sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
-  2 the enemies (bots, chasers, KERNEL's packets), 3 the lifts: the style guide's three
-  sprite palettes in order (player, red, gold; `server_room` set through
-  `tools/gbconvert.py`), 2026-10-10, owner.
+  so a tile's attribute is its tileset palette, no remapping), 4 the band base, 5 the HUD chassis
+  (#E0F8D0 #88C070 #346856 #081820), 6 the HUD accents (#E0F8D0 #F0A820 #D82828 #081820:
+  red heart and gold floppy disk, 2026-10-11), 7 the band accent (e.g. server room glowing emerald LEDs, 2026-10-11).
+  Sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
+  2 the enemies (red patrol bots & KERNEL's packets), 3 the lifts (gold), 4 the chaser drones
+  (electric cyan/teal #D0F8F8 #2090A8 #082028, 2026-10-11); 5-7 free.
 - **A palette per tile, not per map cell** (2026-10-10; owner, 2026-10-11): `tools/tiled2c.py`
   reads each tile's palette from the indexed tileset PNG (color index / 4) into
   `<tileset>_tileset_palette[]`, copied to WRAM at level load (256 bytes) like the
@@ -200,22 +199,22 @@ or git keeps the old one). Details of how the code does it belong in
   uses of a tile.
 - **No brighter palettes for GBA** (owner, 2026-10-11): cut to keep the scope small; a GBA shows
   the GBC colors. No GBC double-speed mode.
-- **Art pipeline:** Claude Design → `tools/gbconvert.py` → png2asset (ART_PIPELINE.md);
+- **Art pipeline:** Claude Design \u2192 `tools/gbconvert.py` \u2192 png2asset (ART_PIPELINE.md);
   every palette light to dark; no background tile flips.
 - **Placeholders until each level's art pass:** the greybox tileset and band (drawn by
   scripts), now only in the test rooms (levels 3-5 got their art 2026-10-11).
-- **Server Room art** (2026-10-10; owner, 2026-10-11): redrawn by hand on the 8×8 grid from
+- **Server Room art** (2026-10-10; owner, 2026-10-11): redrawn by hand on the 8\u00d78 grid from
   the owner's Gemini starter art (mock-up, band, object sheet; not on a pixel grid, so
   used as references). Green riveted machine blocks with a striped top lip (a 16-tile
   Tiled terrain set, plus a vent plate), a blue truss catwalk (one-way), red and gold
   wiring (hazard), racks, pipes, cable trays and terminals behind the play lane in
   shades 0-2 only, a gold and black striped shutter for the gate (gray slats read as a
-  ladder), a 2×4 elevator that opens at level complete (closed gray, open lit green), a
+  ladder), a 2\u00d74 elevator that opens at level complete (closed gray, open lit green), a
   floppy disk for the fragment; 68 tiles, the band 16. No light plates in the fill: on
-  DMG they read as holes.
+  DMG they read as holes. Parallax band has glowing emerald LED server racks in palette 7 (2026-10-11).
 - **Code Testing Lab art** (2026-10-10; owner, 2026-10-11): level 2 in Server Room's way,
   redrawn by hand from the owner's Gemini mock-up and band. Teal riveted panels with a
-  dark outline and a light lip on exposed sides (a 16-tile "panel" terrain set, plus a
+  dark outline and a light lip on exposed sides (a 16-tile \"panel\" terrain set, plus a
   vent plate), thin blue shelves with brackets (one-way: the tile's lower half is empty),
   sparking cut cables (hazard, unused in level 2), and behind the play lane only shades 0
   and 1 of the props palette: desks with monitors, lab benches with an oscilloscope,
@@ -226,20 +225,20 @@ or git keeps the old one). Details of how the code does it belong in
   them in Tiled.
 - **AI Research Wing art** (2026-10-11, owner): level 3 in the same way, from the
   owner's Gemini mock-up and band. Dark-purple riveted lab plates with a lilac lip (a
-  16-tile "plate" terrain set, plus a vent plate), thin blue catwalks (one-way), and
+  16-tile \"plate\" terrain set, plus a vent plate), thin blue catwalks (one-way), and
   behind the play lane in shades 0-1: specimen tanks, neural-network boards, server
   cabinets, terminals, lamps, and rails with a pulley beam behind each lift. Gate, rails,
   elevator (open: lit purple), floppy and start marker are level 2's tiles recolored. 69
   tiles, the band 28. Layout and every cell's collision kept; props placed by a script.
 - **Network Hub art** (2026-10-11, owner): level 4 in the same way. Tan floor tiles
-  with a lip and dark outline (a 16-tile "floor" terrain set, plus a vent), lighter than
+  with a lip and dark outline (a 16-tile \"floor\" terrain set, plus a vent), lighter than
   levels 1-2 so the dark hazards stand out; blue data bridges (one-way); spikes, one per
   tile (yellow and dark red, black outline), and hanging cut-cable bundles ending in
   spikes; wall panels, patch panels, racks and routers behind in shades 0-1. Shared
   objects recolored from level 2, the open elevator lit blue. 72 tiles, the band 21.
   Layout and collision kept; props placed by a script.
 - **Mainframe art and KERNEL's face** (2026-10-11, owner): level 5 in the same
-  way: lavender riveted plates ("plate" terrain set), a blue truss catwalk (one-way),
+  way: lavender riveted plates (\"plate\" terrain set), a blue truss catwalk (one-way),
   racks, consoles and cables behind; the band tape-reel mainframes under a truss. 96
   tiles, the band 17. KERNEL's face (7x6 tiles, traced from `kernel_face_v1`; the owner kept it
   as drawn), its wide eyes, the glitch (from `kernel_v2`) and the terminals
@@ -248,11 +247,11 @@ or git keeps the old one). Details of how the code does it belong in
   needed (`tests/test_kernel_art.py` checks it). So the corrupted floor is black spikes on
   the floor's gray palette, not red (owner: fine). The fragment stays the floppy in every
   level, to match the HUD icon (owner, 2026-10-11).
-- **Title screen** (2026-10-10, owner): redrawn by hand at 1× on the 8×8 grid from
+- **Title screen** (2026-10-10, owner): redrawn by hand at 1\u00d7 on the 8\u00d78 grid from
   the owner's Gemini starter art (a server corridor, the programmer from behind, his head turned
-  to a monitor; the "APEX [LAB] / CODE BREACH" logo), 139 tiles from 0. A warning triangle on the
-  monitor (6×5 tiles, 23 more after the font) blinks by a tile-map swap every 30 frames,
-  the same on DMG and GBC, and stays on under the menu. "PRESS START" is printed with the
+  to a monitor; the \"APEX [LAB] / CODE BREACH\" logo), 139 tiles from 0. A warning triangle on the
+  monitor (6\u00d75 tiles, 23 more after the font) blinks by a tile-map swap every 30 frames,
+  the same on DMG and GBC, and stays on under the menu. \"PRESS START\" is printed with the
   font below the monitor, where START's NEW GAME / CONTINUE box covers it. 4 palettes on
   GBC (`title` set: scene and racks, walls and monitor, the programmer, the triangle and
   LEDs), a palette per map cell from png2asset's attribute map; on DMG the 4 grays by
@@ -262,25 +261,25 @@ or git keeps the old one). Details of how the code does it belong in
   it (tileset at most 128, band 32), the font 160-208, the HUD 209-218 (was 64-73, which
   capped a tileset at 64 tiles); 219-255 free (KERNEL's tiles moved into level 5's
   tileset, 2026-10-11).
-- **HUD and font** (2026-10-10): redrawn from Gemini starter art. The HUD is 2 tile rows
-  (Gemini's was 30 px tall): light boxes for the lives and the count, which the code
-  writes, a heart and a floppy icon in the frame, a riveted strip below; 10 tiles. One
-  1-bit font of 49 characters (7×7 glyphs) for all text, the HUD's digits and '/'
-  included. 59 tiles together; GBDK's 1-bit loader costs about 110 bytes of bank 0.
-  **Proposed.**
+- **HUD and font** (2026-10-10; dual-palette polish 2026-10-11, owner): redrawn from
+  Gemini starter art. The HUD is 2 tile rows: light boxes for the lives and count, which
+  the code writes, red heart and gold floppy disk icons in the frame, a riveted strip
+  below; 10 tiles. Dual-palette on GBC: palette 5 chassis, palette 6 accents. One 1-bit
+  font of 49 characters (7\u00d77 glyphs) for all text, the HUD's digits and '/' included.
+  59 tiles together; GBDK's 1-bit loader costs about 110 bytes of bank 0.
 - **Player sprite is final** (2026-10-10, owner): the owner's programmer, first based on
   a Mario sprite and then heavily redrawn, plus 5 frames drawn in its style (10 frames:
   idle 2, run 4, jump, fall, hurt, death). `graphics/player/programmer.png` and the
-  "ApexLab Hero Sprite Sheet" Claude Design canvas are the source of truth.
+  \"ApexLab Hero Sprite Sheet\" Claude Design canvas are the source of truth.
 - **All player frames stay in VRAM** (68 sprite tiles, 2026-10-10): no per-frame tile
   copy, so no frame budget cost. Copying each frame's 8 tiles in VBlank is the fallback
   if tiles run out.
-- **Enemy and lift sprites** (2026-10-10): the security bot, the chaser, the lift and
-  KERNEL's packet, redrawn at 16×16 (the lift 24×16) from the owner's reference pictures
-  on the "ApexLab Enemy Sprites" Claude Design canvas. 2 frames each but the lift, every
-  8 frames, by a tile offset (no tile copies, about 1 line). Every actor's tiles stay
-  loaded in every level: 108 of the 128 sprite-only tiles in use, 20 left for the L2-L4
-  enemies. Agreed (owner, 2026-10-11).
+- **Enemy and lift sprites** (2026-10-10; chaser drone recolor 2026-10-11): the security bot, the
+  chaser, the lift and KERNEL's packet, redrawn at 16\u00d716 (the lift 24\u00d716) from the
+  owner's reference pictures on the \"ApexLab Enemy Sprites\" Claude Design canvas. 2 frames each
+  but the lift, every 8 frames, by a tile offset (no tile copies, about 1 line). Security bots
+  use red palette 2, lifts use gold palette 3, chaser drones use electric cyan palette 4. Every actor's
+  tiles stay loaded in every level: 108 of the 128 sprite-only tiles in use, 20 left. Agreed (owner, 2026-10-11).
 - **Golden screenshots** of key screens in both modes catch visual changes.
 
 ## Audio
@@ -290,11 +289,11 @@ or git keeps the old one). Details of how the code does it belong in
   hUGETracker's export, instead of downloading `uge2source.exe`).
 - **The music step runs in the line-23 interrupt, not VBlank** (2026-10-04, owner): about 9
   lines per frame, up to 18; in VBlank it delayed every update.
-- **Songs:** level 1 "Tech", level 2 "Neurotic Robonaut" (owner, after the hardware pass,
-  2026-10-04), level 3 "Observing Jupiter" (owner: keep, 2026-10-04), level 4 "Whirlwind"
+- **Songs:** level 1 \"Tech\", level 2 \"Neurotic Robonaut\" (owner, after the hardware pass,
+  2026-10-04), level 3 \"Observing Jupiter\" (owner: keep, 2026-10-04), level 4 \"Whirlwind\"
   (2026-10-05; owner, 2026-10-11); only Tronimal's own songs, not the packs' remixes of other
   people's.
-- **Screen songs:** title "Decampment", game over "Gone Missing", level complete "Delight",
+- **Screen songs:** title \"Decampment\", game over \"Gone Missing\", level complete \"Delight\",
   each after the screen's flashes; the level's song starts again after them (2026-10-04,
   owner approved after listening).
 - **Sound effects: Tronimal's GBFX and GBFX2** (FX Hammer files, CC BY 4.0), picked in
@@ -320,7 +319,7 @@ or git keeps the old one). Details of how the code does it belong in
   level, so the password after the last level works in the same build.
 - **Menus** (2026-10-05): the title shows NEW GAME / CONTINUE after START; CONTINUE asks
   for the password, then a level select (levels up to the furthest, with 100% marks,
-  starting on the furthest; skipped when only level 1 is open). Game over shows CONTINUE /
+  starting on the furthest; skipped when only level 1 is open). Game over shows CONTINUE /\
   QUIT and the password, and waits for a choice (no 5 s timeout any more); QUIT goes to
   the title. Menu sounds reuse the approved effects: pause beep to pick or type, gate to
   accept a password, buzz to refuse one. Agreed (owner, 2026-10-11).

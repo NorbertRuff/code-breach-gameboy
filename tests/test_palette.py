@@ -78,10 +78,10 @@ def test_invincible_player_is_pale_on_gbc_and_blinks_on_dmg(game):
     assert player_oam(game) == [(True, 0)] * 4, "not back to normal after invincibility"
 
 
-def rom_palette(game, symbol: str) -> list:
-    """A png2asset palette's 4 colors (RGB555) from the ROM, like _hud_palettes."""
-    raw = read_symbol(game.pyboy, symbol, 8)
-    return [raw[i] | raw[i + 1] << 8 for i in range(0, 8, 2)]
+def rom_palette(game, symbol: str, count: int = 4) -> list:
+    """A png2asset palette's colors (RGB555) from the ROM, like _hud_palettes."""
+    raw = read_symbol(game.pyboy, symbol, count * 2)
+    return [raw[i] | raw[i + 1] << 8 for i in range(0, count * 2, 2)]
 
 
 @pytest.mark.level(LEVEL_1)
@@ -105,16 +105,18 @@ def test_streamed_level_cells_use_their_tiles_palettes(game):
 
 
 def test_band_and_hud_use_their_own_gbc_palettes(game):
-    # GBC background palettes 0-3: the level's tileset, 4: the band (rows 0-2), 5: the HUD window.
+    # GBC background palettes 0-3: the level's tileset, 4: the band (rows 0-2),
+    # 5: the HUD window chassis, 6: the HUD accents (heart and floppy disk icons).
     if game.mode != "cgb":
         return
     game.start_on_open_ground()
     colors = game.gbc_colors()
     assert colors[16:20] == rom_palette(game, "_greybox_band_palettes")
-    assert colors[20:24] == rom_palette(game, "_hud_palettes")
+    assert colors[20:28] == rom_palette(game, "_hud_palettes", count=8)
     memory = game.pyboy.memory
     band = [memory[1, 0x9800 + row * 32 + col] for row in range(3) for col in range(32)]
     level_row = [memory[1, 0x9800 + 3 * 32 + col] for col in range(32)]
     window_base = 0x9C00 if game.reg("LCDC") & 0x40 else 0x9800
     hud = [memory[1, window_base + row * 32 + col] for row in range(2) for col in range(20)]
-    assert set(band) == {4} and set(level_row) == {0} and set(hud) == {5}
+    assert set(band) == {4} and set(level_row) == {0} and set(hud) == {5, 6}
+    assert memory[1, window_base] == 6 and memory[1, window_base + 14] == 6

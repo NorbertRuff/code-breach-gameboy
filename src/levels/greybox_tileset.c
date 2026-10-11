@@ -25,7 +25,8 @@ static const uint8_t greybox_tileset_palette[8] = {
 
 const TilesetData greybox_tileset = {
     &__bank_greybox, greybox_tiles, greybox_TILE_COUNT, greybox_palettes, greybox_PALETTE_COUNT,
-    &__bank_greybox_band, greybox_band_tiles, greybox_band_TILE_COUNT, greybox_band_map, greybox_band_palettes,
+    &__bank_greybox_band, greybox_band_tiles, greybox_band_TILE_COUNT, greybox_band_map, greybox_band_map_attributes,
+    greybox_band_palettes, greybox_band_PALETTE_COUNT,
     greybox_tileset_collision, greybox_tileset_palette,
     6, 4, 5,
     { 0, 0, 0, 0, 0, 0, 0, 0 }

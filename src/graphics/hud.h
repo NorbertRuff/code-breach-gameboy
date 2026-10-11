@@ -14,16 +14,16 @@
 #define hud_WIDTH 160
 #define hud_HEIGHT 16
 #define hud_TILE_COUNT 10
-#define hud_PALETTE_COUNT 1
+#define hud_PALETTE_COUNT 2
 #define hud_COLORS_PER_PALETTE 4
-#define hud_TOTAL_COLORS 4
+#define hud_TOTAL_COLORS 8
 #define hud_MAP_ATTRIBUTES 0
 extern const unsigned char hud_map[40];
 #define hud_map_attributes hud_map
 
 BANKREF_EXTERN(hud)
 
-extern const palette_color_t hud_palettes[4];
+extern const palette_color_t hud_palettes[8];
 extern const uint8_t hud_tiles[160];
 
 #endif

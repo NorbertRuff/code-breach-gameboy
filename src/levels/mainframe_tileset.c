@@ -129,7 +129,8 @@ static const uint8_t mainframe_tileset_palette[112] = {
 
 const TilesetData mainframe_tileset = {
     &__bank_mainframe, mainframe_tiles, mainframe_TILE_COUNT, mainframe_palettes, mainframe_PALETTE_COUNT,
-    &__bank_mainframe_band, mainframe_band_tiles, mainframe_band_TILE_COUNT, mainframe_band_map, mainframe_band_palettes,
+    &__bank_mainframe_band, mainframe_band_tiles, mainframe_band_TILE_COUNT, mainframe_band_map, mainframe_band_map_attributes,
+    mainframe_band_palettes, mainframe_band_PALETTE_COUNT,
     mainframe_tileset_collision, mainframe_tileset_palette,
     16, 32, 48,
     { 0, 0, 0, 0, 0, 0, 0, 0 }

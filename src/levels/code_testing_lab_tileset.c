@@ -97,7 +97,8 @@ static const uint8_t code_testing_lab_tileset_palette[80] = {
 
 const TilesetData code_testing_lab_tileset = {
     &__bank_code_testing_lab, code_testing_lab_tiles, code_testing_lab_TILE_COUNT, code_testing_lab_palettes, code_testing_lab_PALETTE_COUNT,
-    &__bank_code_testing_lab_band, code_testing_lab_band_tiles, code_testing_lab_band_TILE_COUNT, code_testing_lab_band_map, code_testing_lab_band_palettes,
+    &__bank_code_testing_lab_band, code_testing_lab_band_tiles, code_testing_lab_band_TILE_COUNT, code_testing_lab_band_map, code_testing_lab_band_map_attributes,
+    code_testing_lab_band_palettes, code_testing_lab_band_PALETTE_COUNT,
     code_testing_lab_tileset_collision, code_testing_lab_tileset_palette,
     39, 40, 49,
     { 3, 4, 19, 20, 35, 36, 51, 52 }

@@ -427,7 +427,8 @@ static const uint8_t {n}_palette[{len(tileset.palette)}] = {{
 
 const TilesetData {n} = {{
     &__bank_{art}, {art}_tiles, {art}_TILE_COUNT, {art}_palettes, {art}_PALETTE_COUNT,
-    &__bank_{band}, {band}_tiles, {band}_TILE_COUNT, {band}_map, {band}_palettes,
+    &__bank_{band}, {band}_tiles, {band}_TILE_COUNT, {band}_map, {band}_map_attributes,
+    {band}_palettes, {band}_PALETTE_COUNT,
     {n}_collision, {n}_palette,
     {markers["fragment"]}, {markers["gate"]}, {markers["exit"]},
     {{ {", ".join(str(t) for t in opened)} }}

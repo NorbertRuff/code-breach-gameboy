@@ -97,7 +97,8 @@ static const uint8_t network_hub_tileset_palette[80] = {
 
 const TilesetData network_hub_tileset = {
     &__bank_network_hub, network_hub_tiles, network_hub_TILE_COUNT, network_hub_palettes, network_hub_PALETTE_COUNT,
-    &__bank_network_hub_band, network_hub_band_tiles, network_hub_band_TILE_COUNT, network_hub_band_map, network_hub_band_palettes,
+    &__bank_network_hub_band, network_hub_band_tiles, network_hub_band_TILE_COUNT, network_hub_band_map, network_hub_band_map_attributes,
+    network_hub_band_palettes, network_hub_band_PALETTE_COUNT,
     network_hub_tileset_collision, network_hub_tileset_palette,
     39, 40, 49,
     { 3, 4, 19, 20, 35, 36, 51, 52 }

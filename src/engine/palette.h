@@ -12,16 +12,19 @@
 #define PALETTE_BLACK  3
 #define SCREEN_FADE_FRAMES 10   // per fade step between screens
 
-// GBC background palettes: the level's tileset from 0 (up to 4), the parallax band, the
-// HUD window.
-#define LEVEL_PALETTE 0
-#define BAND_PALETTE  4
-#define HUD_PALETTE   5
+// GBC background palettes: the level's tileset from 0 (up to 4), the parallax band base,
+// the HUD window chassis, the HUD accents (heart and floppy disk icons), and the band accents.
+#define LEVEL_PALETTE       0
+#define BAND_PALETTE        4
+#define HUD_PALETTE         5
+#define HUD_ACCENT_PALETTE  6
+#define BAND_ACCENT_PALETTE 7
 
 // GBC sprite palettes: 0 the player, 1 the pale invincible player (player.h), then the
-// actors': the enemies' and the harmless objects' (lifts).
+// actors': the enemies' (bots), the harmless objects' (lifts), and the chaser drones.
 #define ENEMY_PALETTE  2
 #define OBJECT_PALETTE 3
+#define CHASER_PALETTE 4
 
 #define PALETTE_COUNT 8    // per kind (background, sprites) on GBC
 #define PALETTE_COLORS 4

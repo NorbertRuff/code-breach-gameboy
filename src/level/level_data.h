@@ -56,7 +56,9 @@ typedef struct {
     const uint8_t* band_tiles;
     uint8_t band_tile_count;
     const uint8_t* band_map;                // 32 x 3 tiles
+    const uint8_t* band_attributes;         // 32 x 3 tiles
     const palette_color_t* band_palettes;
+    uint8_t band_palette_count;
     const uint8_t* collision;
     const uint8_t* palette;
     uint8_t fragment_tile, gate_tile, exit_tile;

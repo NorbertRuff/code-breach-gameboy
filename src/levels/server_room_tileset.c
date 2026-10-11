@@ -97,7 +97,8 @@ static const uint8_t server_room_tileset_palette[80] = {
 
 const TilesetData server_room_tileset = {
     &__bank_server_room, server_room_tiles, server_room_TILE_COUNT, server_room_palettes, server_room_PALETTE_COUNT,
-    &__bank_server_room_band, server_room_band_tiles, server_room_band_TILE_COUNT, server_room_band_map, server_room_band_palettes,
+    &__bank_server_room_band, server_room_band_tiles, server_room_band_TILE_COUNT, server_room_band_map, server_room_band_map_attributes,
+    server_room_band_palettes, server_room_band_PALETTE_COUNT,
     server_room_tileset_collision, server_room_tileset_palette,
     39, 40, 49,
     { 3, 4, 19, 20, 35, 36, 51, 52 }
