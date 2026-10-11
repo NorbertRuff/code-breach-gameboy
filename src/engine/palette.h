@@ -40,6 +40,7 @@ void palette_init(void) BANKED;
 void palette_set_pale_sprite(uint8_t target, uint8_t source) BANKED;
 void palette_use_bkg(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t palette) BANKED;
 void palette_use_grays(void) BANKED;
+void palette_use_terminal(void) BANKED;
 void palette_use_win(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t palette) BANKED;
 void palette_fade_to(uint8_t step) BANKED;
 void palette_fade_out(uint8_t frames_per_step) BANKED;

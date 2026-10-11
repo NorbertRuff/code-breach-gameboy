@@ -14,9 +14,9 @@
 #define ai_research_wing_band_WIDTH 256
 #define ai_research_wing_band_HEIGHT 24
 #define ai_research_wing_band_TILE_COUNT 28
-#define ai_research_wing_band_PALETTE_COUNT 1
+#define ai_research_wing_band_PALETTE_COUNT 2
 #define ai_research_wing_band_COLORS_PER_PALETTE 4
-#define ai_research_wing_band_TOTAL_COLORS 4
+#define ai_research_wing_band_TOTAL_COLORS 8
 #define ai_research_wing_band_MAP_ATTRIBUTES ai_research_wing_band_map_attributes
 #define ai_research_wing_band_MAP_ATTRIBUTES_WIDTH 32
 #define ai_research_wing_band_MAP_ATTRIBUTES_HEIGHT 3
@@ -27,7 +27,7 @@ extern const unsigned char ai_research_wing_band_map_attributes[96];
 
 BANKREF_EXTERN(ai_research_wing_band)
 
-extern const palette_color_t ai_research_wing_band_palettes[4];
+extern const palette_color_t ai_research_wing_band_palettes[8];
 extern const uint8_t ai_research_wing_band_tiles[448];
 
 #endif

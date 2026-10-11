@@ -18,6 +18,11 @@ static const palette_color_t grays[PALETTE_COLORS] = {
     RGB(31, 31, 31), RGB(21, 21, 21), RGB(10, 10, 10), RGB(0, 0, 0)
 };
 
+// Green phosphor CRT terminal colors for story screens on GBC.
+static const palette_color_t terminal_colors[PALETTE_COLORS] = {
+    RGB8(208, 248, 208), RGB8(104, 200, 104), RGB8(32, 96, 48), RGB8(8, 24, 16)
+};
+
 static const palette_color_t black_colors[PALETTE_COLORS] = { 0 };
 static uint8_t dmg_obp0;   // the DMG sprite palette during a flash
 
@@ -64,6 +69,18 @@ void palette_use_grays(void) BANKED
 {
     palette_set_bkg(LEVEL_PALETTE, 1, grays);
     palette_use_bkg(0, 0, DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, LEVEL_PALETTE);
+}
+
+// Sets LEVEL_PALETTE to green phosphor CRT terminal colors on GBC, and sets screen
+// attributes to LEVEL_PALETTE. On DMG, keeps standard DMG grays.
+void palette_use_terminal(void) BANKED
+{
+    if (is_cgb) {
+        palette_set_bkg(LEVEL_PALETTE, 1, terminal_colors);
+        palette_use_bkg(0, 0, DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, LEVEL_PALETTE);
+    } else {
+        palette_use_grays();
+    }
 }
 
 // GBC: the same for window map cells (the HUD).

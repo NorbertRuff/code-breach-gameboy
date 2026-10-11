@@ -14,9 +14,9 @@
 #define code_testing_lab_band_WIDTH 256
 #define code_testing_lab_band_HEIGHT 24
 #define code_testing_lab_band_TILE_COUNT 22
-#define code_testing_lab_band_PALETTE_COUNT 1
+#define code_testing_lab_band_PALETTE_COUNT 2
 #define code_testing_lab_band_COLORS_PER_PALETTE 4
-#define code_testing_lab_band_TOTAL_COLORS 4
+#define code_testing_lab_band_TOTAL_COLORS 8
 #define code_testing_lab_band_MAP_ATTRIBUTES code_testing_lab_band_map_attributes
 #define code_testing_lab_band_MAP_ATTRIBUTES_WIDTH 32
 #define code_testing_lab_band_MAP_ATTRIBUTES_HEIGHT 3
@@ -27,7 +27,7 @@ extern const unsigned char code_testing_lab_band_map_attributes[96];
 
 BANKREF_EXTERN(code_testing_lab_band)
 
-extern const palette_color_t code_testing_lab_band_palettes[4];
+extern const palette_color_t code_testing_lab_band_palettes[8];
 extern const uint8_t code_testing_lab_band_tiles[352];
 
 #endif

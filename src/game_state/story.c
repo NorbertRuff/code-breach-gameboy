@@ -58,6 +58,7 @@ static void wait_to_read(void)
 void story_boot_screen(void) BANKED
 {
     menu_open_screen();
+    palette_use_terminal();
     palette_fade_in(SCREEN_FADE_FRAMES);
     type_line(6, 6, "ANOMALY");
     type_line(6, 8, "STAFF #042");
@@ -78,6 +79,7 @@ void story_elevator_log(uint8_t level) BANKED
 {
     if (level >= GAME_LEVEL_COUNT) return;
     menu_open_screen();
+    palette_use_terminal();
     palette_fade_in(SCREEN_FADE_FRAMES);
     story_type_log(level, 8);
     wait_to_read();

@@ -13,7 +13,10 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
   levels, difficulty, checkpoints, the level 3-5 art and KERNEL's face. Next: the release
   build and the rest of M9; the owner's hardware pass.
 - **Visual Polish (2026-10-11, owner):** dual-palette HUD (chassis + ruby heart & gold floppy disk),
-  distinct electric cyan chaser drone sprite palette, and multi-palette parallax band depth (Server Room glowing emerald LEDs).
+  distinct electric cyan chaser drone sprite palette, multi-palette parallax band depth across all
+  5 levels (Server Room emerald LEDs, Code Testing cyan oscilloscopes, AI Research violet neural pulses,
+  Network Hub amber router LEDs, Mainframe crimson tape reels), and retro green phosphor CRT terminal
+  palette for story boot and elevator logs on GBC.
 - **Tests:** `make test` 244 tests in about 30 s; `make test-full` 366 in about 60 s (it builds `make release` first).
 - **Memory:** bank 0 has 401 bytes free; WRAM uses 1,823 of 4,096 bytes.
 - **Frame budget** (worst update on DMG, line of the 140 allowed; average): level 1 127
@@ -62,7 +65,7 @@ layouts depend on the jump, and levels are designed with plain blocks first.
 - **M3, level 1 and gameplay objects:** actors, gates with quotas and checkpoints, the
   exit, HUD, pause and level-select cheat, parallax band and screen splits, lives rules,
   frame budget work, level 1 greybox (owner pass: keep as is), style pass.
-- Fixed pools for particles and projectiles were never needed: parked (M9, \"Parked ideas\").
+- Fixed pools for particles and projectiles were never needed: parked (M9, "Parked ideas").
 
 ## M4 — Game Boy Color support
 
@@ -121,26 +124,26 @@ Done when level 1 looks like the final game in both modes.
       a channel mute mask and priority over the music; sound test ROM and WAVs
       (`make soundtest`). Done 2026-10-04; owner approved the picks.
 - [x] Music per level, title, game over and ending (both packs in `music/packs/`, all
-      18 songs in the sound test). Level 4 \"Whirlwind\", level 5 \"Terminate\" and the
-      ending's \"Closing\" heard in the owner's playthrough (2026-10-11).
+      18 songs in the sound test). Level 4 "Whirlwind", level 5 "Terminate" and the
+      ending's "Closing" heard in the owner's playthrough (2026-10-11).
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
 
 ## M7 — Saves and game flow
 
 - [x] Saves on the EverDrive clone: no save test ROM kept its count (owner,
-      2026-10-04), so the game uses passwords (DECISIONS.md \"Saves\").
+      2026-10-04), so the game uses passwords (DECISIONS.md "Saves").
 - [x] Passwords: one per level, shown at level complete (and game over), entered from
       CONTINUE on the title screen (2026-10-05, `src/game_state/progress.c`,
       `tools/password.py`, `tests/test_passwords.py`). **(owner)** Check them.
 - [x] Level select after a password, game over with CONTINUE / QUIT, level complete with
       the fragments and the password (2026-10-05). A score beyond the fragment count isn't
       designed; add one only if wanted.
-- [x] Story text: 3-line boot screen on a new game, \"PATCH n/5 COMPILED\" on level
+- [x] Story text: 3-line boot screen on a new game, "PATCH n/5 COMPILED" on level
       complete, the AI log on the elevator ride after levels 1-3 (2026-10-05,
       `src/game_state/story.c`). Log 4 comes with level 4, log 5 with the boss level (M8).
 - [x] Ending and the in-game credits screen (2026-10-05, `story_ending` in
-      `src/game_state/story.c`): \"LOCKDOWN LIFTED\", then the credits, then the title.
+      `src/game_state/story.c`): "LOCKDOWN LIFTED", then the credits, then the title.
 
 ## M8 — Levels 2 to 5
 
@@ -165,7 +168,7 @@ replay test that finishes it.
       KERNEL's face and terminals). Agreed (owner). **(owner)** Check it on hardware.
 
 M8 is done: every level is built, has its art and a replay test, and the owner played
-them (2026-10-11). The hardware checks are under \"Waiting for the owner\".
+them (2026-10-11). The hardware checks are under "Waiting for the owner".
 
 ## M9 — Polish and release
 
@@ -183,13 +186,14 @@ them (2026-10-11). The hardware checks are under \"Waiting for the owner\".
 - [x] **Color pass on GBC (2026-10-11, owner):**
       - [x] **Dual-palette HUD:** Chassis uses Palette 5 (`#E0F8D0 #88C070 #346856 #081820`), Heart & Floppy accents use Palette 6 (`#E0F8D0 #F0A820 #D82828 #081820`).
       - [x] **Chaser enemy color differentiation:** Chasers use Sprite Palette 4 (electric cyan/teal `#D0F8F8 #2090A8 #082028`), standing out distinctly from red Patrol Bots (Palette 2).
-      - [x] **Multi-palette parallax band depth:** Background Palette 7 assigned as `BAND_ACCENT_PALETTE`, with Server Room band featuring glowing emerald server rack LEDs.
+      - [x] **Multi-palette parallax band depth:** Background Palette 7 assigned as `BAND_ACCENT_PALETTE` across all 5 levels (Level 1 Server Room emerald LEDs, Level 2 Code Testing Lab cyan oscilloscopes, Level 3 AI Research Wing violet neural pulses, Level 4 Network Hub amber router LEDs, Level 5 Mainframe crimson tape reels).
+      - [x] **Retro green phosphor CRT terminal palette:** Used on GBC for boot screen and elevator logs (`palette_use_terminal()`).
 - [ ] GitHub README (what it is, controls and cheats, how to build, playing on hardware,
       credits), screenshots, and the licence files: MIT for code, CC BY 4.0 for art
       (owner, 2026-10-11). Public on GitHub only.
 - [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;
       nothing copied from Mario or other commercial games.
-- [ ] Write the final \"how it works\" document from DECISIONS.md and SOURCES.md: boot,
+- [ ] Write the final "how it works" document from DECISIONS.md and SOURCES.md: boot,
       main loop, tiles and sprites, banking, collision, physics, palettes and fades,
       parallax, audio, saves.
 

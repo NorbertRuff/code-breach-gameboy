@@ -14,9 +14,9 @@
 #define network_hub_band_WIDTH 256
 #define network_hub_band_HEIGHT 24
 #define network_hub_band_TILE_COUNT 21
-#define network_hub_band_PALETTE_COUNT 1
+#define network_hub_band_PALETTE_COUNT 2
 #define network_hub_band_COLORS_PER_PALETTE 4
-#define network_hub_band_TOTAL_COLORS 4
+#define network_hub_band_TOTAL_COLORS 8
 #define network_hub_band_MAP_ATTRIBUTES network_hub_band_map_attributes
 #define network_hub_band_MAP_ATTRIBUTES_WIDTH 32
 #define network_hub_band_MAP_ATTRIBUTES_HEIGHT 3
@@ -27,7 +27,7 @@ extern const unsigned char network_hub_band_map_attributes[96];
 
 BANKREF_EXTERN(network_hub_band)
 
-extern const palette_color_t network_hub_band_palettes[4];
+extern const palette_color_t network_hub_band_palettes[8];
 extern const uint8_t network_hub_band_tiles[336];
 
 #endif

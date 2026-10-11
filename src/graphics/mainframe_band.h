@@ -14,9 +14,9 @@
 #define mainframe_band_WIDTH 256
 #define mainframe_band_HEIGHT 24
 #define mainframe_band_TILE_COUNT 17
-#define mainframe_band_PALETTE_COUNT 1
+#define mainframe_band_PALETTE_COUNT 2
 #define mainframe_band_COLORS_PER_PALETTE 4
-#define mainframe_band_TOTAL_COLORS 4
+#define mainframe_band_TOTAL_COLORS 8
 #define mainframe_band_MAP_ATTRIBUTES mainframe_band_map_attributes
 #define mainframe_band_MAP_ATTRIBUTES_WIDTH 32
 #define mainframe_band_MAP_ATTRIBUTES_HEIGHT 3
@@ -27,7 +27,7 @@ extern const unsigned char mainframe_band_map_attributes[96];
 
 BANKREF_EXTERN(mainframe_band)
 
-extern const palette_color_t mainframe_band_palettes[4];
+extern const palette_color_t mainframe_band_palettes[8];
 extern const uint8_t mainframe_band_tiles[272];
 
 #endif
