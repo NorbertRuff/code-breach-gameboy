@@ -79,12 +79,12 @@ static void show_hit_pose(void)
     for (uint8_t i = 0; i < HIT_POSE_FRAMES; i++) wait_vbl_done();
 }
 
-// Takes a life and restarts the section. On game over the player continues (the lives
+// Takes a life (none with the no-death cheat) and restarts the section. On game over the player continues (the lives
 // refill and the section's fragments come back) or quits to the title. Returns the next
 // game state.
 uint8_t lose_life(void) BANKED
 {
-    lives--;
+    if (!no_death_cheat) lives--;
     hud_update_lives(lives);
     show_hit_pose();
     if (lives) {

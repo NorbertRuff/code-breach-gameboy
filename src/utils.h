@@ -13,6 +13,11 @@
 #define LEVEL_SELECT_CHEAT 1
 #endif
 
+// 1: B in the pause menu turns the no-death cheat on or off (for testing)
+#ifndef NO_DEATH_CHEAT
+#define NO_DEATH_CHEAT 1
+#endif
+
 // Game states (current_game_state in main.c)
 #define INTRO_CREDITS_STATE 0
 #define TITLE_SCREEN_STATE 1

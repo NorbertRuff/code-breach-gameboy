@@ -1,4 +1,5 @@
-"""The pause (START) and the level-select cheat (SELECT while paused)."""
+"""The pause (START), the level-select cheat (SELECT while paused) and the no-death cheat
+(B while paused)."""
 
 from gamelib import (COREGAMELOOP, GAMEPLAY_START, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_GREYBOX_TEST,
                      LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, PAUSED)
@@ -64,3 +65,37 @@ def test_select_does_nothing_while_playing(game):
     game.press("select")
     game.frames(30)
     assert game.state() == COREGAMELOOP and game.u8("_level_index") == LEVEL_GREYBOX_TEST
+
+
+def turn_on_no_death(game):
+    game.press("start")
+    game.frames(2)
+    game.press("b")
+    game.frames(2)
+    game.press("start")
+    game.frames(2)
+    assert game.u8("_no_death_cheat") == 1
+
+
+def test_b_while_paused_turns_the_no_death_cheat_on_and_off(game):
+    game.start_on_open_ground()
+    turn_on_no_death(game)
+    game.press("start")
+    game.frames(2)
+    game.press("b")
+    game.frames(2)
+    assert game.u8("_no_death_cheat") == 0
+
+
+def test_with_no_death_a_bot_passes_through_and_a_fall_keeps_the_lives(game):
+    game.start_on_open_ground()
+    turn_on_no_death(game)
+    game.place_player(80, 71)                   # on platform B, in the bot's way (test_actors.py)
+    game.frames(60)
+    assert game.state() == COREGAMELOOP and game.lives() == 3
+    game.set_player_y(170)                      # below the level: back to the section start
+    for _ in range(300):
+        game.frames(1)
+        if game.player().py < 170:
+            break
+    assert game.player().py < 170 and game.lives() == 3

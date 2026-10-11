@@ -22,5 +22,17 @@
   "code_testing_lab": { "type": "bg", "palettes": "code_testing_lab", "budget": 128,
                      "size": [128, 40], "out": "graphics/tilesets/code_testing_lab.png" },
   "code_testing_lab_band": { "type": "bg", "palettes": "code_testing_lab_band", "budget": 32,
-                     "size": [256, 24], "out": "graphics/bands/code_testing_lab_band.png" }
+                     "size": [256, 24], "out": "graphics/bands/code_testing_lab_band.png" },
+  "ai_research_wing": { "type": "bg", "palettes": "ai_research_wing", "budget": 128,
+                     "size": [128, 40], "out": "graphics/tilesets/ai_research_wing.png" },
+  "ai_research_wing_band": { "type": "bg", "palettes": "ai_research_wing_band", "budget": 32,
+                     "size": [256, 24], "out": "graphics/bands/ai_research_wing_band.png" },
+  "network_hub":   { "type": "bg", "palettes": "network_hub", "budget": 128,
+                     "size": [128, 40], "out": "graphics/tilesets/network_hub.png" },
+  "network_hub_band": { "type": "bg", "palettes": "network_hub_band", "budget": 32,
+                     "size": [256, 24], "out": "graphics/bands/network_hub_band.png" },
+  "mainframe":     { "type": "bg", "palettes": "mainframe", "budget": 128,
+                     "size": [128, 56], "out": "graphics/tilesets/mainframe.png" },
+  "mainframe_band": { "type": "bg", "palettes": "mainframe_band", "budget": 32,
+                     "size": [256, 24], "out": "graphics/bands/mainframe_band.png" }
 }

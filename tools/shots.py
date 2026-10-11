@@ -7,6 +7,8 @@ Run with "make shots". Writes, per mode (dmg, cgb):
   tests/out/shots/<mode>_level_map.png   the whole 32x18 background map from VRAM, 2x
   tests/out/shots/<mode>_level_N/ and <mode>_level_N_contact.png: level N (1-4) played by
                                          its replay (tests/test_level_N.py), high route
+  tests/out/shots/<mode>_level_5/ and <mode>_level_5_contact.png: KERNEL in each state,
+                                         beaten by the boss test's pilot (tests/test_boss.py)
 
 The script uses the same helpers as the tests (tests/gamelib.py). Long ways are skipped
 by moving the player (place_player), lives are lost with lose_life, and game over comes
@@ -24,7 +26,8 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tests"))
 
-from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, Game, Pilot, boot  # noqa: E402
+from gamelib import COREGAMELOOP, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, Game, Pilot, boot  # noqa: E402
+from test_boss import FLOOR, LIFT, SHELF, TERMINALS, UPLOAD_FRAMES, KernelPilot  # noqa: E402
 from test_level_1 import play_level_1  # noqa: E402
 from test_level_2 import play_level_2  # noqa: E402
 from test_level_3 import play_level_3  # noqa: E402
@@ -35,6 +38,7 @@ LEVELS = {1: (LEVEL_1, play_level_1), 2: (LEVEL_2, play_level_2), 3: (LEVEL_3, p
           4: (LEVEL_4, play_level_4)}
 
 OUT = ROOT / "tests" / "out" / "shots"
+FLOOR_STATE = "Fkernel$floor_state$0_0$0"      # kernel.c: 1 a segment warns, 2 it is a hazard
 SHADES = [(232, 232, 232), (160, 160, 160), (88, 88, 88), (16, 16, 16)]
 MAP_W, MAP_H = 32, 18     # background map tiles shown: the 32 that wrap, 18 screen rows
 
@@ -227,6 +231,50 @@ def run_level(mode: str, rom: Path, number: int) -> None:
     print(f"{mode}: {len(rec.shots)} level {number} shots, contact sheet {sheet}")
 
 
+def run_kernel(mode: str, rom: Path) -> None:
+    """Level 5: the intro log, a volley's wide eyes and packets, each terminal lit and
+    uploading, the glitches after each upload, the corrupted floor, and the face breaking."""
+    pyboy = boot(rom, mode)
+    game = Game(pyboy, mode, OUT, mode, LEVEL_5)
+    rec = Recorder(game, OUT / f"{mode}_level_5")
+    game.wait_for_text(0, 10, "...#042? Y0U?")
+    rec.shot("intro_log")
+    game.wait_for_state(COREGAMELOOP, timeout=600)
+    rec.shot("start")
+    level_map(game).save(OUT / f"{mode}_level_5_map.png")
+    pilot = KernelPilot(game)
+    pilot.step_until(pilot.packets, FLOOR, what="a volley")
+    rec.shot("eyes_wide_packets_warn")
+    pilot.step_until(lambda: any(a.y > 64 for a in pilot.packets()), FLOOR, what="a packet falling")
+    rec.shot("packets_falling")
+    pilot.step_until(pilot.lit, FLOOR, what="terminal 1")
+    rec.shot("terminal_1_lit")
+    pilot.step_until(lambda: game.u8(UPLOAD_FRAMES) >= 17, FLOOR, lambda: TERMINALS[0], "up", "half an upload")
+    rec.shot("uploading")
+    pilot.upload(TERMINALS[0], FLOOR)
+    rec.shot("phase_2_glitches_lift")
+    pilot.board_lift()
+    pilot.ride_to_top(LIFT)
+    pilot.step_until(pilot.lit, SHELF, what="terminal 2")
+    rec.shot("terminal_2_lit")
+    pilot.upload(TERMINALS[1], SHELF)
+    rec.shot("phase_3")
+    pilot.step_until(lambda: game.u8(FLOOR_STATE) == 1, SHELF, what="a segment warning")
+    rec.shot("floor_warning")
+    pilot.step_until(lambda: game.u8(FLOOR_STATE) == 2, SHELF, what="a corrupted segment")
+    rec.shot("floor_corrupted")
+    pilot.stand_on_shelf_until_lit()
+    rec.shot("terminal_3_lit")
+    pilot.step_until(lambda: pilot.uploads() == 3, FLOOR, lambda: TERMINALS[2], "up", "the last upload")
+    pilot.buttons("")
+    game.frames(40)                                 # past the hit-stop and the shake
+    rec.shot("face_broken")
+    sheet = OUT / f"{mode}_level_5_contact.png"
+    contact_sheet(rec.shots).save(sheet)
+    pyboy.stop(save=False)
+    print(f"{mode}: {len(rec.shots)} level 5 shots, contact sheet {sheet}")
+
+
 def main() -> None:
     global OUT
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -240,6 +288,7 @@ def main() -> None:
         run(mode, Path(args.rom))
         for number in LEVELS:
             run_level(mode, Path(args.rom), number)
+        run_kernel(mode, Path(args.rom))
 
 
 if __name__ == "__main__":

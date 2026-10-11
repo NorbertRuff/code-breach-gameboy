@@ -32,6 +32,9 @@ Player player;
 
 uint8_t lives = START_LIVES;   // refilled on game over
 
+// 1: hits don't count and a fall restarts the section without a life (pause + B)
+uint8_t no_death_cheat = 0;
+
 // Frames the screen showed without a new update, because an update ran past VBlank.
 // Read by the tests; in Emulicious, watch _lag_frames.
 uint8_t lag_frames = 0;
@@ -97,8 +100,8 @@ static uint8_t new_press(uint8_t button)
     return (joypad_current & button) && !(joypad_previous & button);
 }
 
-// While paused: START goes back to the game. With the level-select cheat, SELECT loads
-// the next level.
+// While paused: START goes back to the game. With the cheats, SELECT loads the next
+// level and B turns the no-death cheat on or off.
 static void update_pause(void)
 {
     if (new_press(J_START)) {
@@ -111,6 +114,13 @@ static void update_pause(void)
         if (level_index == LEVEL_COUNT) level_index = 0;
         palette_fade_out(RESTART_FADE_FRAMES);
         current_game_state = GAMEPLAY_START;
+    }
+#endif
+#if NO_DEATH_CHEAT
+    else if (new_press(J_B)) {
+        no_death_cheat = !no_death_cheat;
+        if (no_death_cheat) sound_play(EFFECT_COLLECT);
+        else sound_play(EFFECT_DENIED);
     }
 #endif
 }
@@ -139,7 +149,7 @@ void main_game_loop(void)
     actors_move_lifts();
     player_update(&player);
 
-    // Fell out of the level? Costs a life, even while invincible.
+    // Fell out of the level? Restarts the section and costs a life, even while invincible.
     if (TO_PIXELS(player.y) > FALL_DEATH_Y) {
         sound_play(EFFECT_HIT);
         current_game_state = GAMEPLAY_END;
@@ -158,8 +168,9 @@ void main_game_loop(void)
     // Invincibility countdown
     if (player.invincibility_frames > 0) player.invincibility_frames--;
 
-    // Hit by an actor or a hazard tile? Not while invincible.
-    if (!player.invincibility_frames && (player.touched_hazard || player_touches_actor())) {
+    // Hit by an actor or a hazard tile? Not while invincible or with the no-death cheat.
+    if (!player.invincibility_frames && !no_death_cheat
+        && (player.touched_hazard || player_touches_actor())) {
         sound_play(EFFECT_HIT);
         current_game_state = GAMEPLAY_END;
     }

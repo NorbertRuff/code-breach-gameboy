@@ -8,10 +8,10 @@
 #include "../actor/actor.h"
 #include "../actor/lift.h"
 #include "../actor/packet.h"
+#include "../engine/camera.h"
 #include "../engine/palette.h"
 #include "../engine/screen.h"
 #include "../engine/text.h"
-#include "../graphics/hud.h"
 #include "../level/level_manager.h"
 #include "../sound/sound.h"
 #include "../utils.h"
@@ -45,11 +45,14 @@ static const uint8_t volley_lanes[UPLOADS][VOLLEYS][2] = {
     { {6, NO_LANE}, {2, NO_LANE}, {8, NO_LANE}, {1, NO_LANE} },
 };
 
-// The arena (levels/level_5.tmj) in screen tiles; its tiles are the greybox tileset's.
+// The arena (levels/level_5.tmj) in screen tiles. Its tiles, KERNEL's included, are the
+// mainframe tileset's (graphics/tilesets/mainframe.tsx), loaded from tile 0: the ids here
+// are its tile ids. A tile KERNEL swaps in has the palette of the one it replaces, so the
+// GBC attributes the map set stay right.
 #define ARENA_WIDTH 20
 #define ARENA_EMPTY_TILE 0
-#define ARENA_FLOOR_TILE 1
-#define ARENA_HAZARD_TILE 3
+#define ARENA_FLOOR_TILE 97         // top
+#define ARENA_HAZARD_TILE 89        // floor_corrupt
 #define FLOOR_ROW 15
 #define TEXT_ROW 9                  // log 5, under the face
 
@@ -71,49 +74,24 @@ static const LevelEntity lift_entity = { ENTITY_LIFT, 104, 96, 32, 1 };
 static const uint8_t floor_order[FLOOR_TURNS] = { 2, 0, 4, 1, 3 };
 enum { FLOOR_SAFE, FLOOR_WARNING, FLOOR_HAZARD };
 
-// KERNEL's background tiles, after the HUD frame's. Placeholder art until M5.
-#define KERNEL_TILE_BASE (uint8_t)(HUD_TILE_BASE + hud_TILE_COUNT)
-enum {
-    FRAME_TL, FRAME_T, FRAME_TR, FRAME_L, SCREEN, FRAME_R, FRAME_BL, FRAME_B, FRAME_BR,
-    EYE, EYE_WIDE, MOUTH, GLITCH, TERMINAL_OFF, TERMINAL_LIT, TERMINAL_FILL, KERNEL_TILE_COUNT = TERMINAL_FILL + 3
-};
-static const uint8_t kernel_tiles[KERNEL_TILE_COUNT * 16] = {
-    0xFF,0xFF, 0xFF,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF,   // FRAME_TL
-    0xFF,0xFF, 0xFF,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF,   // FRAME_T
-    0xFF,0xFF, 0xFF,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF,   // FRAME_TR
-    0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF,   // FRAME_L
-    0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF,   // SCREEN
-    0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF,   // FRAME_R
-    0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xC0,0xFF, 0xFF,0xFF, 0xFF,0xFF,   // FRAME_BL
-    0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0xFF,0xFF, 0xFF,0xFF,   // FRAME_B
-    0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0x03,0xFF, 0xFF,0xFF, 0xFF,0xFF,   // FRAME_BR
-    0x00,0xFF, 0x00,0xFF, 0x00,0xC3, 0x00,0xC3, 0x00,0xC3, 0x00,0xC3, 0x00,0xFF, 0x00,0xFF,   // EYE
-    0x00,0xFF, 0x00,0x81, 0x00,0x81, 0x00,0x81, 0x00,0x81, 0x00,0x81, 0x00,0x81, 0x00,0xFF,   // EYE_WIDE
-    0x00,0xFF, 0x00,0xFF, 0x00,0xFF, 0x00,0x00, 0x00,0x00, 0x00,0xFF, 0x00,0xFF, 0x00,0xFF,   // MOUTH
-    0xAA,0xFF, 0x55,0xFF, 0xAA,0xFF, 0x55,0xFF, 0xAA,0xFF, 0x55,0xFF, 0xAA,0xFF, 0x55,0xFF,   // GLITCH
-    0x7E,0x7E, 0x42,0x7E, 0x42,0x7E, 0x42,0x7E, 0x42,0x7E, 0x7E,0x7E, 0x18,0x18, 0x3C,0x3C,   // TERMINAL_OFF
-    0x7E,0x7E, 0x42,0x42, 0x42,0x42, 0x42,0x42, 0x42,0x42, 0x7E,0x7E, 0x18,0x18, 0x3C,0x3C,   // TERMINAL_LIT
-    0x7E,0x7E, 0x42,0x42, 0x42,0x42, 0x42,0x42, 0x7E,0x7E, 0x7E,0x7E, 0x18,0x18, 0x3C,0x3C,   // upload 1/4
-    0x7E,0x7E, 0x42,0x42, 0x42,0x42, 0x7E,0x7E, 0x7E,0x7E, 0x7E,0x7E, 0x18,0x18, 0x3C,0x3C,   // upload 2/4
-    0x7E,0x7E, 0x42,0x42, 0x7E,0x7E, 0x7E,0x7E, 0x7E,0x7E, 0x7E,0x7E, 0x18,0x18, 0x3C,0x3C,   // upload 3/4
-};
+// KERNEL's tiles: the face itself is in the map; these are swapped into it.
+#define EYE_LEFT 35                 // kernel_2_2
+#define EYE_RIGHT 37                // kernel_4_2
+#define EYE_WIDE_LEFT 9
+#define EYE_WIDE_RIGHT 10
+#define GLITCH 8
+#define TERMINAL_OFF 11
+#define TERMINAL_LIT 12
+#define TERMINAL_FILL 13            // 3 tiles: the upload 1/4 to 3/4 done
 
-// The face: a monitor of 7x6 tiles at the top middle, in the background.
+// The face: a monitor of 7x6 tiles at the top middle, drawn by the map.
 #define FACE_X 6
 #define FACE_Y 3
 #define FACE_WIDTH 7
 #define FACE_HEIGHT 6
 #define LEFT_EYE_X (FACE_X + 2)
 #define RIGHT_EYE_X (FACE_X + 4)
-#define EYES_Y (FACE_Y + 1)
-static const uint8_t face_map[FACE_WIDTH * FACE_HEIGHT] = {
-    FRAME_TL, FRAME_T, FRAME_T, FRAME_T, FRAME_T, FRAME_T, FRAME_TR,
-    FRAME_L,  SCREEN,  EYE,     SCREEN,  EYE,     SCREEN,  FRAME_R,
-    FRAME_L,  SCREEN,  SCREEN,  SCREEN,  SCREEN,  SCREEN,  FRAME_R,
-    FRAME_L,  SCREEN,  MOUTH,   MOUTH,   MOUTH,   SCREEN,  FRAME_R,
-    FRAME_L,  SCREEN,  SCREEN,  SCREEN,  SCREEN,  SCREEN,  FRAME_R,
-    FRAME_BL, FRAME_B, FRAME_B, FRAME_B, FRAME_B, FRAME_B, FRAME_BR,
-};
+#define EYES_Y (FACE_Y + 2)
 
 // Screen cells that glitch as KERNEL loses: 3 more after each upload.
 #define GLITCHES_PER_UPLOAD 3
@@ -132,32 +110,26 @@ static uint8_t floor_turn, floor_state, floor_frames;
 // shows them, a lost life keeps them and a game over clears them (game_flow.c).
 #define uploads current_level.section_collected[0]
 
-// Writes one of KERNEL's tiles at a screen tile.
-static void draw_tile(uint8_t x, uint8_t y, uint8_t tile)
+// Draws both eyes: EYE_LEFT and EYE_RIGHT, or the wide ones.
+static void draw_eyes(uint8_t left, uint8_t right)
 {
-    set_bkg_tile_xy(x, y, KERNEL_TILE_BASE + tile);
+    set_bkg_tile_xy(LEFT_EYE_X, EYES_Y, left);
+    set_bkg_tile_xy(RIGHT_EYE_X, EYES_Y, right);
 }
 
-// Draws the face, with a glitch for every upload done.
+// Puts the face's eyes back and a glitch on it for every upload done.
 static void draw_face(void)
 {
-    set_bkg_based_tiles(FACE_X, FACE_Y, FACE_WIDTH, FACE_HEIGHT, face_map, KERNEL_TILE_BASE);
+    draw_eyes(EYE_LEFT, EYE_RIGHT);
     for (uint8_t i = 0; i < uploads * GLITCHES_PER_UPLOAD; i++) {
-        draw_tile(FACE_X + glitch_x[i], FACE_Y + glitch_y[i], GLITCH);
+        set_bkg_tile_xy(FACE_X + glitch_x[i], FACE_Y + glitch_y[i], GLITCH);
     }
-}
-
-// Draws both eyes with one tile: EYE or EYE_WIDE.
-static void draw_eyes(uint8_t tile)
-{
-    draw_tile(LEFT_EYE_X, EYES_Y, tile);
-    draw_tile(RIGHT_EYE_X, EYES_Y, tile);
 }
 
 // Draws the current phase's terminal with a tile.
 static void draw_terminal(uint8_t tile)
 {
-    draw_tile(terminal_x[uploads], terminal_y[uploads], tile);
+    set_bkg_tile_xy(terminal_x[uploads], terminal_y[uploads], tile);
 }
 
 // Adds phase 2's lift, waiting at the bottom of its travel.
@@ -196,7 +168,7 @@ static void start_volley(void)
     drop_packet(player_lane(), 0);
     for (uint8_t i = 0; i < 2 && lanes[i] != NO_LANE; i++) drop_packet(lanes[i], i + 1);
     volley_turn = (volley_turn + 1) & (VOLLEYS - 1);
-    draw_eyes(EYE_WIDE);
+    draw_eyes(EYE_WIDE_LEFT, EYE_WIDE_RIGHT);
     eyes_frames = EYES_WIDE_FRAMES;
 }
 
@@ -305,40 +277,37 @@ static void shake_screen(void)
     screen_scroll(0);
 }
 
-// After level_load: KERNEL's tiles, and the uploads as the arena's
-// fragment quota, so the HUD shows "00/03".
+// After level_load: the uploads as the arena's fragment quota, so the HUD shows "00/03".
 void kernel_start(void) BANKED
 {
-    set_bkg_data(KERNEL_TILE_BASE, KERNEL_TILE_COUNT, kernel_tiles);
     current_level.section_fragments[0] = UPLOADS;
 }
 
-// After the arena is drawn (a start, or a restart after a lost life): the map columns a
-// shake shows past its right edge, the terminals, and the current phase from its start.
+// After the arena is drawn from its map, face and terminals included (a start, or a
+// restart after a lost life): the map columns a shake shows past its right edge, and the
+// current phase from its start.
 void kernel_restart(void) BANKED
 {
     fill_bkg_rect(ARENA_WIDTH, LEVEL_MAP_TOP_ROW, RING_COLUMNS - ARENA_WIDTH, FLOOR_ROW - LEVEL_MAP_TOP_ROW, ARENA_EMPTY_TILE);
     fill_bkg_rect(ARENA_WIDTH, FLOOR_ROW, RING_COLUMNS - ARENA_WIDTH, 1, ARENA_FLOOR_TILE);
-    for (uint8_t i = 0; i < UPLOADS; i++) {
-        draw_tile(terminal_x[i], terminal_y[i], TERMINAL_OFF);
-    }
     start_phase();
 }
 
-// Once the arena has faded in: KERNEL's log 5 under its face, then the fight.
+// Once the arena has faded in: KERNEL's log 5 under its face, then the fight. Drawing the
+// arena again from its map takes the text away: nothing else on it has changed yet.
 void kernel_intro(void) BANKED
 {
     text_load_font();
     story_type_log(LEVEL_BOSS, TEXT_ROW);
     wait_frames(INTRO_READ_FRAMES);
-    fill_bkg_rect(0, TEXT_ROW, ARENA_WIDTH, 2, ARENA_EMPTY_TILE);
+    level_stream_reset(camera_x);
 }
 
 // Once per gameplay frame, early (VBlank time for its tile writes): eyes, volleys, the
 // floor in phase 3, the terminal. Returns 1 when an upload is done.
 uint8_t kernel_update(void) BANKED
 {
-    if (eyes_frames && !--eyes_frames) draw_eyes(EYE);
+    if (eyes_frames && !--eyes_frames) draw_eyes(EYE_LEFT, EYE_RIGHT);
     if (!--volley_frames) {
         start_volley();
         volley_frames = VOLLEY_FRAMES;
@@ -359,7 +328,7 @@ uint8_t kernel_hit(void) BANKED
     remove_packets();
     draw_sprites(0);
     if (uploads == UPLOADS) {
-        fill_bkg_rect(FACE_X + 1, FACE_Y + 1, FACE_WIDTH - 2, FACE_HEIGHT - 2, (uint8_t)(KERNEL_TILE_BASE + GLITCH));
+        fill_bkg_rect(FACE_X + 1, FACE_Y + 1, FACE_WIDTH - 2, FACE_HEIGHT - 2, GLITCH);
         palette_flash(3, 10);
         palette_fade_out(SCREEN_FADE_FRAMES);
         return ENDING;

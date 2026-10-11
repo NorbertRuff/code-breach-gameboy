@@ -12,7 +12,8 @@ States are defined in `src/utils.h`:
   chosen: NEW GAME (progress reset, the boot screen, level 1) or CONTINUE (the password
   screen, then the level select). B on an empty password shows the title again.
 - `COREGAMELOOP` ↔ `PAUSED` on START ("PAUSE" in sprites over the parallax band). While
-  paused, SELECT loads the next level (`LEVEL_SELECT_CHEAT`).
+  paused, SELECT loads the next level (`LEVEL_SELECT_CHEAT`) and B toggles
+  `no_death_cheat` (`NO_DEATH_CHEAT`).
 - `GAMEPLAY_END` (a life lost): `lose_life` restarts the current section behind a fade
   (`restart_behind_fade`) and returns the next state. On game over, `game_over` in
   `game_over.c` asks CONTINUE (the lives refill, the section's fragments come back) or
@@ -36,13 +37,14 @@ The per-frame gameplay code is `main_game_loop()`. Global state: in `main.c`
 `perfect_levels`.
 
 Development flags in `src/utils.h`: `SKIP_INTRO_AND_START` (1: straight to gameplay; the
-tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next level).
+tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next level), `NO_DEATH_CHEAT` (1: B
+while paused turns the no-death cheat on or off).
 
 ## Modules
 
 | Directory | Purpose |
 |---|---|
-| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, and the password; `tools/password.py` is a copy), `game_flow` (level start, section restart, losing a life), `game_over` (also `level_complete`), `story` (the boot screen, the AI logs, the ending and credits), `kernel` (the boss: face, terminals, packet volleys, the lift, the corrupted floor; `start_level` and `restart_section` call it in level 5), `pause` (the label); all banked (the title picture's loader, `draw_title_picture`, is `NONBANKED`) |
+| `src/game_state/` | `prepare_gameboy`, `intro_credits`, `start_screen` (the title picture), `title_menu` (NEW GAME / CONTINUE, the password screen, the level select), `menu` (blank menu screen, button presses, `menu_choose`), `progress` (furthest level, 100% marks, and the password; `tools/password.py` is a copy), `game_flow` (level start, section restart, losing a life), `game_over` (also `level_complete`), `story` (the boot screen, the AI logs, the ending and credits), `kernel` (the boss: face, terminals, packet volleys, the lift, the corrupted floor; the face and terminals are in level 5's map, and it swaps mainframe tiles by id; `start_level` and `restart_section` call it in level 5), `pause` (the label); all banked (the title picture's loader, `draw_title_picture`, is `NONBANKED`) |
 | `src/engine/` | `platform.c` (`is_cgb`), `palette.c` and `palette_effects.c` (every palette write; loads in bank 0, fades and flashes banked), `text.c` (screen text in the game's font), `banking.h` (`WITH_BANK`, `WITH_ROM_BANK`), `camera.c`, `screen.c` (line interrupts) |
 | `src/player/` | `Player` struct and physics: `player_update`, `player_draw` |
 | `src/input/` | Joypad polling; `input_read_player` copies the d-pad, Down and A into the player |
@@ -181,7 +183,7 @@ status.
 - **Background tiles** (GBDK uses `0x8800` addressing, so background tiles 128–255 share
   memory with sprite tiles 128–255): the level's tileset from 0 and its band right after
   (together at most 160), the font 160–208 (1-bit, loaded in color 3 on 0; the HUD's
-  digits are the font's), the HUD frame 209–218, KERNEL's 219–236 (level 5).
+  digits are the font's), the HUD frame 209–218; 219–255 free (KERNEL's tiles are in level 5's tileset).
 - **Sprite tiles:** the player 0–67 (all 10 frames), the bot 68–75, the chaser 76–83,
   the lift 84–89, KERNEL's packet 90–97 (`src/actor/actor.h`), the pause label 98–107.
   The player is

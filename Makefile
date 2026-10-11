@@ -194,6 +194,12 @@ assets:
 	$(PNG2ASSET) graphics/bands/server_room_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/server_room_band.c
 	$(PNG2ASSET) graphics/tilesets/code_testing_lab.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/code_testing_lab.c
 	$(PNG2ASSET) graphics/bands/code_testing_lab_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/code_testing_lab_band.c
+	$(PNG2ASSET) graphics/tilesets/ai_research_wing.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/ai_research_wing.c
+	$(PNG2ASSET) graphics/bands/ai_research_wing_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/ai_research_wing_band.c
+	$(PNG2ASSET) graphics/tilesets/network_hub.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/network_hub.c
+	$(PNG2ASSET) graphics/bands/network_hub_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/network_hub_band.c
+	$(PNG2ASSET) graphics/tilesets/mainframe.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/mainframe.c
+	$(PNG2ASSET) graphics/bands/mainframe_band.png -map -noflip -keep_palette_order -b 255 -o src/graphics/mainframe_band.c
 	$(PNG2ASSET) graphics/player/programmer.png -sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255 -o src/graphics/programmer.c
 	$(PNG2ASSET) graphics/enemies/security_bot.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/security_bot.c
 	$(PNG2ASSET) graphics/enemies/chaser_drone.png -spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255 -o src/graphics/chaser_drone.c

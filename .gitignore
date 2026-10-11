@@ -110,3 +110,6 @@ tests/out/
 # ROMs built for the flashcart outside obj/ (make OBJDIR=flashcart savetest), kept through make clean
 flashcart/
 /graphics/raw generated/
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/

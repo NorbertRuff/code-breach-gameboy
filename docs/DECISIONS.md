@@ -52,6 +52,10 @@ or git keeps the old one). Details of how the code does it belong in
 - **Pause:** START freezes the game with "PAUSE" in the band; the music keeps playing.
   SELECT while paused loads the next level (cheat, `LEVEL_SELECT_CHEAT`; M9 decides if it
   ships). A real menu waits for M7. **Proposed.**
+- **No-death cheat** (2026-10-11, owner asked for it for playtesting): B while paused turns
+  it on (pickup sound) or off (denied sound); hits don't count, and a fall restarts the
+  section without a life. Behind `NO_DEATH_CHEAT`; off in the release (M9) with the
+  level-select cheat. No on-screen mark, to keep bank 0 and the HUD as they are.
 - **No hard mode** (2026-10-05, owner): cut to keep the game small.
 - **Story:** "PATCH n/5"; each level's fragments compile into a patch uploaded in the boss
   fight; the twist that staff #042 wrote the AI stays (STORY.md).
@@ -150,7 +154,8 @@ or git keeps the old one). Details of how the code does it belong in
 - **A tileset per level** (2026-10-10): each level's header points at its tileset's
   `TilesetData`, written by `tools/tiled2c.py` from the `.tsx`: the art and band, the
   collision and palette of each tile, the marker tiles, the open elevator. Level 1 uses
-  `server_room`, level 2 `code_testing_lab`, the other levels the greybox.
+  `server_room`, level 2 `code_testing_lab`, level 3 `ai_research_wing`, level 4
+  `network_hub`, level 5 `mainframe`; the test rooms the greybox.
 - **Bank 0 is for per-frame code;** code that never runs in a gameplay frame lives in ROM
   banks (`#pragma bank 255`, `BANKED`). Code that reads banked data inside the caller's
   `WITH_BANK` stays in bank 0 (2026-10-04: the palette fades and the level start/restart
@@ -168,8 +173,8 @@ or git keeps the old one). Details of how the code does it belong in
   RGB555 (multiplying took 2 frames per step).
 - **GBC palettes:** background 0-3 the level's tileset (its palettes in the set's order,
   so a tile's attribute is its tileset palette, no remapping), 4 the band, 5 the HUD
-  (`hud` set: #E0F8D0 #88C070 #346856 #081820, 2026-10-10, **Proposed**), 6-7 free (the
-  boss art, M8). Was 0 level, 1 band, 2 HUD until a tileset needed 4 (2026-10-10,
+  (`hud` set: #E0F8D0 #88C070 #346856 #081820, 2026-10-10, **Proposed**), 6-7 free
+  (KERNEL only swaps tiles of the same palette, 2026-10-11). Was 0 level, 1 band, 2 HUD until a tileset needed 4 (2026-10-10,
   **Proposed**). Sprite 0 the player, 1 the pale invincible player (DMG blinks instead),
   2 the enemies (bots, chasers, KERNEL's packets), 3 the lifts: the style guide's three
   sprite palettes in order (player, red, gold; `server_room` set through
@@ -187,7 +192,7 @@ or git keeps the old one). Details of how the code does it belong in
 - **Art pipeline:** Claude Design → `tools/gbconvert.py` → png2asset (ART_PIPELINE.md);
   every palette light to dark; no background tile flips.
 - **Placeholders until each level's art pass:** the greybox tileset and band (drawn by
-  scripts), in levels 3-5 and the test rooms.
+  scripts), now only in the test rooms (levels 3-5 got their art 2026-10-11).
 - **Server Room art** (2026-10-10, **Proposed**): redrawn by hand on the 8×8 grid from
   the owner's Gemini starter art (mock-up, band, object sheet; not on a pixel grid, so
   used as references). Green riveted machine blocks with a striped top lip (a 16-tile
@@ -208,6 +213,30 @@ or git keeps the old one). Details of how the code does it belong in
   the band (desks, racks and benches under a ceiling pipe) 22. The map keeps its layout
   and every cell's collision; the props were placed by a script, so the owner can repaint
   them in Tiled.
+- **AI Research Wing art** (2026-10-11, owner): level 3 in the same way, from the
+  owner's Gemini mock-up and band. Dark-purple riveted lab plates with a lilac lip (a
+  16-tile "plate" terrain set, plus a vent plate), thin blue catwalks (one-way), and
+  behind the play lane in shades 0-1: specimen tanks, neural-network boards, server
+  cabinets, terminals, lamps, and rails with a pulley beam behind each lift. Gate, rails,
+  elevator (open: lit purple), floppy and start marker are level 2's tiles recolored. 69
+  tiles, the band 28. Layout and every cell's collision kept; props placed by a script.
+- **Network Hub art** (2026-10-11, owner): level 4 in the same way. Tan floor tiles
+  with a lip and dark outline (a 16-tile "floor" terrain set, plus a vent), lighter than
+  levels 1-2 so the dark hazards stand out; blue data bridges (one-way); spikes, one per
+  tile (yellow and dark red, black outline), and hanging cut-cable bundles ending in
+  spikes; wall panels, patch panels, racks and routers behind in shades 0-1. Shared
+  objects recolored from level 2, the open elevator lit blue. 72 tiles, the band 21.
+  Layout and collision kept; props placed by a script.
+- **Mainframe art and KERNEL's face** (2026-10-11, owner): level 5 in the same
+  way: lavender riveted plates ("plate" terrain set), a blue truss catwalk (one-way),
+  racks, consoles and cables behind; the band tape-reel mainframes under a truss. 96
+  tiles, the band 17. KERNEL's face (7x6 tiles, traced from `kernel_face_v1`; the owner kept it
+  as drawn), its wide eyes, the glitch (from `kernel_v2`) and the terminals
+  are cells of the mainframe tileset, painted in the map; `kernel.c` swaps tiles by
+  tileset id, each with the palette of the cell it replaces, so no attribute writes are
+  needed (`tests/test_kernel_art.py` checks it). So the corrupted floor is black spikes on
+  the floor's gray palette, not red (owner: fine). The fragment stays the floppy in every
+  level, to match the HUD icon (owner, 2026-10-11).
 - **Title screen** (2026-10-10, owner): redrawn by hand at 1× on the 8×8 grid from
   the owner's Gemini starter art (a server corridor, the programmer from behind, his head turned
   to a monitor; the "APEX [LAB] / CODE BREACH" logo), 139 tiles from 0. A warning triangle on the
@@ -220,7 +249,8 @@ or git keeps the old one). Details of how the code does it belong in
   hair finished by the owner in Aseprite. Replaces the owner's `apexLogo.png` as it was.
 - **Background tiles** (2026-10-10, **Proposed**): the tileset from 0 and its band after
   it (tileset at most 128, band 32), the font 160-208, the HUD 209-218 (was 64-73, which
-  capped a tileset at 64 tiles), KERNEL 219-236.
+  capped a tileset at 64 tiles); 219-255 free (KERNEL's tiles moved into level 5's
+  tileset, 2026-10-11).
 - **HUD and font** (2026-10-10): redrawn from Gemini starter art. The HUD is 2 tile rows
   (Gemini's was 30 px tall): light boxes for the lives and the count, which the code
   writes, a heart and a floppy icon in the frame, a riveted strip below; 10 tiles. One

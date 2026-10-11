@@ -18,6 +18,7 @@ void go_to_next_level(void) BANKED;
 extern Player player;
 extern uint8_t joypad_current;
 extern uint8_t lives;
+extern uint8_t no_death_cheat;
 void draw_sprites(uint8_t with_pause_label);
 void redraw_hud_count(void);
 

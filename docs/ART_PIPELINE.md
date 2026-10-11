@@ -36,7 +36,7 @@ The ROM must work on DMG, so all tiles live in VRAM bank 0: 384 tiles in three b
 | Block | Tiles | Used for |
 |---|---|---|
 | Sprite-only (`0x8000`) | 128 | Player (68, all 10 frames), current level's enemies and objects (about 40), pause label (10), spare |
-| Shared (`0x8800`) | 128 | Background tiles 128–255: the rest of the level tiles (to 159), the font (160–208), the HUD frame (209–218), KERNEL (219–236, level 5) |
+| Shared (`0x8800`) | 128 | Background tiles 128–255: the rest of the level tiles (to 159), the font (160–208), the HUD frame (209–218); 219–255 free (KERNEL's tiles are in the mainframe tileset) |
 | Background-only (`0x9000`) | 128 | Background tiles 0–127: the level tileset, then its band |
 
 So a level tileset gets **128 tiles** (every cell of its sheet, `tools/tiled2c.py`
@@ -130,11 +130,11 @@ Design.
 | KERNEL's data packet (L5) | 16×16 | Flicker (2) | Done (2026-10-10) |
 | Enemies for L2–L4 | 16×16 or 16×32 | One or two types per level | Not started |
 | Boss (L5) | Large | Built from background tiles or a metasprite within 10 sprites per line | Not designed |
-| Collectibles | 8×8 tiles in the level tileset | Code fragment, bug report, debug tool, AI core, security protocol | Code fragment (a floppy) in the Server Room and Code Testing Lab tilesets (2026-10-10); greybox diamond elsewhere |
-| Level objects | Tiles in the level tileset | Security gate (a striped shutter column between rails, opened a row at a time), exit elevator (2×4 tiles, closed and open) | Server Room done (2026-10-10); Code Testing Lab recolored from it |
-| Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Server Room wiring, Code Testing Lab sparking cables (top and fill, 2026-10-10); levels 1 and 2 have no hazards |
-| Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room (16 tiles) and Code Testing Lab (22) done (2026-10-10); greybox placeholder for levels 3-5 |
-| Tilesets | ≤ 128 tiles each, with a `.tsx` | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Server Room done (2026-10-10): `graphics/tilesets/server_room.png`, 68 tiles in an 80-cell sheet, machine terrain set in Tiled. Code Testing Lab done (2026-10-10): `code_testing_lab.png`, 69 tiles in an 80-cell sheet, same tile ids for the shared objects, "panel" terrain set |
+| Collectibles | 8×8 tiles in the level tileset | Code fragment, bug report, debug tool, AI core, security protocol | Code fragment (a floppy) in every level tileset (levels 1-2 2026-10-10, 3-5 2026-10-11); greybox diamond in the test rooms |
+| Level objects | Tiles in the level tileset | Security gate (a striped shutter column between rails, opened a row at a time), exit elevator (2×4 tiles, closed and open) | Server Room done (2026-10-10); Code Testing Lab recolored from it, AI Research Wing (open: purple) and Network Hub (open: blue) from that (2026-10-11); level 5 has none |
+| Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Server Room wiring, Code Testing Lab sparking cables (top and fill, 2026-10-10), recolored for the AI Research Wing; Network Hub spikes and hanging cut-cable bundles, Mainframe corrupted floor (2026-10-11); levels 1-3 have no hazards |
+| Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room (16 tiles) and Code Testing Lab (22) done (2026-10-10); AI Research Wing (28), Network Hub (21) and Mainframe (17) done (2026-10-11) |
+| Tilesets | ≤ 128 tiles each, with a `.tsx` | Server Room, Code Testing Lab, AI Research Wing, Network Hub, Mainframe | Server Room done (2026-10-10): `graphics/tilesets/server_room.png`, 68 tiles in an 80-cell sheet, machine terrain set in Tiled. Code Testing Lab done (2026-10-10): `code_testing_lab.png`, 69 tiles in an 80-cell sheet, same tile ids for the shared objects, "panel" terrain set. AI Research Wing (69 tiles, "plate"), Network Hub (72, "floor") and Mainframe (96 in a 112-cell sheet, "plate"; KERNEL's face at columns 1-7, rows 0-5) done (2026-10-11) |
 | HUD and font | 59 tiles | Frame (heart, floppy icon, riveted strip), A–Z, 0–9, punctuation | Done (2026-10-10): `graphics/hud/hud.png`, `graphics/font/font.png` |
 | Screens | ≤ 256 tiles each | Title logo, intro credits, game over, level complete, ending, credits | Title done (2026-10-10): `graphics/start_screen/title.png` and the blinking `title_warning.png`, 4 palettes; the others are text screens in the game font |
 

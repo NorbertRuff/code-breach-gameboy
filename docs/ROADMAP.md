@@ -4,27 +4,28 @@ From the current prototype to the full 5-level game, playable in color on GBC an
 4 shades on DMG. Claude writes the code; the owner runs git, reviews, and plays it in
 Emulicious and on hardware. Items marked **(owner)** need the owner.
 
-## Status (2026-10-10)
+## Status (2026-10-11)
 
-- **Playable from start to end:** levels 1-4 (level 1 in its Server Room art and level 2
-  in its Code Testing Lab art since 2026-10-10; level 3's greybox, kept after the owner's
-  pass; level 4's greybox new) and level 5, the KERNEL
-  boss (greybox, placeholder face), then the ending and the credits; music and sound
+- **Playable from start to end:** levels 1-4 and level 5, the KERNEL boss, all in their
+  final art (levels 1-2 since 2026-10-10, levels 3-5 and KERNEL's face since 2026-10-11;
+  the owner played levels 1-5 end to end on 2026-10-11, before the level 3-5 art: good),
+  then the ending and the credits; music and sound
   effects; passwords, the title menu, the level select and the game over menu; the story
   text. New since the owner's last check: the M7 menus and story, level 4, level 5 and the
   ending, and since 2026-10-10 the final player sprite (10 frames, GBC colors from the
   style guide), the bot, chaser, lift and packet sprites, the HUD and font, and level 1's
   tileset, band, gate and elevator, level 2's art and the new title screen with its
-  blinking warning. Next: the owner's playthrough; level 3's art pass.
-- **Tests:** `make test` 239 tests in about 20 s; `make test-full` 356 in about 25 s.
-- **Memory:** bank 0 has 638 bytes free (KERNEL's packet actor and the boss and ending
+  blinking warning. The level 3-5 art and KERNEL's face agreed by the owner (2026-10-11).
+  Next: hardware checks; M9 polish.
+- **Tests:** `make test` 241 tests in about 20 s; `make test-full` 360 in about 25 s.
+- **Memory:** bank 0 has 600 bytes free (the no-death cheat took 38; KERNEL's packet actor and the boss and ending
   states are in it; the tileset loading and GBC attribute streaming took 380; moving the
   title flow to a ROM bank gave 31 back; the new title took about 47, and dropping
   `sizeof(FONT_CHARS)` gave 100 back); WRAM uses
   1,820 of 4,096 bytes.
 - **Frame budget** (worst update on DMG, line of the 140 allowed; average): level 1 127
   (79), level 2 111 (67), level 3 132 (90; 139 on GBC, the tightest), level 4 110 (70),
-  level 5 111 (72), greybox route 125 (80). KERNEL's own update about 8 lines, up to 25
+  level 5 110 (72), greybox route 125 (80). KERNEL's own update about 8 lines, up to 25
   when it writes tiles. Lifts cost about 10 lines on average where they are; the music
   step about 9, up to 18; a streamed column's write 2 in VBlank, 4 with its GBC palettes.
 
@@ -49,6 +50,8 @@ A fixed bug leaves this list; its regression test keeps the number.
   elevator): agree or change the **Proposed** Code Testing Lab art decision
   (DECISIONS.md). Repaint or move the props in Tiled with the
   "panel" terrain set (`graphics/tilesets/code_testing_lab.tsx`).
+- Levels 3-5's art and KERNEL's face on hardware (DMG and GBC): agreed in Emulicious
+  (2026-10-11).
 - The new title screen on hardware (DMG and GBC): agreed in Emulicious (2026-10-10).
 - The new bot, chaser, lift and packet on DMG and GBC (2 frames every 8 frames, the lift
   still): agree or change the **Proposed** enemy sprite decision (DECISIONS.md).
@@ -178,13 +181,15 @@ replay test that finishes it.
 - [ ] Level 3, AI Research Wing: vertical movers and chasers. Lifts done 2026-10-04
       (`src/actor/lift.c`), chasers done (`src/actor/chaser.c`), both tested in
       `levels/test_movers.tmj`; greybox built ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7)
-      with a replay test; **(owner)** play it. Then the art pass.
+      with a replay test; owner played it (2026-10-11). Art pass done 2026-10-11 (AI
+      Research Wing tileset and band). **(owner)** Check it on hardware.
 - [ ] Level 4, Network Hub: hazards. Greybox built 2026-10-05 (`levels/level_4.tmj`,
-      [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7) with a replay test; **(owner)** play it.
-      Then the art pass.
+      [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7) with a replay test; owner played it
+      (2026-10-11). Art pass done 2026-10-11 (Network Hub). **(owner)** Check it on hardware.
 - [ ] Level 5, Mainframe: the KERNEL boss. Built 2026-10-05 from the approved design
       (`levels/level_5.tmj`, `src/game_state/kernel.c`, `tests/test_boss.py`);
-      **(owner)** play it. Then the art pass (the face, the packet, the terminals).
+      owner played it (2026-10-11). Art pass done 2026-10-11 (Mainframe tileset and band,
+      KERNEL's face and terminals). Agreed (owner). **(owner)** Check it on hardware.
 
 ## M9 — Polish and release
 
@@ -192,6 +197,8 @@ replay test that finishes it.
 - [x] No lag frames in any level, at most 10 sprites per line: each level's replay test
       (`tests/test_level_1.py` to `test_level_4.py`, `test_boss.py`) checks both.
 - [ ] Difficulty and checkpoint tuning.
+- [ ] Turn off the testing cheats (`LEVEL_SELECT_CHEAT`, `NO_DEATH_CHEAT` in `src/utils.h`)
+      for the release, and the tests that use them.
 - [ ] Project README, screenshots, itch.io page.
 - [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;
       nothing copied from Mario or other commercial games.
