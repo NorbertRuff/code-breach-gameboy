@@ -1,4 +1,4 @@
-"""Sections, gates, checkpoints and the exit (roadmap M3, GAME_DESIGN.md, "Rules"),
+"""Sections, gates, checkpoints and the exit (roadmap M3, docs/GAME_DESIGN.md, "Rules"),
 in levels/greybox_test.tmj: gate A at column 33 and gate B at column 50, both with a
 quota of 1 and their bottom tile on row 14; the exit at column 62."""
 

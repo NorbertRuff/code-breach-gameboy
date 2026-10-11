@@ -1,4 +1,4 @@
-"""The jump metrics in docs/LEVELS.md section 4, measured in the test room
+"""The jump metrics in docs/GAME_DESIGN.md, "Jump metrics", measured in the test room
 levels/test_jumps.tmj: a floor with walls and pits and nothing else.
 
 If one of these fails after a physics change, measure again and update the table: the
@@ -8,7 +8,7 @@ level layouts are built on these numbers.
 from gamelib import (COREGAMELOOP, LEVEL_TEST_JUMPS, SPRITE_LEFT_W, SPRITE_RIGHT_W,
                      TILE_SIZE)
 
-# docs/LEVELS.md section 4, in tiles.
+# docs/GAME_DESIGN.md, "Jump metrics", in tiles.
 MAX_CLIMB_HELD = 4
 MAX_CLIMB_TAPPED = 1
 MAX_GAP_STANDING = 7

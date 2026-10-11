@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 // Level data in ROM, written by tools/tiled2c.py from the Tiled maps in levels/.
-// docs/LEVELS.md describes the Tiled side.
+// docs/GAME_DESIGN.md, "Making levels", describes the Tiled side.
 
 // A level map is 13 rows tall: screen rows 3-15. Rows 0-2 are the parallax band.
 #define LEVEL_MAP_ROWS 13

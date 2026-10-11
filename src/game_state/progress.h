@@ -4,7 +4,7 @@
 #include <gb/gb.h>
 #include <stdint.h>
 
-// What the player has done, kept in a 4-letter password (DECISIONS.md "Saves"): the
+// What the player has done, kept in a 4-letter password (docs/ARCHITECTURE.md, "Saves: passwords"): the
 // furthest level they may play and a 100% mark per finished level.
 // progress.c, a ROM bank.
 

@@ -1,4 +1,4 @@
-"""Passwords of ApexLab, the same as src/game_state/progress.c (DECISIONS.md "Saves").
+"""Passwords of ApexLab, the same as src/game_state/progress.c (docs/ARCHITECTURE.md, "Saves: passwords").
 
     python tools/password.py           the password of each level, plain and with every mark before it
     python tools/password.py BCDF      what a password holds

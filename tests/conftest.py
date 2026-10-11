@@ -48,19 +48,15 @@ def pytest_sessionstart(session):
 
 @pytest.fixture(scope="session")
 def rom_dir(tmp_path_factory) -> Path:
-    """Copy the built ROMs and their .sym files into a fresh temp folder.
+    """Copy the built ROM and its .sym and .map files into a fresh temp folder.
 
-    PyBoy loads <rom>.ram if it exists and writes it when a battery cartridge stops.
-    Running from a copy keeps tests independent of each other and of Emulicious saves.
+    Running from a copy keeps the tests away from Emulicious's files in obj/.
     """
     if not (OBJ / "ApexLab.gb").exists():
         pytest.exit("obj/ApexLab.gb is missing: run 'make test' (or 'make' first)")
     folder = tmp_path_factory.mktemp("roms")
-    for name in ("ApexLab", "savetest", "savetest_mbc1", "savetest_mbc3", "soundtest"):
-        for ext in (".gb", ".sym", ".map"):
-            src = OBJ / f"{name}{ext}"
-            if src.exists():
-                shutil.copy(src, folder / src.name)
+    for ext in (".gb", ".sym", ".map"):
+        shutil.copy(OBJ / f"ApexLab{ext}", folder / f"ApexLab{ext}")
     return folder
 
 

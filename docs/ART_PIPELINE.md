@@ -64,8 +64,7 @@ set, tile budget, size in Game Boy pixels and output path. The script shrinks th
 to 1×, snaps each pixel to the nearest palette color (fails above 2% changed), checks
 every tile's colors and palette, counts unique tiles against the budget, and writes the
 indexed PNG (palettes in groups of 4, light to dark) plus GBC and DMG previews to
-`tests/out/previews/`. Errors name the tile and the colors at fault. Tests:
-`tests/test_gbconvert.py`.
+`tests/out/previews/`. Errors name the tile and the colors at fault. 
 
 ## 5. png2asset settings
 
@@ -76,7 +75,7 @@ indexed PNG (palettes in groups of 4, light to dark) plus GBC and DMG previews t
 |---|---|
 | Player | `-sw 16 -sh 32 -spr8x16 -keep_palette_order -b 255` |
 | Actor sheets (enemies, lift, packet) | `-spr8x16 -keep_palette_order -keep_duplicate_tiles -noflip -tiles_only -b 255`: tiles in sheet order; the metasprites are written by hand in `src/actor/` |
-| Level tilesets | `-map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255`: one tile per sheet cell, so Tiled's tile ids are the VRAM tiles; maps and per-tile palettes come from `tools/tiled2c.py` ([LEVELS.md](LEVELS.md)) |
+| Level tilesets | `-map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255`: one tile per sheet cell, so Tiled's tile ids are the VRAM tiles; maps and per-tile palettes come from `tools/tiled2c.py` ([GAME_DESIGN.md](GAME_DESIGN.md), "Making levels") |
 | Parallax bands | `-map -noflip -keep_palette_order -use_map_attributes -b 255`: the base and accent palettes per cell |
 | HUD, title warning | `-map -noflip -keep_palette_order -b 255` |
 | Full screens (title) | `-map -noflip -keep_palette_order -use_map_attributes -b 255`; with one palette, no `-use_map_attributes` |

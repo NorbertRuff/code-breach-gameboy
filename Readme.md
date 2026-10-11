@@ -87,9 +87,9 @@ palettes, the passwords and the frame budget, and compare screenshots.
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the game runs on the hardware:
 ROM banking, streaming a wide level through a 32-tile map, the jump physics in integer
 math, the parallax screen splits, palettes and fades on both Game Boys, music and sound
-effects, and the passwords. The reasons behind each choice are in
-[docs/DECISIONS.md](docs/DECISIONS.md), where every idea and asset came from in
-[docs/SOURCES.md](docs/SOURCES.md). The rest of the docs are listed in
+effects, the passwords and the demo, with where each idea came from. The game itself,
+and how to make levels, is in [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md). The rest of the
+docs are listed in
 [docs/README.md](docs/README.md).
 
 ## Credits

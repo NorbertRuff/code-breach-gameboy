@@ -3,8 +3,8 @@
 How ApexLab: Code Breach runs on a Game Boy: one cartridge ROM, written in C with
 GBDK-2020, that plays in color on a Game Boy Color and in 4 shades on the original Game
 Boy. Each section says what the game does, how the code does it, and where the idea came
-from. The reasons behind each choice are one line each in [DECISIONS.md](DECISIONS.md);
-every source with its license is in [SOURCES.md](SOURCES.md) and [../CREDITS.md](../CREDITS.md).
+from; third-party code, music and sounds with their licenses are in
+[../CREDITS.md](../CREDITS.md).
 For a code change, read the section for the part you change.
 
 ## The hardware in one paragraph
@@ -146,7 +146,8 @@ GBC palette (read back from the indexed PNG: color index / 4). It also checks th
 rules (pit widths, room right of each gate). `make preview` draws every level with its
 jump arcs and checks that every fragment and the exit can be reached, by simulating
 jumps with `tools/physics.py`, a frame-exact copy of the player physics.
-[LEVELS.md](LEVELS.md) has the Tiled setup and how to add a level.
+[GAME_DESIGN.md](GAME_DESIGN.md), "Making levels", has the Tiled setup and how to add a
+level.
 
 **Streaming.** A level is up to 255 tiles wide, the background map only 32. Maps are 13
 rows drawn at screen rows 3–15. `level_stream_update(camera_x)` draws each column that
@@ -277,8 +278,6 @@ the right shades on both.
   unless a higher-priority one plays, and mutes its channels in `hUGE_mute_mask` so the
   music leaves them alone; `sound_step`, called by `music_step`, writes the next step and
   unmutes the channels after the last (the pattern of VGM2GBSFX's music manager).
-- `make soundtest` builds `obj/soundtest.gb` with every effect and every song of both
-  music packs, and renders each to a WAV (`tools/render_sounds.py`).
 
 ## The demo (`src/game_state/demo.c`)
 
@@ -297,8 +296,8 @@ level's start always play the same way.
 
 ## Saves: passwords
 
-The owner's flashcart kept no battery save in any test ROM (MBC5, MBC1, MBC3; the
-test ROMs are `make savetest`), so the game uses passwords. `progress.c` keeps one
+The owner's flashcart kept no battery save in any test ROM (MBC5, MBC1 and MBC3, tried
+during development), so the game uses passwords. `progress.c` keeps one
 progress byte: the furthest level and a 100% mark per finished level. A password is 4
 letters from `BCDFGHJKLMNPRTWX`: the progress byte and a check byte that is a one-to-one
 mix of it, so every single wrong letter is refused. The level complete and game over

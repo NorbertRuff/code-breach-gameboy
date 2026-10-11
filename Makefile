@@ -11,16 +11,12 @@
 #   make goldens    build, then rewrite the golden screenshots in tests/golden/
 #   make budget     build, then print where the frame time goes (tools/frame_budget.py)
 #   make venv       create .venv with the test tools from tools/requirements.txt
-#   make savetest   build obj/savetest.gb, the cartridge RAM persistence test, and its
-#                   MBC1 and MBC3 variants for the flashcart (savetest_mbc1/3.gb)
 #   make usage      show ROM and RAM use per bank
 #   make assets     regenerate src/graphics/*.c from the PNGs in graphics/
 #   make levels     regenerate src/levels/*.c from the Tiled maps in levels/
 #   make music      regenerate src/music/*.c from the hUGETracker songs in music/
 #   make sounds     regenerate src/sound/effects.c from the effect list sounds/effects.txt
 #   make demo       build, then record the title screen demo's clips from the level replays
-#   make soundtest  build obj/soundtest.gb, every GBFX/GBFX2 effect and every song of the
-#                   music packs, and render each to a WAV in tests/out/sounds/
 #   make preview    draw every level to tests/out/levels/ and check it can be finished
 #   make clean      delete obj/
 #
@@ -60,18 +56,11 @@ EMULICIOUS := emulicious/Emulicious.jar
 # Tests use the project venv when it exists, otherwise python from PATH (as in CI).
 PYTHON ?= $(call fixpath,$(if $(wildcard $(VENV_PY)),$(VENV_PY),python))
 
-# Cartridge (docs/ARCHITECTURE.md, "The cartridge and the build"): MBC5 without RAM (progress is kept in
-# passwords, docs/DECISIONS.md "Saves"), ROM size picked automatically, GBC-enhanced
-# header that still runs on DMG, cartridge title.
+# Cartridge (docs/ARCHITECTURE.md, "The cartridge and the build"): MBC5 without RAM
+# (progress is kept in passwords), ROM size picked automatically, GBC-enhanced header
+# that still runs on DMG, cartridge title.
 CART_TYPE  := 0x19
 CART_FLAGS := -Wl-yt$(CART_TYPE) -Wm-yoA -Wm-yc -Wm-ynAPEXLAB
-
-# Save test ROMs: MBC5 + RAM + battery with 1 RAM bank (8 KB), and the same with an MBC1
-# or MBC3 mapper.
-SAVETEST_TYPE  := 0x1B
-SAVETEST_FLAGS := -Wl-yt$(SAVETEST_TYPE) -Wm-yoA -Wm-ya1 -Wm-yc -Wm-ynAPEXLAB
-CART_TYPE_MBC1 := 0x03
-CART_TYPE_MBC3 := 0x13
 
 # -debug: .cdb/.noi/.map for Emulicious. -Wm-yS: .sym for PyBoy.
 LCCFLAGS := -debug
@@ -98,13 +87,7 @@ endif
 OBJS := $(addprefix $(OBJDIR)/,$(OBJNAMES))
 vpath %.c $(sort $(dir $(CSOURCES)))
 
-SAVETEST := $(OBJDIR)/savetest.gb
-SOUNDTEST := $(OBJDIR)/soundtest.gb
-SOUND_PACKS := sounds/GBFX.sav sounds/GBFX2.sav
-MUSIC_PACKS := music/packs/game_boy_music_pack_1.zip music/packs/game_boy_music_pack_2.zip
-SAVETEST_VARIANTS := $(OBJDIR)/savetest_mbc1.gb $(OBJDIR)/savetest_mbc3.gb
-
-.PHONY: all rebuild run release test test-full shots goldens budget venv savetest soundtest soundtest-link usage assets levels music sounds demo preview clean
+.PHONY: all rebuild run release test test-full shots goldens budget venv usage assets levels music sounds demo preview clean
 
 all: $(ROM)
 
@@ -134,10 +117,10 @@ release:
 	$(MAKE) OBJDIR=release/obj EXTRA_CFLAGS=-DSKIP_INTRO_AND_START=0
 	$(call COPY,release/obj/$(PROJECTNAME).gb,release/$(PROJECTNAME).gb)
 
-test: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS) $(SOUNDTEST)
+test: $(ROM)
 	$(PYTHON) -m pytest tests -n auto
 
-test-full: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS) $(SOUNDTEST) release
+test-full: $(ROM) release
 	$(PYTHON) -m pytest tests -n auto --full
 
 # Scripted playthroughs of the greybox level and level 1: screenshots, contact sheets
@@ -157,33 +140,6 @@ venv:
 	python -m venv .venv
 	$(call fixpath,$(VENV_PY)) -m pip install -r tools/requirements.txt
 
-# Standalone ROM with an MBC5 + RAM + battery cartridge. It counts boots in cartridge
-# RAM, to check that saves survive a power cycle on a flashcart.
-savetest: $(SAVETEST) $(SAVETEST_VARIANTS)
-
-$(SAVETEST): tools/savetest/savetest.c | $(OBJDIR)
-	$(LCC) $(LCCFLAGS) -Wm-yS $(SAVETEST_FLAGS) -o $@ $<
-
-# MBC1 and MBC3 headers, to find out whether the flashcart keeps saves for another
-# mapper (roadmap M7). The screen names the mapper.
-$(OBJDIR)/savetest_mbc%.gb: tools/savetest/savetest.c | $(OBJDIR)
-	$(LCC) $(LCCFLAGS) -Wm-yS $(subst -Wl-yt$(SAVETEST_TYPE),-Wl-yt$(CART_TYPE_MBC$*),$(SAVETEST_FLAGS)) -DMBC=$* -o $@ $<
-
-# Every effect of the sound packs and every song of the music packs, played by the
-# game's players, to pick them by ear (on hardware, or as WAVs from tools/render_sounds.py).
-soundtest: $(SOUNDTEST)
-	$(PYTHON) tools/render_sounds.py
-
-# The songs' C files only exist after uge2c, so a second make links them (its wildcard
-# sees them).
-$(SOUNDTEST): tools/soundtest/soundtest.c tools/soundtest/song_table.h src/sound/sound.c src/sound/sound.h tools/fxhammer2c.py tools/uge2c.py $(SOUND_PACKS) $(MUSIC_PACKS) | $(OBJDIR)
-	$(PYTHON) tools/fxhammer2c.py --all $(SOUND_PACKS) -o $(OBJDIR)/soundtest
-	$(PYTHON) tools/uge2c.py $(MUSIC_PACKS) -o $(OBJDIR)/soundtest --table $(OBJDIR)/soundtest/song_table.c
-	$(MAKE) --no-print-directory soundtest-link
-
-soundtest-link:
-	$(LCC) $(LCCFLAGS) -I$(HUGEDRIVER) -Isrc/sound -Itools/soundtest $(LDFLAGS) -o $(SOUNDTEST) tools/soundtest/soundtest.c src/sound/sound.c $(wildcard $(OBJDIR)/soundtest/*.c)
-
 usage: $(ROM)
 	$(ROMUSAGE) $(MAP) -a -g
 
@@ -192,9 +148,7 @@ usage: $(ROM)
 # -b 255 puts the data in a ROM bank picked by autobank, so code must switch to
 # BANK(name) before reading it (see src/engine/banking.h).
 assets:
-	$(PYTHON) tools/greybox_tileset.py
 	$(PNG2ASSET) graphics/tilesets/greybox.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/greybox.c
-	$(PYTHON) tools/greybox_band.py
 	$(PNG2ASSET) graphics/bands/greybox_band.png -map -noflip -keep_palette_order -use_map_attributes -b 255 -o src/graphics/greybox_band.c
 	$(PNG2ASSET) graphics/tilesets/server_room.png -map -noflip -keep_duplicate_tiles -keep_palette_order -tiles_only -b 255 -o src/graphics/server_room.c
 	$(PNG2ASSET) graphics/bands/server_room_band.png -map -noflip -keep_palette_order -use_map_attributes -b 255 -o src/graphics/server_room_band.c
@@ -217,7 +171,7 @@ assets:
 	$(PNG2ASSET) graphics/font/font.png -map -bpp 1 -noflip -keep_duplicate_tiles -tiles_only -b 255 -o src/graphics/font.c
 
 # tools/tiled2c.py output is committed too. Run this after saving a map in Tiled.
-# A level that breaks a rule (docs/LEVELS.md section 6) stops with a message.
+# A level that breaks a rule (docs/GAME_DESIGN.md, "What tiled2c.py checks") stops with a message.
 levels:
 	$(PYTHON) tools/tiled2c.py $(wildcard levels/*.tmj) -o src/levels
 

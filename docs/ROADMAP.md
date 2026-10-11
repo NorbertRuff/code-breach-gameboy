@@ -11,7 +11,8 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
   game over menu, the story text, the cheats (A held + SELECT or B while paused), and the
   title screen demo. The owner played it end to end on a real Game Boy Color (2026-10-11).
   M9 is done apart from the DMG hardware pass and a look at the demo on hardware.
-- **Tests:** `make test` 237 tests in about 15 s; `make test-full` 359 in about 21 s (it
+- **Version 1.0** (2026-10-11): `release/ApexLab.gb`, "Version 1.0" on the intro screen.
+- **Tests:** `make test` 165 tests in about 13 s; `make test-full` 286 in about 18 s (it
   builds `make release` first).
 - **Memory:** bank 0 has 382 bytes free (42 at its end, after the startup code); WRAM
   uses 1,831 of 4,096 bytes.
@@ -35,7 +36,8 @@ leaves this list; its regression test keeps the number.
   and the story screens in 4 grays.
 - **The demo on hardware:** leave the title screen alone for a minute; a clip of level 1
   plays, any button goes back; the next minute shows level 2, and so on.
-- **The GitHub release:** commit, push, and attach `release/ApexLab.gb` to a release.
+- **The GitHub release v1.0:** commit, push, then the release with `release/ApexLab.gb`
+  (the command is in the session's report).
 - Optional: repaint or move props in Tiled with each level's terrain set
   (`graphics/tilesets/*.tsx`).
 
@@ -53,7 +55,7 @@ layouts depend on the jump, and levels are designed with plain blocks first.
 - **M2, physics and level loading:** sub-pixel physics with coyote time, jump buffer and
   corner correction; camera; tile collision; Tiled levels with `tools/tiled2c.py`; the
   collision ring and column streaming; `tools/levelpreview.py` with the reachability check.
-  Jump metrics in [LEVELS.md](LEVELS.md) section 4.
+  Jump metrics in [GAME_DESIGN.md](GAME_DESIGN.md), "Jump metrics".
 - **M3, level 1 and gameplay objects:** actors, gates with quotas and checkpoints, the
   exit, HUD, pause and level-select cheat, parallax band and screen splits, lives rules,
   frame budget work, level 1 greybox (owner pass: keep as is), style pass.
@@ -95,14 +97,14 @@ Done when level 1 looks like the final game in both modes.
       level 1 (2026-10-10). **(owner)** Check it on hardware.
 - [x] Security gate and exit elevator art (Server Room, 2026-10-10).
 - [x] HUD frame and font (2026-10-10). **(owner)** Check them on hardware; agree or change
-      the **Proposed** HUD palette and HUD decisions (DECISIONS.md).
+      the HUD palette and HUD art.
 - [x] Title screen redrawn from Gemini starter art with a blinking warning triangle
       (2026-10-10; `apexLogo.png` kept out of the build); `splashscreen.c`,
       `press_start.png` and the unused `background.png` and `Font.png` removed. The
       owner finished the programmer in Aseprite and agreed the title in Emulicious.
       **(owner)** Check it on hardware.
 - [x] Parallax band art for the Server Room (32×3 tiles, wraps; 2026-10-10).
-- [x] Replace every copied placeholder listed under Assets in [SOURCES.md](SOURCES.md)
+- [x] Replace every copied placeholder listed as copied in the asset records
       (2026-10-10: the last, `background.png`, deleted unused).
 
 ## M6 — Audio
@@ -112,10 +114,10 @@ Done when level 1 looks like the final game in both modes.
 - [x] hUGEDriver in the build, songs in banked ROM (`make music`), one step per frame from
       the line interrupt below the band.
 - [x] Sound effects: Tronimal GBFX/GBFX2 (`sounds/`, `make sounds`), our own player with
-      a channel mute mask and priority over the music; sound test ROM and WAVs
-      (`make soundtest`). Done 2026-10-04; owner approved the picks.
-- [x] Music per level, title, game over and ending (both packs in `music/packs/`, all
-      18 songs in the sound test). Level 4 "Whirlwind", level 5 "Terminate" and the
+      a channel mute mask and priority over the music; a sound test ROM to pick
+      them (removed at the release). Done 2026-10-04; owner approved the picks.
+- [x] Music per level, title, game over and ending (picked from all 18 songs of both
+      packs). Level 4 "Whirlwind", level 5 "Terminate" and the
       ending's "Closing" heard in the owner's playthrough (2026-10-11).
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
@@ -123,7 +125,7 @@ Done when level 1 looks like the final game in both modes.
 ## M7 — Saves and game flow
 
 - [x] Saves on the EverDrive clone: no save test ROM kept its count (owner,
-      2026-10-04), so the game uses passwords (DECISIONS.md "Saves").
+      2026-10-04), so the game uses passwords.
 - [x] Passwords: one per level, shown at level complete (and game over), entered from
       CONTINUE on the title screen (2026-10-05, `src/game_state/progress.c`,
       `tools/password.py`, `tests/test_passwords.py`). **(owner)** Check them.
@@ -181,14 +183,17 @@ them (2026-10-11). The hardware checks are under "Waiting for the owner".
 - [x] GitHub README (`Readme.md`: what it is, controls and cheats, how to play and build,
       credits), screenshots in `screenshots/`, `LICENSE` (MIT, code) and `LICENSE-ART`
       (CC BY 4.0, art and levels) (2026-10-11).
-- [x] Asset check (2026-10-11): every asset in SOURCES.md is the owner's own, redrawn by
+- [x] Asset check (2026-10-11): every asset is the owner's own, redrawn by
       hand, or CC BY / public domain and credited; the player sprite is the owner's own
       work (owner). The old placeholder screenshot is gone.
-- [x] The final "how it works" document: `docs/ARCHITECTURE.md`, from DECISIONS.md and
-      SOURCES.md (2026-10-11).
+- [x] The final "how it works" document: `docs/ARCHITECTURE.md` (2026-10-11); the
+      decision and source records it was written from were then removed (owner).
 - [x] Clean-up before the release (2026-10-11): dead code and helpers, the finished
       working docs (plans, research, level briefs, archive), the text-sketch tool, and
-      repeated tests removed; 17 docs became 9.
+      repeated tests removed; 17 docs became 9. Then (owner): the decision and source
+      records, the save test and sound test ROMs and their tools, the greybox art scripts,
+      the music pack archives and the converters' unit tests removed; GAME_DESIGN.md moved
+      into docs/ with the level-making guide; CLAUDE.md and .claude/ kept local; 6 files in docs/.
 - [x] Demo on the title screen (2026-10-11, owner): a minute without a press plays a clip
       of the next level, recorded from the replay tests (`make demo`,
       `tests/test_demo.py`).

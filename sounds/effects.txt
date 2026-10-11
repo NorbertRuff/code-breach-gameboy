@@ -1,7 +1,7 @@
 # The game's sound effects, in Tronimal's GBFX and GBFX2 packs (CC BY 4.0, CREDITS.md).
 # One per line: name, pack, effect number (the $ value in the pack's .txt), priority.
 # A playing effect is cut only by one with the same or a higher priority.
-# After a change: "make sounds". To hear every effect of both packs: "make soundtest".
+# After a change: "make sounds".
 
 jump      GBFX.sav    0x04  1   # Pitch Up
 collect   GBFX.sav    0x0A  2   # Bling Up

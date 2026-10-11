@@ -7,8 +7,8 @@ description: Add or replace pixel art in the ApexLab Game Boy game (player and e
 
 The rules and their reasons are in `docs/ART_PIPELINE.md` section 1.
 
-1. **Check the record.** `docs/SOURCES.md`, Assets section: what this replaces and where
-   it came from. Nothing copied from Mario or other commercial games may ship.
+1. **Check where it comes from.** Nothing copied from Mario or other commercial games may
+   ship; third-party art needs an open license and a `CREDITS.md` entry.
 2. **Design** in Claude Design (Artifact tool, `quickstart` with intent `design`) or take
    the owner's drawing. Prompt with: pixel art on an exact 8×8 grid, no anti-aliasing,
    no gradients, only the listed hex colors. The hardware rules:
@@ -46,6 +46,6 @@ The rules and their reasons are in `docs/ART_PIPELINE.md` section 1.
    Look at the `diff_*.png` pictures and both contact sheets (DMG and GBC). If the
    golden screenshots fail (`tests/test_golden.py`), look at the new pictures in
    `tests/out/`, then `make goldens`.
-8. **Update the records:** the Assets row in `docs/SOURCES.md` (origin, license, credit)
-   and a `CREDITS.md` entry for CC-BY material.
+8. **Update the records:** a `CREDITS.md` entry for CC-BY material, and
+   `docs/ART_PIPELINE.md` if a rule or budget changed.
 9. **Report** with the before/after pictures and a suggested commit message.

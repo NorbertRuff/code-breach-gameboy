@@ -13,7 +13,7 @@ def test_intro_credits_are_printed_in_the_game_font(game):
     game.wait_for_state(COREGAMELOOP, timeout=300)
     game.set_state(INTRO_CREDITS_STATE)
     game.frames(40)                                         # drawn; the fade-in runs
-    lines = {2: (4, "Developed By"), 6: (4, "Norbert Ruff"), 10: (4, "v0.2.0 (dev)"), 15: (8, "2026")}
+    lines = {2: (4, "Developed By"), 6: (4, "Norbert Ruff"), 10: (4, "Version 1.0"), 15: (8, "2026")}
     for row, (column, text) in lines.items():
         assert [game.bkg_tile(column + i, row) for i in range(len(text))] == font_tiles(text), f"row {row}"
     assert game.bkg_tile(0, 0) == FONT_FIRST_TILE           # the rest of the screen is blank

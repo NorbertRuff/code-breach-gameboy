@@ -13,10 +13,9 @@ description: Wrap up a roadmap milestone (M0–M9) of the ApexLab Game Boy game 
 3. **`docs/ROADMAP.md`:** tick what's done. Leave anything unfinished unticked, with one
    line saying why and where it moves. Owner tasks stay marked **(owner)**. Update the
    status block at the top (tests, bank 0 free bytes, WRAM, frame budget).
-4. **`docs/DECISIONS.md`:** every decision made during the milestone, with its reason and
-   status. **`docs/SOURCES.md`:** rows for techniques and assets now in use (planned →
-   in use) and any new ones.
-5. **`docs/TESTING.md`, `docs/ARCHITECTURE.md` and `CLAUDE.md`:** update them if commands, tools or conventions
+4. **`docs/ARCHITECTURE.md`:** how new parts work, with the idea's source where one was
+   used; `CREDITS.md` for new third-party material.
+5. **`docs/TESTING.md` and `CLAUDE.md`:** update them if commands, tools or conventions
    changed.
 6. **Hardware checklist for the owner:** flash `obj/ApexLab.gb` (run `make` first;
    `obj/` is build output and can disappear). List what to try on DMG and on GBC for
@@ -24,5 +23,3 @@ description: Wrap up a roadmap milestone (M0–M9) of the ApexLab Game Boy game 
 7. **Report:** what changed, how it was verified, what's left, the checklist, and a
    suggested commit message. The owner runs git.
 
-For M9, also write the final "how it works" document from `docs/DECISIONS.md` and
-`docs/SOURCES.md`, as the roadmap says.

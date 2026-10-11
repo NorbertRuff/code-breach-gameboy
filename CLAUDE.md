@@ -6,11 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **ApexLab: Code Breach** is a Game Boy platformer built with GBDK-2020: one ROM that runs
 in color on Game Boy Color (GBC) and in 4 shades on the original Game Boy (DMG). Scope:
-the 5-level game in `GAME_DESIGN.md`.
+the 5-level game in `docs/GAME_DESIGN.md`; version 1.0 is released.
 
 Docs are in `docs/` (index: `docs/README.md`). Start with the status at the top of
-`docs/ROADMAP.md`; read `docs/DECISIONS.md` before changing anything decided there, and
-`docs/ARCHITECTURE.md` for the part of the code you change.
+`docs/ROADMAP.md`, and read `docs/ARCHITECTURE.md` for the part of the code you change.
 
 **Workflow:** Claude writes the code. The owner runs git, reviews, and tests on a real DMG
 and GBC (EverDrive-style flashcart). Don't run git commands that change state; leave
@@ -38,7 +37,7 @@ to a ROM bank (ARCHITECTURE.md, memory map).
 make            # build obj/ApexLab.gb (incremental)
 make run        # build, then open the ROM in Emulicious
 make release    # release/ApexLab.gb, the ROM to share and for the flashcart: intro and title on
-make test       # quick tests, in parallel: DMG, plus GBC where the mode matters (~12 s)
+make test       # quick tests, in parallel: DMG, plus GBC where the mode matters (~15 s)
 make test-full  # every test in DMG and GBC mode, extra start times and seeds (before a commit; CI)
 make shots      # screenshots and contact sheets of scripted playthroughs in tests/out/shots/
 make goldens    # rewrite the golden screenshots after an intended visual change (look at them)
@@ -47,10 +46,8 @@ make levels     # Tiled maps in levels/ -> src/levels/
 make music      # hUGETracker songs in music/ -> src/music/
 make sounds     # effect picks in sounds/effects.txt -> src/sound/effects.c
 make demo       # the title demo's clips from the level replays -> src/game_state/demo_clips.h
-make soundtest  # obj/soundtest.gb with every GBFX/GBFX2 effect, and a WAV of each in tests/out/sounds/
 make assets     # PNGs in graphics/ -> src/graphics/ (read png2asset's output for "not recognized")
 make preview    # draw every level to tests/out/levels/ and check everything can be reached
-make savetest   # the cartridge RAM test ROMs (make OBJDIR=flashcart savetest keeps them)
 make usage, make rebuild, make clean, make venv
 ```
 
@@ -70,21 +67,19 @@ repeats what another one checks. Failing tests save screenshots to `tests/out/`.
 
 ## Records: one home per fact
 
-- A decision and its reason: `docs/DECISIONS.md` (newest first, short).
-- Where an idea, code or asset came from: `docs/SOURCES.md`; third-party assets also in
-  `CREDITS.md`.
-- What's done, open, and the current numbers (tests, bank 0, frame budget): `docs/ROADMAP.md`.
-- How the game works (the final explainer, from DECISIONS and SOURCES): `docs/ARCHITECTURE.md`,
+- What the game is, and making levels (Tiled setup, rules, jump metrics): `docs/GAME_DESIGN.md`.
+- How the game works and why, with where each idea came from: `docs/ARCHITECTURE.md`,
   updated when the structure changes.
-- Level rules, the Tiled setup and jump metrics: `docs/LEVELS.md`.
+- Third-party code, music and sounds with their licenses: `CREDITS.md`.
+- What's done, open, and the current numbers (tests, bank 0, frame budget): `docs/ROADMAP.md`.
 
-Don't repeat a fact in a second doc; link to it. No copied art in the game (SOURCES.md,
-Assets). Earlier plans, research and reviews are in the git history only.
+Don't repeat a fact in a second doc; link to it. No copied art in the game. Earlier
+plans, decision and source records, research and reviews are in the git history only.
 
 Project skills (`.claude/skills/`): `fix-bug`, `add-asset` (pixel art from Claude Design),
 `close-milestone`. Before/after screenshots: `tools/shots.py --out <dir>` and
-`tools/compare_shots.py`. Check a repo's license in SOURCES.md ("Reference code and
-licenses") before copying code.
+`tools/compare_shots.py`. Check a repo's license before copying code: only MIT-style or
+public domain, credited in `CREDITS.md`.
 
 ## Code style (owner's rule)
 
@@ -93,7 +88,7 @@ The owner walks through every file and must be able to say what each part does:
   the name or a short trailing comment (`// 1.5 s at 60 fps`).
 - **One short comment above each function:** what it handles, in plain words.
 - **Short walk-through comments** only where a step isn't obvious.
-- **No long explanations in code:** reasons and sources go to DECISIONS and SOURCES.
+- **No long explanations in code:** reasons and sources go to `docs/ARCHITECTURE.md`.
 - **Keep it short:** small functions, no dead or commented-out code, no duplication.
 
 ## Game Boy rules

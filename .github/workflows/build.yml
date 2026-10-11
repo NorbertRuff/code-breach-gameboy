@@ -1,5 +1,5 @@
 # Build the ROMs and run the PyBoy tests on every push and pull request.
-# Uses the same GBDK version as local development (docs/DECISIONS.md).
+# Uses the same GBDK version as local development (4.5.0).
 name: Build and test
 
 on:
@@ -34,7 +34,7 @@ jobs:
 
       # romusage -R in the Makefile fails the build if a ROM bank overflows.
       - name: Build
-        run: make all savetest
+        run: make all
 
       - name: Test (full tier: DMG and GBC mode)
         run: make test-full
@@ -52,6 +52,4 @@ jobs:
           name: roms
           path: |
             obj/ApexLab.gb
-            obj/savetest.gb
-            obj/savetest_mbc1.gb
-            obj/savetest_mbc3.gb
+            release/ApexLab.gb

@@ -1,12 +1,9 @@
 """Turn FX Hammer sound effects (.sav) into banked C data for src/sound/sound.c.
 
     python tools/fxhammer2c.py sounds/effects.txt -o src/sound
-    python tools/fxhammer2c.py --all sounds/GBFX.sav sounds/GBFX2.sav -o obj/soundtest
 
-The first form writes the game's effects, listed in sounds/effects.txt (one per line:
-name, pack file, effect number, priority), to effects.c and effects.h ("make sounds").
-The second writes every effect of the packs, with the names from each pack's .txt, to
-soundtest_effects.c for the sound test ROM ("make soundtest").
+Writes the game's effects, listed in sounds/effects.txt (one per line: name, pack file,
+effect number, priority), to effects.c and effects.h ("make sounds").
 
 An FX Hammer effect is up to 32 steps on CH2 (square) and CH4 (noise). Each step becomes
 8 bytes: frames, channels, NR21, NR22, NR23, NR24, NR42, NR43. The file layout and the
@@ -26,7 +23,6 @@ MAGIC = b"FX HAMMER"
 MAGIC_AT = 0x09
 CHANNELS_AT = 0x300         # one byte per effect: CH2 in the high nibble, CH4 in the low
 STEPS_AT = 0x400            # 256 bytes per effect: 32 steps of 8 bytes
-EFFECTS_PER_FILE = 0x3C
 STEPS_PER_EFFECT = 32
 
 CH2, CH4 = 0x02, 0x08       # hUGE_mute_mask bits (sound.h: SOUND_CH2, SOUND_CH4)
@@ -94,23 +90,11 @@ def read_pick_list(path: Path) -> list[Effect]:
     return effects
 
 
-def read_whole_pack(path: Path) -> list[Effect]:
-    """Every effect of a pack, named "<PACK> <nn> <NAME>" from its .txt ("$04 I04 - Pitch Up")."""
-    data = path.read_bytes()
-    names = {}
-    for line in path.with_suffix(".txt").read_text(encoding="utf-8").splitlines():
-        match = re.match(r"\$([0-9A-F]{2}) I\d+ - (.+)", line.strip())
-        if match:
-            names[int(match.group(1), 16)] = match.group(2).strip()
-    return [read_effect(data, number, f"{path.stem} {number:02X} {names.get(number, '')}".upper().strip())
-            for number in range(EFFECTS_PER_FILE) if data[CHANNELS_AT + number]]
-
-
 def c_identifier(name: str) -> str:
     return re.sub(r"\W+", "_", name).strip("_").lower()
 
 
-def effects_c(effects: list[Effect], with_names: bool) -> str:
+def effects_c(effects: list[Effect]) -> str:
     """The banked C file: each effect's steps, then the sound_effects table (sound.h)."""
     out = ["// Made by tools/fxhammer2c.py from FX Hammer files. Don't edit.", "",
            "#pragma bank 255", "", "#include <gb/gb.h>", '#include "sound.h"', ""]
@@ -122,11 +106,6 @@ def effects_c(effects: list[Effect], with_names: bool) -> str:
     out += [f"    {{ effect_{c_identifier(e.name)}, 0x{e.channels:02X}, {e.priority} }},"
             for e in effects]
     out += ["};", ""]
-    if with_names:
-        out += [f"const uint8_t sound_effect_count = {len(effects)};",
-                "const char* const sound_effect_names[] = {"]
-        out += [f'    "{e.name}",' for e in effects]
-        out += ["};", ""]
     return "\n".join(out)
 
 
@@ -139,25 +118,20 @@ def effects_h(effects: list[Effect]) -> str:
     return "\n".join(out)
 
 
-def write_outputs(sources: list[Path], out_dir: Path, whole_packs: bool) -> None:
+def write_outputs(pick_list: Path, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    if whole_packs:
-        effects = [effect for pack in sources for effect in read_whole_pack(pack)]
-        (out_dir / "soundtest_effects.c").write_text(effects_c(effects, True), encoding="utf-8", newline="\n")
-    else:
-        effects = read_pick_list(sources[0])
-        (out_dir / "effects.c").write_text(effects_c(effects, False), encoding="utf-8", newline="\n")
-        (out_dir / "effects.h").write_text(effects_h(effects), encoding="utf-8", newline="\n")
+    effects = read_pick_list(pick_list)
+    (out_dir / "effects.c").write_text(effects_c(effects), encoding="utf-8", newline="\n")
+    (out_dir / "effects.h").write_text(effects_h(effects), encoding="utf-8", newline="\n")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("sources", nargs="+", type=Path, help="sounds/effects.txt, or .sav packs with --all")
-    parser.add_argument("--all", action="store_true", help="every effect of the given packs, for the sound test")
+    parser.add_argument("pick_list", type=Path, help="sounds/effects.txt")
     parser.add_argument("-o", "--out", type=Path, required=True, help="output folder")
     args = parser.parse_args()
     try:
-        write_outputs(args.sources, args.out, args.all)
+        write_outputs(args.pick_list, args.out)
     except (OSError, ValueError, IndexError) as error:
         print(f"fxhammer2c: {error}", file=sys.stderr)
         return 1

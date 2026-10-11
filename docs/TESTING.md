@@ -105,39 +105,13 @@ Pillow, NumPy). `make test` uses `.venv` when it exists, otherwise `python` from
   look at the new pictures. For a wider before/after: `tools/shots.py --out
   tests/out/shots_before`, change, `make shots`, `tools/compare_shots.py`.
 
-## Save test on the real Game Boy
-
-`obj/savetest.gb` counts boots in cartridge RAM. Build it outside `obj/` for the
-flashcart (`make OBJDIR=flashcart savetest`, gitignored), so CLion's `make clean` keeps it.
-
-1. Start it from the SD card: `NO SAVE: NEW ONE`, `BOOT COUNT: 1`.
-2. Power off, wait, power on, start it again: the count must be 2. Repeat once.
-3. Try both ways of leaving: back to the flashcart menu, and switching off directly.
-4. Press A to clear the save.
-
-If the count never goes up, try `savetest_mbc1.gb` and `savetest_mbc3.gb` (the mapper is
-named on screen). On the owner's EverDrive clone none kept it (2026-10-04); what the game
-does about it is in DECISIONS.md, "Saves".
-
-## Sound test
-
-`make soundtest` builds `obj/soundtest.gb` with every effect of the GBFX and GBFX2 packs,
-played by the game's effect player, and every song of the two music packs, and writes a
-WAV of each to `tests/out/sounds/` (songs: their first 45 s).
-On the Game Boy: SELECT switches between effects and songs, LEFT/RIGHT step, UP/DOWN
-jump 10, A plays, B stops the song. The game's effects are in `sounds/effects.txt` (then
-`make sounds`), its songs in `music/` (then `make music`).
-`tests/test_soundtest.py` checks that every effect holds its channels for its length and
-that every song plays.
-
 ## Continuous integration
 
 `.github/workflows/build.yml` runs on every push and pull request on `ubuntu-24.04`:
-GBDK 4.5.0 (cached), `make all savetest`, `make test-full`, then uploads the ROMs (and
+GBDK 4.5.0 (cached), `make all`, `make test-full`, then uploads the ROMs (and
 `tests/out/` on failure).
 
 ## What PyBoy cannot prove
 
-How colors and motion look on the real screens, whether saves persist on the flashcart,
-exact VRAM timing edge cases (use Emulicious, then hardware), and how the music and the
+How colors and motion look on the real screens, exact VRAM timing edge cases (use Emulicious, then hardware), and how the music and the
 effects sound (PyBoy's sound is close, not exact).

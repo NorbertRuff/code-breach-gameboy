@@ -1,8 +1,8 @@
 # Credits
 
 Everything in the game that someone else made, with its license. The in-game credits
-screen (roadmap M7) is written from this file. The full list of sources, including code
-ideas, is in [docs/SOURCES.md](docs/SOURCES.md).
+screen is written from this file. Ideas taken from tutorials and other projects are named
+where they are used, in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Music
 
@@ -19,8 +19,7 @@ ideas, is in [docs/SOURCES.md](docs/SOURCES.md).
 | Closing (Game Boy Music Pack #2, `10_closing.uge`) | Tronimal (Yogi) | https://yogi-tronimal.itch.io/game-boy-music-pack-2 | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Converted to hUGEDriver C data by `tools/uge2c.py`; notes unchanged | Ending and credits |
 
 The songs the game uses are in `music/` as downloaded, without the pack's number in the
-file name (`tech.uge`, `decampment.uge`, ...). Both packs are in `music/packs/` as
-downloaded (renamed `game_boy_music_pack_1.zip` and `_2.zip`), for the sound test.
+file name (`tech.uge`, `decampment.uge`, ...).
 
 ## Sound effects
 

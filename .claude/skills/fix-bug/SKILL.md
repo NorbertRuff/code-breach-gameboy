@@ -34,7 +34,6 @@ Conventions this follows are in `docs/TESTING.md`. The owner runs git; don't com
 8. **Update the records:**
    - `docs/ROADMAP.md`: remove the bug from the Bugs list (the regression test's header
      keeps its number), tick the item if there is one.
-   - `docs/SOURCES.md`: a row if the fix uses an idea from a tutorial, repo or doc.
-   - `docs/DECISIONS.md`: a row if the fix chose a behavior (for example a timing).
+   - `docs/ARCHITECTURE.md`: if the fix changed how a part works.
 9. **Report:** what was wrong, the fix, the test, the old-build result, and a suggested
    commit message.

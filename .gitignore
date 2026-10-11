@@ -5,14 +5,8 @@
 
 # Custom
 emulicious/
-emulicious/*.*
 gbdk/
-gbdk/*.*
-*.pptx
--p/
--p/*.*
 obj/
-obj/*.*
 
 # Python test tools (make venv, make test)
 .venv/
@@ -20,12 +14,10 @@ __pycache__/
 .pytest_cache/
 tests/out/
 
-# ROMs built for the flashcart outside obj/ (make OBJDIR=flashcart savetest), kept through make clean
-flashcart/
-
 # The ROM to share (make release), kept through make clean
 release/
 /graphics/raw generated/
 
-# Agent worktrees (Claude Code)
-.claude/worktrees/
+# Claude Code's project notes, skills and settings, kept local
+CLAUDE.md
+.claude/

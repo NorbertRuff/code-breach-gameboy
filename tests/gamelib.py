@@ -119,7 +119,7 @@ PYBOY_DMG_BOOTROM = Path(pyboy_package.__file__).parent / "core" / "bootrom_dmg.
 CARTRIDGE_ENTRY = 0x100
 
 
-def boot(rom: Path, mode: str, ram_file=None) -> PyBoy:
+def boot(rom: Path, mode: str) -> PyBoy:
     """Start a headless PyBoy at full speed and run it to the game's first instruction.
 
     mode is "dmg" or "cgb". PyBoy picks its boot ROM from the cartridge header, and our
@@ -129,7 +129,7 @@ def boot(rom: Path, mode: str, ram_file=None) -> PyBoy:
     """
     extra = {"bootrom": str(PYBOY_DMG_BOOTROM)} if mode == "dmg" else {}
     pyboy = PyBoy(str(rom), window="null", cgb=(mode == "cgb"),
-                  sound_emulated=False, ram_file=ram_file, **extra)
+                  sound_emulated=False, **extra)
     pyboy.set_emulation_speed(0)
 
     reached = []

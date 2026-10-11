@@ -43,7 +43,7 @@ def main() -> int:
         print(f"exported {rev} to {folder}")
 
         gbdk = (ROOT / "gbdk").as_posix() + "/"
-        build = subprocess.run(["make", f"GBDK_HOME={gbdk}", "all", "savetest"],
+        build = subprocess.run(["make", f"GBDK_HOME={gbdk}", "all"],
                                cwd=folder, capture_output=True, text=True)
         if build.returncode != 0:
             print(build.stdout[-2000:], build.stderr[-2000:])

@@ -17,7 +17,7 @@ static void print_credits(void)
     fill_bkg_rect(0, 0, DEVICE_SCREEN_WIDTH, DEVICE_SCREEN_HEIGHT, TEXT_SPACE_TILE);
     text_print(4, 2, "Developed By");
     text_print(4, 6, "Norbert Ruff");
-    text_print(4, 10, "v0.2.0 (dev)");
+    text_print(4, 10, "Version 1.0");
     text_print(8, 15, "2026");
 }
 

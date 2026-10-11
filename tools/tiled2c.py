@@ -7,7 +7,7 @@ and for the level's tileset <tileset>_tileset.c and .h: a TilesetData with a col
 type and a GBC palette per tile, the marker tiles, and the tileset's art and band.
 "make levels" runs it on every level. The output is committed, like png2asset output.
 
-The format and the checks are described in docs/LEVELS.md. A failed check stops
+The format and the checks are described in docs/GAME_DESIGN.md, "Making levels". A failed check stops
 the conversion with a message that names the level and the problem.
 """
 

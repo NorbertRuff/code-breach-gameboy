@@ -1,4 +1,4 @@
-"""Level 5, KERNEL (src/game_state/kernel.c, GAME_DESIGN.md, "Level 5: KERNEL"): a replay
+"""Level 5, KERNEL (src/game_state/kernel.c, docs/GAME_DESIGN.md, "Level 5: KERNEL"): a replay
 beats it without losing a life, within the frame budget and the sprites-per-line limit, and
 goes on through the ending and the credits to the title; packets warn before they fall; an
 upload needs Up held; a lost life keeps the uploads, a game over clears them."""

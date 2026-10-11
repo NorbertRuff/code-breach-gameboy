@@ -1,4 +1,4 @@
-"""Passwords and the game flow around them (roadmap M7, DECISIONS.md "Saves"): the format
+"""Passwords and the game flow around them (roadmap M7, docs/ARCHITECTURE.md, "Saves: passwords"): the format
 in tools/password.py, the same as src/game_state/progress.c; the title menu, the password
 screen and the level select (title_menu.c); QUIT on the game over menu; the title's blinking
 warning (start_screen.c); the boot screen of a new game (story.c).

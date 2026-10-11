@@ -13,7 +13,7 @@ def test_header_gbc_enhanced_and_dmg_compatible(rom_bytes):
 
 
 def test_cartridge_is_mbc5_without_ram(rom_bytes):
-    # Progress is kept in passwords (docs/DECISIONS.md "Saves").
+    # Progress is kept in passwords (docs/ARCHITECTURE.md, "Saves: passwords").
     assert rom_bytes[0x147] == 0x19   # MBC5
     assert rom_bytes[0x149] == 0x00   # no cartridge RAM
 

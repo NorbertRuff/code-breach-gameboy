@@ -4,7 +4,7 @@
 #include <gb/gb.h>
 #include <stdint.h>
 
-// KERNEL, the boss of level 5 (kernel.c, a ROM bank; GAME_DESIGN.md, "Level 5: KERNEL").
+// KERNEL, the boss of level 5 (kernel.c, a ROM bank; docs/GAME_DESIGN.md, "Level 5: KERNEL").
 #define LEVEL_BOSS LEVEL_5
 
 void kernel_start(void) BANKED;
