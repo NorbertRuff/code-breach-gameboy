@@ -109,6 +109,9 @@ tests/out/
 
 # ROMs built for the flashcart outside obj/ (make OBJDIR=flashcart savetest), kept through make clean
 flashcart/
+
+# The ROM to share (make release), kept through make clean
+release/
 /graphics/raw generated/
 
 # Agent worktrees (Claude Code)

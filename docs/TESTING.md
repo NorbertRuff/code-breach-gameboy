@@ -98,8 +98,9 @@ Pillow, NumPy). `make test` uses `.venv` when it exists, otherwise `python` from
 - **An open bug can be an expected failure** in `test_known_bugs.py`
   (`xfail_strict = true`): fixing it fails the run until the test moves to
   `test_regressions.py`.
-- **Build variants:** `make OBJDIR=<folder> EXTRA_CFLAGS=-D...` (for example
-  `-DSKIP_INTRO_AND_START=0` for the intro), never in `obj/`.
+- **Build variants:** `make OBJDIR=<folder> EXTRA_CFLAGS=-D...`, never in `obj/`.
+  `make release` is one: `release/ApexLab.gb` with the intro and title on, the ROM for the
+  flashcart; `make test-full` builds it and `test_release.py` checks it.
 - **Golden screenshots** (`tests/golden/`): `make goldens` after an intended visual change;
   look at the new pictures. For a wider before/after: `tools/shots.py --out
   tests/out/shots_before`, change, `make shots`, `tools/compare_shots.py`.

@@ -4,6 +4,7 @@
 #   make            build obj/ApexLab.gb (incremental; headers are tracked)
 #   make rebuild    clean, then build
 #   make run        build, then open the ROM in Emulicious
+#   make release    build release/ApexLab.gb, the ROM to share: the intro and title on
 #   make test       build, then the quick tests in parallel (DMG; GBC only where the mode matters)
 #   make test-full  build, then every test in DMG and GBC mode (before a commit, and in CI)
 #   make shots      build, then save review screenshots to tests/out/shots/
@@ -40,11 +41,13 @@ ifeq ($(OS),Windows_NT)
 SHELL   := cmd.exe
 fixpath  = $(subst /,\,$1)
 MKDIR    = if not exist $(call fixpath,$1) mkdir $(call fixpath,$1)
+COPY     = copy /y $(call fixpath,$1) $(call fixpath,$2) >nul
 RMDIR    = if exist $(call fixpath,$1) rmdir /s /q $(call fixpath,$1)
 VENV_PY := .venv/Scripts/python.exe
 else
 fixpath  = $1
 MKDIR    = mkdir -p $1
+COPY     = cp $1 $2
 RMDIR    = rm -rf $1
 VENV_PY := .venv/bin/python
 endif
@@ -105,7 +108,7 @@ SOUND_PACKS := sounds/GBFX.sav sounds/GBFX2.sav
 MUSIC_PACKS := music/packs/game_boy_music_pack_1.zip music/packs/game_boy_music_pack_2.zip
 SAVETEST_VARIANTS := $(OBJDIR)/savetest_mbc1.gb $(OBJDIR)/savetest_mbc3.gb
 
-.PHONY: all rebuild run test test-full shots goldens budget venv savetest soundtest soundtest-link usage assets levels music sounds preview clean
+.PHONY: all rebuild run release test test-full shots goldens budget venv savetest soundtest soundtest-link usage assets levels music sounds preview clean
 
 all: $(ROM)
 
@@ -128,10 +131,17 @@ rebuild:
 run: $(ROM)
 	java -jar $(EMULICIOUS) $(ROM)
 
+# The ROM for the flashcart and itch.io: the same build as obj/ (the tests skip the intro
+# and title, so obj/ does too), with them on. Its objects stay in release/obj/; make clean
+# leaves release/ alone. Not the RELEASE=1 compile option above.
+release:
+	$(MAKE) OBJDIR=release/obj EXTRA_CFLAGS=-DSKIP_INTRO_AND_START=0
+	$(call COPY,release/obj/$(PROJECTNAME).gb,release/$(PROJECTNAME).gb)
+
 test: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS) $(SOUNDTEST)
 	$(PYTHON) -m pytest tests -n auto
 
-test-full: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS) $(SOUNDTEST)
+test-full: $(ROM) $(SAVETEST) $(SAVETEST_VARIANTS) $(SOUNDTEST) release
 	$(PYTHON) -m pytest tests -n auto --full
 
 # Scripted playthroughs of the greybox level and level 1: screenshots, contact sheets

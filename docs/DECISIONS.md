@@ -24,6 +24,13 @@ or git keeps the old one). Details of how the code does it belong in
   or openly licensed and credited.
 - **Order:** physics and level loading (M2) before color (M4) and art (M5): layouts
   depend on the jump.
+- **Licence** (owner, 2026-10-11): MIT for the project's code, CC BY 4.0 for its own art; the
+  music and sound effects keep their own CC BY 4.0 licence (CREDITS.md).
+- **Release ROM** (owner, 2026-10-11): `make release` builds `release/ApexLab.gb`, the same build
+  as `obj/` with the intro and title on; the folder is gitignored and survives
+  `make clean`. The ROM for the flashcart and a GitHub release comes from there.
+- **Where it's published** (owner, 2026-10-11): a pet project, public on GitHub only (no
+  itch.io or other stores).
 - **Tests:** PyBoy 2.7.0 headless. `make test` is the quick tier (DMG, GBC only where the
   mode matters, in parallel with pytest-xdist); `make test-full` runs both modes and the
   extra cases, before commits and in CI. Overlapping tests were merged or removed
@@ -41,7 +48,7 @@ or git keeps the old one). Details of how the code does it belong in
   quota (like 3 of 5) ends each of the first two. Extra fragments are bonus. A gate is a
   full-height column, opened by walking into it with the quota (one row every 2 frames);
   the opened gate is the checkpoint, and the camera locks behind it (no going back).
-- **A closed gate buzzes once per touch** without its quota. **Proposed.**
+- **A closed gate buzzes once per touch** without its quota (owner, 2026-10-11).
 - **Each level ends at a lab elevator** (the exit tile completes the level).
 - **HUD:** lives, and the current section's fragments against its quota (`02/03`); in the
   last section, against all its (bonus) fragments.
@@ -183,7 +190,7 @@ or git keeps the old one). Details of how the code does it belong in
   2 the enemies (bots, chasers, KERNEL's packets), 3 the lifts: the style guide's three
   sprite palettes in order (player, red, gold; `server_room` set through
   `tools/gbconvert.py`), 2026-10-10, owner.
-- **A palette per tile, not per map cell** (2026-10-10, **Proposed**): `tools/tiled2c.py`
+- **A palette per tile, not per map cell** (2026-10-10; owner, 2026-10-11): `tools/tiled2c.py`
   reads each tile's palette from the indexed tileset PNG (color index / 4) into
   `<tileset>_tileset_palette[]`, copied to WRAM at level load (256 bytes) like the
   collision table. A streamed column looks up its 13 attributes as it is read and, on GBC
@@ -191,13 +198,13 @@ or git keeps the old one). Details of how the code does it belong in
   outside it); a gate row or a pickup writes its cell's attribute too. An attribute map
   per level would double the map data for no gain: the palette never differs between two
   uses of a tile.
-- **Brighter palettes on GBA**, chosen at boot (`_is_GBA`). No GBC double-speed mode.
-  **Proposed.**
+- **No brighter palettes for GBA** (owner, 2026-10-11): cut to keep the scope small; a GBA shows
+  the GBC colors. No GBC double-speed mode.
 - **Art pipeline:** Claude Design → `tools/gbconvert.py` → png2asset (ART_PIPELINE.md);
   every palette light to dark; no background tile flips.
 - **Placeholders until each level's art pass:** the greybox tileset and band (drawn by
   scripts), now only in the test rooms (levels 3-5 got their art 2026-10-11).
-- **Server Room art** (2026-10-10, **Proposed**): redrawn by hand on the 8×8 grid from
+- **Server Room art** (2026-10-10; owner, 2026-10-11): redrawn by hand on the 8×8 grid from
   the owner's Gemini starter art (mock-up, band, object sheet; not on a pixel grid, so
   used as references). Green riveted machine blocks with a striped top lip (a 16-tile
   Tiled terrain set, plus a vent plate), a blue truss catwalk (one-way), red and gold
@@ -206,7 +213,7 @@ or git keeps the old one). Details of how the code does it belong in
   ladder), a 2×4 elevator that opens at level complete (closed gray, open lit green), a
   floppy disk for the fragment; 68 tiles, the band 16. No light plates in the fill: on
   DMG they read as holes.
-- **Code Testing Lab art** (2026-10-10, **Proposed**): level 2 in Server Room's way,
+- **Code Testing Lab art** (2026-10-10; owner, 2026-10-11): level 2 in Server Room's way,
   redrawn by hand from the owner's Gemini mock-up and band. Teal riveted panels with a
   dark outline and a light lip on exposed sides (a 16-tile "panel" terrain set, plus a
   vent plate), thin blue shelves with brackets (one-way: the tile's lower half is empty),
@@ -251,7 +258,7 @@ or git keeps the old one). Details of how the code does it belong in
   LEDs), a palette per map cell from png2asset's attribute map; on DMG the 4 grays by
   palette index. The programmer is traced from the Gemini scene, his face, glasses and
   hair finished by the owner in Aseprite. Replaces the owner's `apexLogo.png` as it was.
-- **Background tiles** (2026-10-10, **Proposed**): the tileset from 0 and its band after
+- **Background tiles** (2026-10-10; owner, 2026-10-11): the tileset from 0 and its band after
   it (tileset at most 128, band 32), the font 160-208, the HUD 209-218 (was 64-73, which
   capped a tileset at 64 tiles); 219-255 free (KERNEL's tiles moved into level 5's
   tileset, 2026-10-11).
@@ -273,7 +280,7 @@ or git keeps the old one). Details of how the code does it belong in
   on the "ApexLab Enemy Sprites" Claude Design canvas. 2 frames each but the lift, every
   8 frames, by a tile offset (no tile copies, about 1 line). Every actor's tiles stay
   loaded in every level: 108 of the 128 sprite-only tiles in use, 20 left for the L2-L4
-  enemies. **Proposed.**
+  enemies. Agreed (owner, 2026-10-11).
 - **Golden screenshots** of key screens in both modes catch visual changes.
 
 ## Audio
@@ -285,7 +292,7 @@ or git keeps the old one). Details of how the code does it belong in
   lines per frame, up to 18; in VBlank it delayed every update.
 - **Songs:** level 1 "Tech", level 2 "Neurotic Robonaut" (owner, after the hardware pass,
   2026-10-04), level 3 "Observing Jupiter" (owner: keep, 2026-10-04), level 4 "Whirlwind"
-  (2026-10-05, **Proposed**); only Tronimal's own songs, not the packs' remixes of other
+  (2026-10-05; owner, 2026-10-11); only Tronimal's own songs, not the packs' remixes of other
   people's.
 - **Screen songs:** title "Decampment", game over "Gone Missing", level complete "Delight",
   each after the screen's flashes; the level's song starts again after them (2026-10-04,
@@ -316,4 +323,4 @@ or git keeps the old one). Details of how the code does it belong in
   starting on the furthest; skipped when only level 1 is open). Game over shows CONTINUE /
   QUIT and the password, and waits for a choice (no 5 s timeout any more); QUIT goes to
   the title. Menu sounds reuse the approved effects: pause beep to pick or type, gate to
-  accept a password, buzz to refuse one. **Proposed.**
+  accept a password, buzz to refuse one. Agreed (owner, 2026-10-11).

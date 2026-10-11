@@ -37,6 +37,7 @@ to a ROM bank (ARCHITECTURE.md, memory map).
 ```bash
 make            # build obj/ApexLab.gb (incremental)
 make run        # build, then open the ROM in Emulicious
+make release    # release/ApexLab.gb, the ROM to share and for the flashcart: intro and title on
 make test       # quick tests, in parallel: DMG, plus GBC where the mode matters (~12 s)
 make test-full  # every test in DMG and GBC mode, extra start times and seeds (before a commit; CI)
 make shots      # screenshots and contact sheets of scripted playthroughs in tests/out/shots/
@@ -58,7 +59,8 @@ committed with their sources; tests fail when they are out of date. For a one-of
 
 ## Tests
 
-`make test` after every change; `make test-full` before suggesting a commit. Details in
+`make test` after every change; `make test-full` before suggesting a commit (it also
+builds `make release`). Details in
 `docs/TESTING.md`. Mark a test `both_modes` only when DMG and GBC can differ (palettes,
 screens, hardware); extra start times and seeds get `full`. A fixed bug gets a regression
 test in `tests/test_regressions.py` that fails on the old code (`tools/test_against.py`);

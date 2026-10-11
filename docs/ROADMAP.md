@@ -12,7 +12,7 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
   and A + B while paused). The owner played it end to end on 2026-10-11 and agreed the
   levels, difficulty, checkpoints, the level 3-5 art and KERNEL's face. Next: the release
   build and the rest of M9; the owner's hardware pass.
-- **Tests:** `make test` 242 tests in about 20 s; `make test-full` 362 in about 25 s.
+- **Tests:** `make test` 243 tests in about 20 s; `make test-full` 364 in about 25 s (it builds `make release` first).
 - **Memory:** bank 0 has 587 bytes free (the cheats took 51; KERNEL's packet actor and the boss and ending
   states are in it; the tileset loading and GBC attribute streaming took 380; moving the
   title flow to a ROM bank gave 31 back; the new title took about 47, and dropping
@@ -33,16 +33,16 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 ## Waiting for the owner
 
-- **Hardware pass on DMG and GBC**, the last check before the release (Emulicious
+- **Hardware pass on DMG and GBC** with `release/ApexLab.gb` (`make release`), the last
+  check before the release (Emulicious
   playthrough done 2026-10-11): streaming, one-way shelves, spikes, pits, respawn, head
   bumps; every level's art and colors; the player's 10 frames, the bots, chasers, lifts
   and packets; the HUD and font; the title screen; a password typed back in
   (`python tools/password.py` lists them), the level select, game over CONTINUE and QUIT;
   KERNEL and the ending; the cheats.
-- **The Proposed decisions left** in DECISIONS.md, to agree or change in one go: the
-  closed gate's buzz; the GBC palette layout and the HUD palette; a palette per tile; the
-  Server Room and Code Testing Lab art; the background tile layout; the enemy and lift
-  sprites; the songs (only Tronimal's own); the menus and their sounds.
+- **The Proposed decisions left** in DECISIONS.md (the rest agreed 2026-10-11): the GBC
+  palette layout (0-3 the level, 4 the band, 5 the HUD) with the green HUD palette, and
+  the HUD and font art.
 - Optional: repaint or move props in Tiled with each level's terrain set
   (`graphics/tilesets/*.tsx`).
 
@@ -80,7 +80,7 @@ Done when the game runs in color on GBC and unchanged on DMG. Steps in
 - [x] Attribute maps behind `is_cgb`, including streamed columns. The band and HUD have
       theirs (2026-10-04); streamed columns a palette per tile (2026-10-10,
       `tests/test_palette.py`).
-- [ ] Brighter palette set when `_is_GBA` is set. Moved to M9.
+- [x] Brighter palette set when `_is_GBA` is set: cut (owner, 2026-10-11).
 - [x] Invincibility shown with a pale sprite palette on GBC instead of blinking.
       Done 2026-10-04 (sprite palette 1).
 - [x] Golden screenshots per mode. `tests/test_golden.py`, `tests/golden/`, rewritten by
@@ -178,11 +178,23 @@ them (2026-10-11). The hardware checks are under "Waiting for the owner".
       (2026-10-11).
 - [x] The testing cheats stay in the release, entered with A held while paused
       (2026-10-11, owner).
-- [ ] Release build: `make` skips the intro and title (`SKIP_INTRO_AND_START` 1, the
-      tests need it). Add `make release`: the intro and title on, built in its own
-      folder, so the ROM for the flashcart and itch.io never skips them.
-- [ ] Brighter palette set on GBA (`_is_GBA`, from M4): build it, or cut it as scope.
-- [ ] Project README, screenshots, itch.io page.
+- [x] Release build: `make release` builds `release/ApexLab.gb` with the intro and title
+      on (`make` keeps skipping them for the tests); `make test-full` builds it and
+      `tests/test_release.py` checks it stops at the title (2026-10-11).
+- [x] Brighter palettes on GBA: cut (owner, 2026-10-11).
+- [ ] **(owner)** Color pass on GBC (owner's idea, 2026-10-11; DMG unchanged): 6 of 8
+      background and 4 of 8 sprite palettes are in use, every band has one mostly gray
+      palette, the enemies are the Server Room red in every level, and the text screens
+      are plain. Proposed, cheapest first, none adds per-frame work: (1) bands with 2-3
+      palettes (background 6-7, attributes written once per level); (2) each level's
+      own sprite palettes from the style guide, and a chaser color apart from the bots
+      (sprite palettes 4-7); (3) colored story, level complete, game over and credits
+      screens. Optional: (4) palette animation (blinking LEDs, KERNEL's face pulsing),
+      about 1 line every few frames, checked against level 3's 139 lines on GBC. Not
+      proposed: more tileset palettes (every tileset redrawn). The owner picks.
+- [ ] GitHub README (what it is, controls and cheats, how to build, playing on hardware,
+      credits), screenshots, and the licence files: MIT for code, CC BY 4.0 for art
+      (owner, 2026-10-11). Public on GitHub only.
 - [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;
       nothing copied from Mario or other commercial games.
 - [ ] Write the final "how it works" document from DECISIONS.md and SOURCES.md: boot,
