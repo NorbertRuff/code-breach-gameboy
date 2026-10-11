@@ -6,19 +6,14 @@ Emulicious and on hardware. Items marked **(owner)** need the owner.
 
 ## Status (2026-10-11)
 
-- **Playable from start to end:** levels 1-4 and level 5, the KERNEL boss, all in their
-  final art (levels 1-2 since 2026-10-10, levels 3-5 and KERNEL's face since 2026-10-11;
-  the owner played levels 1-5 end to end on 2026-10-11, before the level 3-5 art: good),
-  then the ending and the credits; music and sound
-  effects; passwords, the title menu, the level select and the game over menu; the story
-  text. New since the owner's last check: the M7 menus and story, level 4, level 5 and the
-  ending, and since 2026-10-10 the final player sprite (10 frames, GBC colors from the
-  style guide), the bot, chaser, lift and packet sprites, the HUD and font, and level 1's
-  tileset, band, gate and elevator, level 2's art and the new title screen with its
-  blinking warning. The level 3-5 art and KERNEL's face agreed by the owner (2026-10-11).
-  Next: hardware checks; M9 polish.
-- **Tests:** `make test` 241 tests in about 20 s; `make test-full` 360 in about 25 s.
-- **Memory:** bank 0 has 600 bytes free (the no-death cheat took 38; KERNEL's packet actor and the boss and ending
+- **Playable from start to end, in final art:** levels 1-5 (KERNEL, the boss, is level
+  5), then the ending and the credits; music and sound effects; passwords, the title menu,
+  the level select and the game over menu; the story text; the testing cheats (A + SELECT
+  and A + B while paused). The owner played it end to end on 2026-10-11 and agreed the
+  levels, difficulty, checkpoints, the level 3-5 art and KERNEL's face. Next: the release
+  build and the rest of M9; the owner's hardware pass.
+- **Tests:** `make test` 242 tests in about 20 s; `make test-full` 362 in about 25 s.
+- **Memory:** bank 0 has 587 bytes free (the cheats took 51; KERNEL's packet actor and the boss and ending
   states are in it; the tileset loading and GBC attribute streaming took 380; moving the
   title flow to a ROM bank gave 31 back; the new title took about 47, and dropping
   `sizeof(FONT_CHARS)` gave 100 back); WRAM uses
@@ -38,34 +33,18 @@ A fixed bug leaves this list; its regression test keeps the number.
 
 ## Waiting for the owner
 
-- Hardware checks of M2 and M4 (streaming, one-way shelf, spikes, pit, respawn, head
-  bumps; colors on GBC).
-- Claude Design style guide (M5): palettes, the player, the enemies and the lift are in;
-  level 1's tileset too.
-- Level 1's Server Room art on DMG and GBC (tileset, band, the striped gate, the
-  elevator opening at the end): agree or change the **Proposed** Server Room art,
-  background tiles, GBC palettes and palette-per-tile decisions (DECISIONS.md). Repaint
-  or decorate in Tiled with the "machine" terrain set (`graphics/tilesets/server_room.tsx`).
-- Level 2's Code Testing Lab art on DMG and GBC (tileset, band, the recolored gate and
-  elevator): agree or change the **Proposed** Code Testing Lab art decision
-  (DECISIONS.md). Repaint or move the props in Tiled with the
-  "panel" terrain set (`graphics/tilesets/code_testing_lab.tsx`).
-- Levels 3-5's art and KERNEL's face on hardware (DMG and GBC): agreed in Emulicious
-  (2026-10-11).
-- The new title screen on hardware (DMG and GBC): agreed in Emulicious (2026-10-10).
-- The new bot, chaser, lift and packet on DMG and GBC (2 frames every 8 frames, the lift
-  still): agree or change the **Proposed** enemy sprite decision (DECISIONS.md).
-- The player's 10 frames on DMG and GBC (idle breathing, jump, fall, the hurt and death
-  poses held 0.5 s on a hit), the white coat on DMG, red enemies and gold lifts on GBC.
-- Try the M7 menus in Emulicious and on hardware: the title menu, a password from a level
-  complete screen typed back in (`python tools/password.py` lists them), the level select,
-  game over CONTINUE and QUIT, the boot screen and the elevator log screens. Agree or
-  change the **Proposed** menu and story-screen decisions (DECISIONS.md).
-- Play the level 4 greybox and its song ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7,
-  "Level 4 brief": the open points).
-- Play level 5 and the ending: the boss's feel and timings, its song "Terminate" and the
-  ending's "Closing", the credits' text ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7,
-  "Level 5 build notes": what changed from the design).
+- **Hardware pass on DMG and GBC**, the last check before the release (Emulicious
+  playthrough done 2026-10-11): streaming, one-way shelves, spikes, pits, respawn, head
+  bumps; every level's art and colors; the player's 10 frames, the bots, chasers, lifts
+  and packets; the HUD and font; the title screen; a password typed back in
+  (`python tools/password.py` lists them), the level select, game over CONTINUE and QUIT;
+  KERNEL and the ending; the cheats.
+- **The Proposed decisions left** in DECISIONS.md, to agree or change in one go: the
+  closed gate's buzz; the GBC palette layout and the HUD palette; a palette per tile; the
+  Server Room and Code Testing Lab art; the background tile layout; the enemy and lift
+  sprites; the songs (only Tronimal's own); the menus and their sounds.
+- Optional: repaint or move props in Tiled with each level's terrain set
+  (`graphics/tilesets/*.tsx`).
 
 The physics and level loading (M2) came before color (M4) and art (M5) on purpose: level
 layouts depend on the jump, and levels are designed with plain blocks first.
@@ -85,8 +64,7 @@ layouts depend on the jump, and levels are designed with plain blocks first.
 - **M3, level 1 and gameplay objects:** actors, gates with quotas and checkpoints, the
   exit, HUD, pause and level-select cheat, parallax band and screen splits, lives rules,
   frame budget work, level 1 greybox (owner pass: keep as is), style pass.
-- Still open from these: fixed pools with free lists for particles and projectiles, once
-  the first one is needed (M8).
+- Fixed pools for particles and projectiles were never needed: parked (M9, "Parked ideas").
 
 ## M4 — Game Boy Color support
 
@@ -96,14 +74,13 @@ Done when the game runs in color on GBC and unchanged on DMG. Steps in
 - [x] `src/engine/platform.c`: `is_cgb`. (M0)
 - [x] `src/engine/palette.c`: load, fade, flash for both systems. No other file writes
       palette registers. Done 2026-10-04, `tests/test_palette.py`.
-- [ ] Load the exported palettes for background, HUD and sprites. Done 2026-10-04 for
-      the current assets (level tiles, band, HUD); the player and actors use the style
-      guide's sprite palettes since 2026-10-10, level 1's tileset its 4 palettes; the M5
-      art adds the rest.
+- [x] Load the exported palettes for background, HUD and sprites: the style guide's
+      palettes for every level's tileset and band, the HUD, the player and the actors
+      (2026-10-11).
 - [x] Attribute maps behind `is_cgb`, including streamed columns. The band and HUD have
       theirs (2026-10-04); streamed columns a palette per tile (2026-10-10,
       `tests/test_palette.py`).
-- [ ] Brighter palette set when `_is_GBA` is set.
+- [ ] Brighter palette set when `_is_GBA` is set. Moved to M9.
 - [x] Invincibility shown with a pale sprite palette on GBC instead of blinking.
       Done 2026-10-04 (sprite palette 1).
 - [x] Golden screenshots per mode. `tests/test_golden.py`, `tests/golden/`, rewritten by
@@ -114,8 +91,8 @@ Done when the game runs in color on GBC and unchanged on DMG. Steps in
 
 Done when level 1 looks like the final game in both modes.
 
-- [ ] **(owner)** Claude Design style guide: palettes and character look. Palettes for
-      all five levels in `graphics/palettes.json` (2026-10-05).
+- [x] Claude Design style guide: palettes and character look. Palettes for all five
+      levels in `graphics/palettes.json` (2026-10-05), all in use (2026-10-11).
 - [x] `tools/gbconvert.py` with previews ([ART_PIPELINE.md](ART_PIPELINE.md)). Built and
       tested 2026-10-04.
 - [x] Player sprite with all animations: idle (2), run (4), jump, fall, hurt and death
@@ -145,11 +122,9 @@ Done when level 1 looks like the final game in both modes.
 - [x] Sound effects: Tronimal GBFX/GBFX2 (`sounds/`, `make sounds`), our own player with
       a channel mute mask and priority over the music; sound test ROM and WAVs
       (`make soundtest`). Done 2026-10-04; owner approved the picks.
-- [ ] Music per level, title, game over and ending. Levels 1 and 2, title, game over and
-      level complete have songs (owner approved 2026-10-04; both packs in `music/packs/`,
-      all 18 songs in the sound test); level 3 too (owner: keep). Level 4 plays
-      "Whirlwind", level 5 "Terminate", the ending "Closing" (2026-10-05, **(owner)**
-      listen).
+- [x] Music per level, title, game over and ending (both packs in `music/packs/`, all
+      18 songs in the sound test). Level 4 "Whirlwind", level 5 "Terminate" and the
+      ending's "Closing" heard in the owner's playthrough (2026-10-11).
 - [x] `CREDITS.md` with every CC-BY item (title, author, link, license, changes); add
       each new item with it.
 
@@ -174,37 +149,50 @@ Done when level 1 looks like the final game in both modes.
 One level at a time: the new mechanic, the brief, the greybox loop, the art pass, and a
 replay test that finishes it.
 
-- [ ] Level 2, Code Testing Lab: one-way platforms, Down + A drops through, fast bots.
+- [x] Level 2, Code Testing Lab: one-way platforms, Down + A drops through, fast bots.
       Greybox done and kept after the owner's hardware pass ([LEVEL_DESIGN.md](LEVEL_DESIGN.md)
       section 7); art pass done 2026-10-10 (Code Testing Lab tileset and band).
       **(owner)** Check it on hardware.
-- [ ] Level 3, AI Research Wing: vertical movers and chasers. Lifts done 2026-10-04
+- [x] Level 3, AI Research Wing: vertical movers and chasers. Lifts done 2026-10-04
       (`src/actor/lift.c`), chasers done (`src/actor/chaser.c`), both tested in
       `levels/test_movers.tmj`; greybox built ([LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7)
       with a replay test; owner played it (2026-10-11). Art pass done 2026-10-11 (AI
       Research Wing tileset and band). **(owner)** Check it on hardware.
-- [ ] Level 4, Network Hub: hazards. Greybox built 2026-10-05 (`levels/level_4.tmj`,
+- [x] Level 4, Network Hub: hazards. Greybox built 2026-10-05 (`levels/level_4.tmj`,
       [LEVEL_DESIGN.md](LEVEL_DESIGN.md) section 7) with a replay test; owner played it
       (2026-10-11). Art pass done 2026-10-11 (Network Hub). **(owner)** Check it on hardware.
-- [ ] Level 5, Mainframe: the KERNEL boss. Built 2026-10-05 from the approved design
+- [x] Level 5, Mainframe: the KERNEL boss. Built 2026-10-05 from the approved design
       (`levels/level_5.tmj`, `src/game_state/kernel.c`, `tests/test_boss.py`);
       owner played it (2026-10-11). Art pass done 2026-10-11 (Mainframe tileset and band,
       KERNEL's face and terminals). Agreed (owner). **(owner)** Check it on hardware.
+
+M8 is done: every level is built, has its art and a replay test, and the owner played
+them (2026-10-11). The hardware checks are under "Waiting for the owner".
 
 ## M9 — Polish and release
 
 - [ ] **(owner)** Full playthrough on DMG and GBC.
 - [x] No lag frames in any level, at most 10 sprites per line: each level's replay test
       (`tests/test_level_1.py` to `test_level_4.py`, `test_boss.py`) checks both.
-- [ ] Difficulty and checkpoint tuning.
-- [ ] Turn off the testing cheats (`LEVEL_SELECT_CHEAT`, `NO_DEATH_CHEAT` in `src/utils.h`)
-      for the release, and the tests that use them.
+- [x] Difficulty and checkpoint tuning: the owner's playthrough found them good as built
+      (2026-10-11).
+- [x] The testing cheats stay in the release, entered with A held while paused
+      (2026-10-11, owner).
+- [ ] Release build: `make` skips the intro and title (`SKIP_INTRO_AND_START` 1, the
+      tests need it). Add `make release`: the intro and title on, built in its own
+      folder, so the ROM for the flashcart and itch.io never skips them.
+- [ ] Brighter palette set on GBA (`_is_GBA`, from M4): build it, or cut it as scope.
 - [ ] Project README, screenshots, itch.io page.
 - [ ] Asset check: every asset in SOURCES.md is original or licensed and credited;
       nothing copied from Mario or other commercial games.
 - [ ] Write the final "how it works" document from DECISIONS.md and SOURCES.md: boot,
       main loop, tiles and sprites, banking, collision, physics, palettes and fades,
       parallax, audio, saves.
+
+**Parked ideas** (not planned; the owner may pick them up): chasers that charge (faster
+than the player once they see them); a live glitch flicker on KERNEL's face (about 1
+line per frame); a red corrupted floor on GBC (a palette change or attribute writes);
+a score beyond the fragment count; fixed pools for particles and projectiles (M3).
 
 ---
 

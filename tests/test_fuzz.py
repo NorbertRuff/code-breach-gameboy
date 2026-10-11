@@ -26,7 +26,7 @@ FRAMES = 1500
 STATES = {GAMEPLAY_START, COREGAMELOOP, GAMEPLAY_END, LEVEL_COMPLETE, PAUSED}
 # Button sets and how often each is picked: mostly running and jumping.
 CHOICES = [("right", 6), ("right a", 5), ("a", 2), ("left", 3), ("left a", 2), ("", 2),
-           ("down a", 1), ("start", 1), ("select", 1)]
+           ("down a", 1), ("start", 1), ("a select", 1)]
 
 
 def random_inputs(seed: int):

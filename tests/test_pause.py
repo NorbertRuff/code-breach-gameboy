@@ -1,5 +1,5 @@
-"""The pause (START), the level-select cheat (SELECT while paused) and the no-death cheat
-(B while paused)."""
+"""The pause (START), the level-select cheat (A + SELECT while paused) and the no-death
+cheat (A + B while paused)."""
 
 from gamelib import (COREGAMELOOP, GAMEPLAY_START, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_GREYBOX_TEST,
                      LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, PAUSED)
@@ -9,6 +9,13 @@ PAUSE_TILES = {98, 100, 102, 104, 106}  # P, A, U, S, E (src/game_state/pause.c)
 
 def pause_label_shown(game) -> bool:
     return PAUSE_TILES <= {tile for _, _, tile in game.visible_sprites()}
+
+
+def press_with_a(game, button: str) -> None:
+    """Press a button for one frame with A held, the way the cheats are entered."""
+    game.pyboy.button_press("a")
+    game.press(button)
+    game.pyboy.button_release("a")
 
 
 def test_start_pauses_and_everything_stops(game):
@@ -45,14 +52,14 @@ def test_holding_start_pauses_once(game):
     assert game.state() == PAUSED
 
 
-def test_select_while_paused_loads_the_next_level(game):
+def test_a_select_while_paused_loads_the_next_level(game):
     # The game fixture starts in the greybox level; the levels go round in index order.
     game.start_on_open_ground()
     for expected in (LEVEL_TEST_JUMPS, LEVEL_TEST_MOVERS, LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5,
                      LEVEL_GREYBOX_TEST):
         game.press("start")
         game.frames(2)
-        game.press("select")
+        press_with_a(game, "select")
         game.wait_for_state(GAMEPLAY_START, timeout=60)
         game.wait_for_state(COREGAMELOOP, timeout=400)      # the boss level types its log first
         assert game.u8("_level_index") == expected
@@ -70,20 +77,31 @@ def test_select_does_nothing_while_playing(game):
 def turn_on_no_death(game):
     game.press("start")
     game.frames(2)
-    game.press("b")
+    press_with_a(game, "b")
     game.frames(2)
     game.press("start")
     game.frames(2)
     assert game.u8("_no_death_cheat") == 1
 
 
-def test_b_while_paused_turns_the_no_death_cheat_on_and_off(game):
+def test_a_b_while_paused_turns_the_no_death_cheat_on_and_off(game):
     game.start_on_open_ground()
     turn_on_no_death(game)
     game.press("start")
     game.frames(2)
-    game.press("b")
+    press_with_a(game, "b")
     game.frames(2)
+    assert game.u8("_no_death_cheat") == 0
+
+
+def test_select_or_b_alone_while_paused_does_nothing(game):
+    game.start_on_open_ground()
+    game.press("start")
+    game.frames(2)
+    for button in ("select", "b"):
+        game.press(button)
+        game.frames(30)
+    assert game.state() == PAUSED and game.u8("_level_index") == LEVEL_GREYBOX_TEST
     assert game.u8("_no_death_cheat") == 0
 
 

@@ -312,14 +312,15 @@ About 9 bots, at most 3 on screen.
   `tools/physics.py` together, before the level 2 greybox.
 - **Bots get a speed property per bot in Tiled** (1 or 2 px per frame), so a level can mix
   slow and fast bots.
-- Still open: the collectible is called a bug report in GAME_DESIGN.md; only a new
-  picture, or also a new name in the HUD?
+- The collectible stays the floppy in every level, matching the HUD icon (owner,
+  2026-10-11).
 
 ### Level 3 brief: AI Research Wing (draft)
 
 **Status: draft by Claude, 2026-10-04. Greybox built the same day** (`levels/level_3.tmj`,
 below), after the owner's answers. Lifts and chasers are tested in `levels/test_movers.tmj`.
-Next: the owner plays it.
+The owner played it end to end (2026-10-11): kept as built. Art: AI Research Wing
+(2026-10-11).
 
 Teaches: **lifts** (vertical movers) and **chasers** (bots that follow the player). Lifts
 reach heights no jump can: the level goes up, with shelves 5-9 tiles above the floor.
@@ -497,7 +498,8 @@ ends at line 115 of the 140 allowed (average 61; `tools/frame_budget.py --route 
 ### Level 4 brief: Network Hub (draft)
 
 **Status: draft by Claude, 2026-10-05, built the same day** (`levels/level_4.tmj`, below)
-with Claude's answers to its open points. Next: the owner plays it.
+with Claude's answers to its open points. The owner played it end to end (2026-10-11):
+kept as built, the answers below included. Art: Network Hub (2026-10-11).
 
 Teaches: **hazard tiles** ("corrupted data"): never solid, and touching one with any part
 of the body costs a life, like a bot. Three shapes: **spike strips** on a floor (jump

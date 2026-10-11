@@ -50,25 +50,28 @@ or git keeps the old one). Details of how the code does it belong in
   all) and the password, then START (or 5 s) goes on to the next level; after the last
   level, level 1 again until the ending exists.
 - **Pause:** START freezes the game with "PAUSE" in the band; the music keeps playing.
-  SELECT while paused loads the next level (cheat, `LEVEL_SELECT_CHEAT`; M9 decides if it
-  ships). A real menu waits for M7. **Proposed.**
-- **No-death cheat** (2026-10-11, owner asked for it for playtesting): B while paused turns
-  it on (pickup sound) or off (denied sound); hits don't count, and a fall restarts the
-  section without a life. Behind `NO_DEATH_CHEAT`; off in the release (M9) with the
-  level-select cheat. No on-screen mark, to keep bank 0 and the HUD as they are.
+  A + SELECT while paused loads the next level (cheat, `LEVEL_SELECT_CHEAT`).
+- **No-death cheat** (2026-10-11, owner asked for it for playtesting): A + B while paused
+  turns it on (pickup sound) or off (denied sound); hits don't count, and a fall restarts
+  the section without a life. Behind `NO_DEATH_CHEAT`. No on-screen mark, to keep bank 0
+  and the HUD as they are.
+- **The cheats stay in the release** (2026-10-11, owner), a little harder to enter: A must
+  be held while paused, so a stray SELECT or B does nothing.
 - **No hard mode** (2026-10-05, owner): cut to keep the game small.
 - **Story:** "PATCH n/5"; each level's fragments compile into a patch uploaded in the boss
   fight; the twist that staff #042 wrote the AI stays (STORY.md).
 - **Story screens** (2026-10-05): the boot screen (after NEW GAME) and the elevator log
   (after level complete) type their lines on a blank screen, a character every 4 frames,
-  then wait for START or 5 s. Log 5 shows before the boss level. **Proposed.**
+  then wait for START or 5 s. Log 5 shows before the boss level. Agreed (owner's
+  playthrough, 2026-10-11).
 - **Boss design approved** (2026-10-05, owner): 3 terminals and uploads (hold Up), one
   earlier idea per phase (packets, the lift, the corrupted floor), no spawned bots or purge
   sweep, a whole-screen shake, game over restarts phase 1, song "Terminate"
-  (LEVEL_DESIGN.md section 7). While building it (2026-10-05, **Proposed**): a terminal
+  (LEVEL_DESIGN.md section 7). While building it (2026-10-05; agreed in the owner's
+  playthrough, 2026-10-11): a terminal
   lights once the phase's first volley has fallen, and phase 2's extra packets stay left
   of the lift (LEVEL_DESIGN.md, "Level 5 build notes").
-- **Ending** (2026-10-05, **Proposed**): "LOCKDOWN LIFTED" typed as the screen fades to
+- **Ending** (2026-10-05; agreed in the owner's playthrough, 2026-10-11): "LOCKDOWN LIFTED" typed as the screen fades to
   light, song "Closing", then a credits screen until START, then the title.
 - **Boss:** "KERNEL" on one screen, drawn with background tiles (details in M8, reviewed by
   the owner first).
@@ -104,7 +107,8 @@ or git keeps the old one). Details of how the code does it belong in
   (2026-10-04). **Level 2** (Code Testing Lab) greybox: built 2026-10-04, the low route
   needs the bridge's fragment for gate B; kept as built after the owner's hardware pass
   (2026-10-04). **Level 3** (AI Research Wing) greybox: built 2026-10-04 with lifts,
-  chasers and 2 patrol bots (owner asked for the bots). **Proposed** until the owner plays it.
+  chasers and 2 patrol bots (owner asked for the bots). **Levels 3-5** kept as built
+  after the owner's playthrough (2026-10-11), difficulty and checkpoints included.
 - **The game starts in level 1;** level indices list the game's levels, then the test
   rooms (the greybox level the tests use, `test_jumps` for the jump metrics, `test_movers`
   for the lift and the chaser).

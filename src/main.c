@@ -32,7 +32,7 @@ Player player;
 
 uint8_t lives = START_LIVES;   // refilled on game over
 
-// 1: hits don't count and a fall restarts the section without a life (pause + B)
+// 1: hits don't count and a fall restarts the section without a life (pause, A + B)
 uint8_t no_death_cheat = 0;
 
 // Frames the screen showed without a new update, because an update ran past VBlank.
@@ -100,8 +100,8 @@ static uint8_t new_press(uint8_t button)
     return (joypad_current & button) && !(joypad_previous & button);
 }
 
-// While paused: START goes back to the game. With the cheats, SELECT loads the next
-// level and B turns the no-death cheat on or off.
+// While paused: START goes back to the game. With the cheats, A + SELECT loads the next
+// level and A + B turns the no-death cheat on or off (A held, so a stray press does nothing).
 static void update_pause(void)
 {
     if (new_press(J_START)) {
@@ -109,7 +109,7 @@ static void update_pause(void)
         current_game_state = COREGAMELOOP;
     }
 #if LEVEL_SELECT_CHEAT
-    else if (new_press(J_SELECT)) {
+    else if ((joypad_current & J_A) && new_press(J_SELECT)) {
         level_index++;
         if (level_index == LEVEL_COUNT) level_index = 0;
         palette_fade_out(RESTART_FADE_FRAMES);
@@ -117,7 +117,7 @@ static void update_pause(void)
     }
 #endif
 #if NO_DEATH_CHEAT
-    else if (new_press(J_B)) {
+    else if ((joypad_current & J_A) && new_press(J_B)) {
         no_death_cheat = !no_death_cheat;
         if (no_death_cheat) sound_play(EFFECT_COLLECT);
         else sound_play(EFFECT_DENIED);

@@ -142,8 +142,8 @@ column about to come into view is read into a 13-byte buffer and written with
 A column draw takes about 30-40 screen lines, so one column per frame fits the frame
 budget. On GBC the band and HUD attributes are written once per level; a streamed
 column's attributes, its tiles' palettes, are written right after its tiles. GBDK ships a large-map scrolling
-example that shows the pattern. The "Drawing Large Maps" notes in GAME_DESIGN.md describe
-the same technique.
+example that shows the pattern; Larold's "Drawing Large Maps" tutorial (RESEARCH.md)
+describes the same technique.
 
 ## 5. Preview and reachability check: `tools/levelpreview.py`
 
@@ -176,8 +176,8 @@ From GAME_DESIGN.md. Widths are targets to tune in playtesting.
 
 | # | Level | New mechanic | Enemies | Collectible |
 |---|---|---|---|---|
-| 1 | Server Room | Basics: run, jump, fragments, gates, pits | Patrol security bot | Code fragments |
-| 2 | Code Testing Lab | One-way platforms | Faster bots | Bug reports, debug tools |
-| 3 | AI Research Wing | Vertical movers, chasers | Malfunctioning AI | AI cores |
-| 4 | Network Hub | Hazard tiles | Network bots, data corruption | Security protocols |
-| 5 | Mainframe | Boss fight | Final AI | n/a |
+| 1 | Server Room | Basics: run, jump, fragments, gates, pits | Patrol security bot | Floppy (all levels) |
+| 2 | Code Testing Lab | One-way platforms | Faster bots | Floppy |
+| 3 | AI Research Wing | Vertical movers, chasers | Chasers, bots | Floppy |
+| 4 | Network Hub | Hazard tiles | Bots, a chaser | Floppy |
+| 5 | Mainframe | Boss fight | KERNEL's packets | Uploads at terminals |

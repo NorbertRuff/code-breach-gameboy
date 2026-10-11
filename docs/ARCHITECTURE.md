@@ -12,7 +12,7 @@ States are defined in `src/utils.h`:
   chosen: NEW GAME (progress reset, the boot screen, level 1) or CONTINUE (the password
   screen, then the level select). B on an empty password shows the title again.
 - `COREGAMELOOP` ↔ `PAUSED` on START ("PAUSE" in sprites over the parallax band). While
-  paused, SELECT loads the next level (`LEVEL_SELECT_CHEAT`) and B toggles
+  paused, A + SELECT loads the next level (`LEVEL_SELECT_CHEAT`) and A + B toggles
   `no_death_cheat` (`NO_DEATH_CHEAT`).
 - `GAMEPLAY_END` (a life lost): `lose_life` restarts the current section behind a fade
   (`restart_behind_fade`) and returns the next state. On game over, `game_over` in
@@ -37,8 +37,8 @@ The per-frame gameplay code is `main_game_loop()`. Global state: in `main.c`
 `perfect_levels`.
 
 Development flags in `src/utils.h`: `SKIP_INTRO_AND_START` (1: straight to gameplay; the
-tests assume it), `LEVEL_SELECT_CHEAT` (1: SELECT while paused loads the next level), `NO_DEATH_CHEAT` (1: B
-while paused turns the no-death cheat on or off).
+tests assume it), `LEVEL_SELECT_CHEAT` (1: A + SELECT while paused loads the next level), `NO_DEATH_CHEAT`
+(1: A + B while paused turns the no-death cheat on or off).
 
 ## Modules
 

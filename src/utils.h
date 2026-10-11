@@ -8,12 +8,12 @@
 #define SKIP_INTRO_AND_START 1
 #endif
 
-// 1: SELECT in the pause menu loads the next level, test rooms included (for testing)
+// 1: A + SELECT in the pause menu loads the next level, test rooms included (for testing)
 #ifndef LEVEL_SELECT_CHEAT
 #define LEVEL_SELECT_CHEAT 1
 #endif
 
-// 1: B in the pause menu turns the no-death cheat on or off (for testing)
+// 1: A + B in the pause menu turns the no-death cheat on or off (for testing)
 #ifndef NO_DEATH_CHEAT
 #define NO_DEATH_CHEAT 1
 #endif

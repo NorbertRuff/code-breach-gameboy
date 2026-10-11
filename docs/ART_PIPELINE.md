@@ -130,7 +130,7 @@ Design.
 | KERNEL's data packet (L5) | 16×16 | Flicker (2) | Done (2026-10-10) |
 | Enemies for L2–L4 | 16×16 or 16×32 | One or two types per level | Not started |
 | Boss (L5) | Large | Built from background tiles or a metasprite within 10 sprites per line | Not designed |
-| Collectibles | 8×8 tiles in the level tileset | Code fragment, bug report, debug tool, AI core, security protocol | Code fragment (a floppy) in every level tileset (levels 1-2 2026-10-10, 3-5 2026-10-11); greybox diamond in the test rooms |
+| Collectibles | 8×8 tiles in the level tileset | Code fragment (a floppy) in every level, matching the HUD icon (owner, 2026-10-11) | Code fragment (a floppy) in every level tileset (levels 1-2 2026-10-10, 3-5 2026-10-11); greybox diamond in the test rooms |
 | Level objects | Tiles in the level tileset | Security gate (a striped shutter column between rails, opened a row at a time), exit elevator (2×4 tiles, closed and open) | Server Room done (2026-10-10); Code Testing Lab recolored from it, AI Research Wing (open: purple) and Network Hub (open: blue) from that (2026-10-11); level 5 has none |
 | Hazards | 8×8 tiles | Spikes or exposed wiring, sparks | Server Room wiring, Code Testing Lab sparking cables (top and fill, 2026-10-10), recolored for the AI Research Wing; Network Hub spikes and hanging cut-cable bundles, Mainframe corrupted floor (2026-10-11); levels 1-3 have no hazards |
 | Parallax bands | 32×3 tiles each, ≤ 32 unique | One per level theme, wraps around; decoration only; `graphics/bands/<tileset>_band.png` | Server Room (16 tiles) and Code Testing Lab (22) done (2026-10-10); AI Research Wing (28), Network Hub (21) and Mainframe (17) done (2026-10-11) |
