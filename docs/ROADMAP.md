@@ -36,8 +36,8 @@ leaves this list; its regression test keeps the number.
   and the story screens in 4 grays.
 - **The demo on hardware:** leave the title screen alone for a minute; a clip of level 1
   plays, any button goes back; the next minute shows level 2, and so on.
-- **The GitHub release v1.0:** commit, push, then the release with `release/ApexLab.gb`
-  (the command is in the session's report).
+- **The GitHub release v1.0:** commit, push, then push the tag `v1.0`; CI builds, tests
+  and publishes the release with `release/ApexLab.gb`.
 - Optional: repaint or move props in Tiled with each level's terrain set
   (`graphics/tilesets/*.tsx`).
 

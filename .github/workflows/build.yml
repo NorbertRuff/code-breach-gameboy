@@ -1,20 +1,26 @@
-# Build the ROMs and run the PyBoy tests on every push and pull request.
-# Uses the same GBDK version as local development (4.5.0).
+# Build the ROMs and run the full PyBoy test suite on every push and pull request, with
+# the same GBDK version as local development (4.5.0). A pushed tag like v1.0 also
+# publishes a GitHub release with release/ApexLab.gb.
 name: Build and test
 
 on:
   push:
+    branches: ["**"]
+    tags: ["v*"]
   pull_request:
 
 jobs:
   build-test:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # only the release step on a tag writes
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Cache GBDK 4.5.0
         id: gbdk
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: gbdk
           key: gbdk-4.5.0-linux64
@@ -23,7 +29,7 @@ jobs:
         if: steps.gbdk.outputs.cache-hit != 'true'
         run: curl -fsSL https://github.com/gbdk-2020/gbdk-2020/releases/download/4.5.0/gbdk-linux64.tar.gz | tar -xz
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
@@ -33,23 +39,36 @@ jobs:
         run: pip install -r tools/requirements.txt
 
       # romusage -R in the Makefile fails the build if a ROM bank overflows.
-      - name: Build
-        run: make all
+      - name: Build the ROM and the release ROM
+        run: make all release
 
-      - name: Test (full tier: DMG and GBC mode)
+      - name: Test, full tier, in DMG and GBC mode
         run: make test-full
 
       - name: Upload test screenshots
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-screenshots
           path: tests/out/
 
       - name: Upload ROMs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: roms
           path: |
             obj/ApexLab.gb
             release/ApexLab.gb
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          name: "ApexLab: Code Breach ${{ github.ref_name }}"
+          files: release/ApexLab.gb
+          body: |
+            A Game Boy platformer: five levels and the KERNEL boss, in color on a Game Boy
+            Color and in 4 shades on the original Game Boy. Passwords, a title screen demo,
+            music and sound effects by Tronimal (CC BY 4.0).
+
+            Play ApexLab.gb in any Game Boy emulator, or on a flashcart (MBC5, no save RAM).

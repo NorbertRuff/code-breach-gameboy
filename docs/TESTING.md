@@ -108,8 +108,9 @@ Pillow, NumPy). `make test` uses `.venv` when it exists, otherwise `python` from
 ## Continuous integration
 
 `.github/workflows/build.yml` runs on every push and pull request on `ubuntu-24.04`:
-GBDK 4.5.0 (cached), `make all`, `make test-full`, then uploads the ROMs (and
-`tests/out/` on failure).
+GBDK 4.5.0 (cached), `make all release`, `make test-full`, then uploads the ROMs (and
+`tests/out/` on failure). A pushed tag like `v1.0` also publishes a GitHub release with
+`release/ApexLab.gb`.
 
 ## What PyBoy cannot prove
 
