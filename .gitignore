@@ -21,3 +21,12 @@ release/
 # Claude Code's project notes, skills and settings, kept local
 CLAUDE.md
 .claude/
+
+# Personal notes on how the code works, kept local
+docs/HOW_IT_WORKS.md
+
+# Understand-Anything knowledge graph, kept local
+.ua/
+
+# Slide decks for talks, kept local
+*.pptx

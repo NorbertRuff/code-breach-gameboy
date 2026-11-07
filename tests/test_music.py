@@ -50,12 +50,13 @@ def track_songs(game) -> list:
     return started
 
 
-def press_start_on_screen(game, presses: int = 1) -> None:
-    """Wait on a title or message screen, then START back to the game; START on each of
-    `presses` screens in turn."""
-    for _ in range(presses):
+def start_new_game_from_title(game) -> None:
+    """START through PRESS START and NEW GAME, then past the boot screen once it is typed."""
+    for _ in range(2):
         game.frames(200)
         game.hold("start", 3)
+    game.wait_for_text(6, 10, "SEND APEXLAB")
+    game.tap("start")
     game.wait_for_state(COREGAMELOOP, timeout=300)
 
 
@@ -66,7 +67,7 @@ def test_each_level_and_screen_starts_its_own_song(game):
     for level in (LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4):
         game.load_level(level)
     game.set_state(TITLE_SCREEN_STATE)
-    press_start_on_screen(game, presses=3)              # PRESS START, NEW GAME, the boot screen
+    start_new_game_from_title(game)
     game.set_lives(1)
     game.lose_life()
     game.answer_game_over()
@@ -74,7 +75,7 @@ def test_each_level_and_screen_starts_its_own_song(game):
     game.set_state(LEVEL_COMPLETE)
     game.wait_for_text(4, 14, "PRESS START")
     game.tap("start")
-    game.wait_for_text(0, 9, "NOT FOUND IN RACKS.")     # the elevator ride's log
+    game.wait_for_text(0, 9, "NOT MEGACORP STAFF.")     # the elevator ride's log
     game.tap("start")
     game.wait_for_state(COREGAMELOOP, timeout=300)
     assert songs == ["tech", "neurotic_robonaut", "observing_jupiter", "whirlwind", "decampment", "tech",

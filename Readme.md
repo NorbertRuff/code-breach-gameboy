@@ -4,10 +4,10 @@ A platformer for the Game Boy, written in C with [GBDK-2020](https://github.com/
 One 128 KB ROM that plays in color on a Game Boy Color and in 4 shades on the original
 Game Boy, tested on real hardware with a flashcart.
 
-The AI security of the ApexLab programming facility has gone haywire. You are staff #042,
-a programmer locked inside. Collect the code fragments (floppy disks) to open each
-security gate, ride the elevator down through five floors, and upload the patch into the
-mainframe AI, KERNEL.
+KERNEL, the mainframe AI of MegaCorp, has gone rogue and locked down the whole facility.
+MegaCorp calls in ApexLab, the team that fixes what nobody else can. You are agent #042:
+collect the code fragments (floppy disks) to open each security gate, ride the elevator
+down through five floors, and upload the patch into KERNEL.
 
 ![Gameplay: the title screen, then a few seconds of each level and the KERNEL fight](screenshots/gameplay.gif)
 
@@ -96,9 +96,11 @@ docs are listed in
 
 ## Credits
 
-- **Code, design and art:** Handcrafted by Norbert Ruff in 2024-2025, using tutorials like [laroldsjubilantjunkyard.com](https://laroldsretrogameyard.com/) the in 2026 resurrected with [Claude Code](https://claude.com/claude-code)
-  Art redrawn by hand on the 8×8 grid from references made with Claude
-  Design and Gemini, finished in Aseprite.
+- **Code, design and art:** Norbert Ruff. Started by hand in 2024-2025, learning from
+  tutorials such as [Larold's Retro Gameyard](https://laroldsretrogameyard.com/), then
+  picked up again and finished in 2026 with [Claude Code](https://claude.com/claude-code).
+  The art was redrawn by hand on the 8×8 grid from references made with Claude Design and
+  Gemini, and finished in Aseprite.
 - **Music:** Tronimal, [Game Boy Music Pack](https://yogi-tronimal.itch.io/game-boy-music-pack)
   and [Game Boy Music Pack #2](https://yogi-tronimal.itch.io/game-boy-music-pack-2), CC BY 4.0.
 - **Sound effects:** Tronimal, [GBFX](https://yogi-tronimal.itch.io/gbfx) and

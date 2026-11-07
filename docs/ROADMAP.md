@@ -4,14 +4,16 @@ From the current prototype to the full 5-level game, playable in color on GBC an
 4 shades on DMG. Claude writes the code; the owner runs git, reviews, and plays it in
 Emulicious and on hardware. Items marked **(owner)** need the owner.
 
-## Status (2026-10-11)
+## Status (2026-10-11): finished, version 1.0 released
 
 - **Done:** levels 1-5 (KERNEL, the boss, is level 5), the ending and the
   credits, music and sound effects, passwords, the title menu, the level select, the
   game over menu, the story text, the cheats (A held + SELECT or B while paused), and the
-  title screen demo. The owner played it end to end on a real Game Boy Color (2026-10-11).
-  M9 is done apart from the DMG hardware pass and a look at the demo on hardware.
-- **Version 1.0** (2026-10-11): `release/ApexLab.gb`, "Version 1.0" on the intro screen.
+  title screen demo. The owner played it on real hardware and closed the project
+  (2026-10-11). All milestones M0-M9 are done.
+- **Version 1.0** (2026-10-11, rebuilt 2026-11-07 with the MegaCorp story before the repo
+  went public): the GitHub release `v1.0` with `ApexLab.gb`, published
+  by CI from the tag; "Version 1.0" on the intro screen.
 - **Tests:** `make test` 165 tests in about 13 s; `make test-full` 286 in about 18 s (it
   builds `make release` first).
 - **Memory:** bank 0 has 382 bytes free (42 at its end, after the startup code); WRAM
@@ -29,17 +31,11 @@ leaves this list; its regression test keeps the number.
 
 - None open.
 
-## Waiting for the owner
+## Open
 
-- **Hardware pass on the original Game Boy (DMG)** with `release/ApexLab.gb` (`make
-  release`); the GBC pass is done (2026-10-11). Every level's shades, the HUD, the title
-  and the story screens in 4 grays.
-- **The demo on hardware:** leave the title screen alone for a minute; a clip of level 1
-  plays, any button goes back; the next minute shows level 2, and so on.
-- **The GitHub release v1.0:** commit, push, then push the tag `v1.0`; CI builds, tests
-  and publishes the release with `release/ApexLab.gb`.
-- Optional: repaint or move props in Tiled with each level's terrain set
-  (`graphics/tilesets/*.tsx`).
+- Nothing. Optional, if the project is picked up again: repaint or move props in Tiled
+  with each level's terrain set (`graphics/tilesets/*.tsx`), and the parked ideas under
+  M9.
 
 The physics and level loading (M2) came before color (M4) and art (M5) on purpose: level
 layouts depend on the jump, and levels are designed with plain blocks first.

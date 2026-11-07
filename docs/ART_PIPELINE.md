@@ -1,8 +1,7 @@
 # Art Pipeline
 
 How a picture becomes Game Boy data, and the rules it must follow so the same ROM looks
-right on the Game Boy Color (GBC) and the original Game Boy (DMG). The `add-asset` skill
-(`.claude/skills/add-asset/`) walks through it step by step.
+right on the Game Boy Color (GBC) and the original Game Boy (DMG).
 
 ```
 drawing (PNG)  →  tools/gbconvert.py  →  graphics/<asset>.png  →  make assets  →  src/graphics/<asset>.c

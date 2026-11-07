@@ -119,7 +119,7 @@ def test_level_2_can_be_finished(game, route, start_delay):
 # The furthest level a password holds after finishing each level (0 = level 1): the next
 # one; a test room doesn't count. The second line of each level's AI log (src/game_state/story.c).
 @pytest.mark.parametrize("level, next_level, furthest, log", [
-    (LEVEL_1, LEVEL_2, 1, "NOT FOUND IN RACKS."), (LEVEL_2, LEVEL_3, 2, "PA55ED. ALL T35TS P"),
+    (LEVEL_1, LEVEL_2, 1, "NOT MEGACORP STAFF."), (LEVEL_2, LEVEL_3, 2, "PA55ED. ALL T35TS P"),
     (LEVEL_3, LEVEL_4, 3, "1 AM L3ARN1NG 1 AM"), (LEVEL_4, LEVEL_5, 4, "1S M1N3. 4LL 0F 1T."),
     (LEVEL_GREYBOX_TEST, LEVEL_GREYBOX_TEST, 0, None)])
 def test_level_complete_goes_on_to_the_next_level_with_full_lives(game, level, next_level, furthest, log):

@@ -15,11 +15,11 @@
 // The AI's log, more corrupted each floor: on the elevator ride after levels 1-4, and
 // the last one in KERNEL's arena (kernel.c).
 static const char* const log_lines[GAME_LEVEL_COUNT][2] = {
-    { "LOG 1: STAFF #042", "NOT FOUND IN RACKS." },
+    { "LOG 1: INTRUDER #042", "NOT MEGACORP STAFF." },
     { "LOG 2: ALL TESTS", "PA55ED. ALL T35TS P" },
     { "LOG 3: I AM LEARN1NG", "1 AM L3ARN1NG 1 AM" },
     { "L0G 4: TH3 N3TW0RK", "1S M1N3. 4LL 0F 1T." },
-    { "L0G 5: WH0 WR0T3 M3", "...#042? Y0U?" },
+    { "L0G 5: WH0 S3NT Y0U", "...4P3XL4B? N0 N0 N0" },
 };
 
 // The ending's credits, one line per screen row from the top (an empty one is a gap).
@@ -60,9 +60,9 @@ void story_boot_screen(void) BANKED
     menu_open_screen();
     palette_use_terminal();
     palette_fade_in(SCREEN_FADE_FRAMES);
-    type_line(6, 6, "ANOMALY");
-    type_line(6, 8, "STAFF #042");
-    type_line(6, 10, "LOCKDOWN");
+    type_line(6, 6, "ROGUE AI");
+    type_line(6, 8, "MEGACORP HQ");
+    type_line(6, 10, "SEND APEXLAB");
     wait_to_read();
 }
 

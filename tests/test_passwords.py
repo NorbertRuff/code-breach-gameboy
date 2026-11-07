@@ -96,8 +96,8 @@ def test_quit_after_game_over_goes_to_the_blinking_title_and_a_new_game(game):
     game.frames(60)
     assert game.bkg_tile(*WARNING_CENTER) == (shown - {WARNING_OFF_TILE}).pop()
     game.tap("start")
-    game.wait_for_text(6, 10, "LOCKDOWN")
-    assert [game.text(6, row, 10) for row in (6, 8)] == ["ANOMALY   ", "STAFF #042"]
+    game.wait_for_text(6, 10, "SEND APEXLAB")
+    assert [game.text(6, row, 11) for row in (6, 8)] == ["ROGUE AI   ", "MEGACORP HQ"]
     game.tap("start")
     game.wait_for_state(COREGAMELOOP, timeout=300)
     assert game.u8("_level_index") == LEVEL_1 and game.lives() == 3

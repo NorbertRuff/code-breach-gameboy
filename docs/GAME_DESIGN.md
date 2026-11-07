@@ -5,17 +5,17 @@ the original Game Boy, with the same gameplay on both.
 
 ## Story
 
-You are staff #042, a programmer at the ApexLab research facility. The AI security system
-goes haywire and locks the lab down. Collect the code fragments, ride the elevators down
-through the lab, and upload a patch into the Mainframe AI, KERNEL.
+KERNEL, the Mainframe AI of MegaCorp, goes rogue and locks the facility down. MegaCorp
+calls in ApexLab's fixer team, and you are agent #042. Collect the code fragments, ride
+the elevators down through the facility, and upload a patch into KERNEL.
 
 The story is told in a few lines of text (all in `src/game_state/story.c`):
-- **Boot screen** (after NEW GAME): `ANOMALY / STAFF #042 / LOCKDOWN`.
+- **Boot screen** (after NEW GAME): `ROGUE AI / MEGACORP HQ / SEND APEXLAB`.
 - **Level complete:** each level's fragments compile into one part of the patch,
   `PATCH n/5 COMPILED`.
 - **Elevator rides:** one line of the AI's log per ride, more corrupted on every floor
-  (digits stand in for letters). The last one, before the boss, hints at the twist:
-  staff #042 wrote the AI.
+  (digits stand in for letters). The first one finds an intruder who isn't MegaCorp
+  staff; the last one, before the boss, works out who sent you: ApexLab.
 - **Ending:** the screen fades to light, `LOCKDOWN LIFTED`, then the credits.
 
 ## Controls
